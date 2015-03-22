@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE components PUBLIC "-//DBFLUTE//DTD LastaDi 1.0//EN" 
+	"http://dbflute.org/meta/lastadi10.dtd">
+<components>
+	<include path="j2ee.xml"/>
+
+	<!-- prototype mock like creator -->
+	<component name="fooController" class="org.dbflute.utflute.lasta.bean.FooControllerImpl" instance="prototype"/>
+	<component name="fooFacade" class="org.dbflute.utflute.lasta.bean.FooFacade" instance="prototype"/>
+	<component name="fooLogic" class="org.dbflute.utflute.lasta.bean.FooLogic" instance="prototype"/>
+	<component name="fooService" class="org.dbflute.utflute.lasta.bean.FooService" instance="prototype"/>
+
+	<!-- DBFlute mock -->
+	<component name="fooBhv" class="org.dbflute.utflute.lasta.dbflute.exbhv.FooBhv"/>
+</components>
