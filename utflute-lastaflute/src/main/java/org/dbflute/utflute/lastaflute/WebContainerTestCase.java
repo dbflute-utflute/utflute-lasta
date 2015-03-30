@@ -27,7 +27,7 @@ import javax.servlet.http.HttpServletRequest;
 import org.dbflute.lasta.di.core.ExternalContext;
 import org.dbflute.lasta.di.core.LaContainer;
 import org.dbflute.lasta.di.core.factory.SingletonLaContainerFactory;
-import org.dbflute.lastaflute.web.servlet.filter.LastaContainerFilter;
+import org.dbflute.lastaflute.web.LastaFilter;
 import org.dbflute.utflute.lasta.ContainerTestCase;
 import org.dbflute.utflute.lastaflute.web.ActionUrlPatternChecker;
 import org.dbflute.utflute.mocklet.MockletHttpServletRequest;
@@ -106,9 +106,9 @@ public abstract class WebContainerTestCase extends ContainerTestCase {
 
     protected void xdoInitializeContainerAsWeb(String configFile) {
         final ServletConfig servletConfig = xprepareMockServletConfig(configFile);
-        final LastaContainerFilter containerServlet = xcreateLastaContainerFilter();
+        final LastaFilter filter = xcreateLastaFilter();
         try {
-            containerServlet.init(new FilterConfig() {
+            filter.init(new FilterConfig() {
                 public String getFilterName() {
                     return "containerFilter";
                 }
@@ -140,8 +140,8 @@ public abstract class WebContainerTestCase extends ContainerTestCase {
         return _xcachedServletConfig;
     }
 
-    protected LastaContainerFilter xcreateLastaContainerFilter() {
-        return new LastaContainerFilter();
+    protected LastaFilter xcreateLastaFilter() {
+        return new LastaFilter();
     }
 
     protected void xregisterWebMockContext(MockletServletConfig servletConfig) { // like S2ContainerFilter
