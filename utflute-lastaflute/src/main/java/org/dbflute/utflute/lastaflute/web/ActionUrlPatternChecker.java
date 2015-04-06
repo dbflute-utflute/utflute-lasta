@@ -20,7 +20,6 @@ import java.lang.annotation.Annotation;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
-import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -30,7 +29,8 @@ import junit.framework.AssertionFailedError;
 import org.dbflute.helper.message.ExceptionMessageBuilder;
 import org.dbflute.lastaflute.web.ActionForm;
 import org.dbflute.lastaflute.web.Execute;
-import org.dbflute.lastaflute.web.exception.IllegalUrlPatternRuntimeException;
+import org.dbflute.lastaflute.web.ruts.config.analyzer.UrlPatternAnalyzer;
+import org.dbflute.lastaflute.web.ruts.config.analyzer.UrlPatternAnalyzer.UrlPatternBox;
 import org.dbflute.utflute.core.policestory.javaclass.PoliceStoryJavaClassHandler;
 
 /**
@@ -78,28 +78,36 @@ public class ActionUrlPatternChecker implements PoliceStoryJavaClassHandler {
                 continue;
             }
             // the @Execute method that has urlPattern here
-            final List<String> urlParamNames = new ArrayList<String>();
-            analyzeUrlPattern(urlPattern, urlParamNames, new ArrayList<String>()); // not use required list
+            final UrlPatternAnalyzer analyzer = newUrlPatternAnalyzer();
+            final UrlPatternBox box = new UrlPatternBox();
+            analyzer.analyzeUrlPattern(method, urlPattern, box);
+            final List<String> urlParamNameList = box.getUrlPatternVarList(); // not use required list
 
-            final Set<String> urlParamSet = new HashSet<String>(urlParamNames);
-            final List<Field> targetFieldList = new ArrayList<Field>();
-            final Class<?> formType = extractActionFormType(actionType);
-            for (Field field : formType.getDeclaredFields()) { // contains protected and concrete only
-                if (!isPublicInstanceMember(field.getModifiers())) {
-                    continue;
-                }
-                // public instance field here
-                targetFieldList.add(field);
-                for (String paramName : urlParamNames) {
-                    if (field.getName().equals(paramName)) {
-                        urlParamSet.remove(paramName);
-                    }
-                }
-            }
-            if (!urlParamSet.isEmpty()) {
-                throwUrlPatternPropertyNotFoundException(actionType, method, urlPattern, formType, targetFieldList, urlParamSet);
-            }
+            // TODO jflute lastaflute: [G] UTFlute urlParam argument check
+            @SuppressWarnings("unused")
+            final Set<String> urlParamSet = new HashSet<String>(urlParamNameList);
+            //final List<Field> targetFieldList = new ArrayList<Field>();
+            //final Class<?> formType = extractActionFormType(actionType);
+            //for (Field field : formType.getDeclaredFields()) { // contains protected and concrete only
+            //    if (!isPublicInstanceMember(field.getModifiers())) {
+            //        continue;
+            //    }
+            //    // public instance field here
+            //    targetFieldList.add(field);
+            //    for (String paramName : urlParamNameList) {
+            //        if (field.getName().equals(paramName)) {
+            //            urlParamSet.remove(paramName);
+            //        }
+            //    }
+            //}
+            //if (!urlParamSet.isEmpty()) {
+            //    throwUrlPatternPropertyNotFoundException(actionType, method, urlPattern, formType, targetFieldList, urlParamSet);
+            //}
         }
+    }
+
+    protected UrlPatternAnalyzer newUrlPatternAnalyzer() {
+        return new UrlPatternAnalyzer();
     }
 
     protected boolean isPublicInstanceMember(int modifiers) {
@@ -169,49 +177,5 @@ public class ActionUrlPatternChecker implements PoliceStoryJavaClassHandler {
         br.addElement(notFoundPropertySet);
         final String msg = br.buildExceptionMessage();
         throw new AssertionFailedError(msg);
-    }
-
-    // ===================================================================================
-    //                                                                     Framework Logic
-    //                                                                     ===============
-    // from SAFlute, keep plain code to re-copy as possible
-    protected String analyzeUrlPattern(String urlPattern, List<String> urlParamNames, List<String> urlParamRequiredSet) {
-        final StringBuilder sb = new StringBuilder(50);
-        final char[] chars = urlPattern.toCharArray();
-        final int length = chars.length;
-        Character previousChar = null;
-        boolean requiredElement = false;
-        int index = -1;
-        for (int i = 0; i < length; i++) {
-            final char currentChar = chars[i];
-            if (currentChar == '{') {
-                index = i;
-            } else if (previousChar != null && previousChar == '{' && currentChar == '*') {
-                // e.g. {*id}/{*name} means required parameter, 404 not found if no value
-                index = i; // to skip required mark
-                requiredElement = true;
-            } else if (currentChar == '}') {
-                if (index >= 0) {
-                    sb.append(ELEMENT_PATTERN);
-                    final String elementName = urlPattern.substring(index + 1, i);
-                    urlParamNames.add(elementName);
-                    if (requiredElement) {
-                        urlParamRequiredSet.add(elementName);
-                    }
-                    requiredElement = false;
-                    index = -1;
-                } else {
-                    throw new IllegalUrlPatternRuntimeException(urlPattern);
-                }
-            } else if (index < 0) {
-                sb.append(currentChar);
-                requiredElement = false;
-            }
-            previousChar = currentChar;
-        }
-        if (index >= 0) {
-            throw new IllegalUrlPatternRuntimeException(urlPattern);
-        }
-        return sb.toString();
     }
 }
