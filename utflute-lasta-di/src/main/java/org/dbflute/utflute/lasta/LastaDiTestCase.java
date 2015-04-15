@@ -26,8 +26,6 @@ import javax.transaction.Transaction;
 import javax.transaction.TransactionManager;
 
 import org.dbflute.lasta.di.core.SingletonLaContainer;
-import org.dbflute.lasta.di.core.annotation.Binding;
-import org.dbflute.lasta.di.core.annotation.BindingType;
 import org.dbflute.lasta.di.core.exception.ComponentNotFoundException;
 import org.dbflute.lasta.di.core.exception.ComponentNotFoundRuntimeException;
 import org.dbflute.lasta.di.core.exception.TooManyRegistrationRuntimeException;
@@ -38,7 +36,6 @@ import org.dbflute.lasta.di.naming.NamingConvention;
 import org.dbflute.utflute.core.InjectionTestCase;
 import org.dbflute.utflute.core.binding.BindingAnnotationRule;
 import org.dbflute.utflute.core.binding.ComponentBinder;
-import org.dbflute.utflute.core.binding.NonBindingDeterminer;
 import org.dbflute.utflute.core.transaction.TransactionFailureException;
 import org.dbflute.utflute.core.transaction.TransactionResource;
 import org.dbflute.util.Srl;
@@ -224,11 +221,6 @@ public abstract class LastaDiTestCase extends InjectionTestCase {
     protected Map<Class<? extends Annotation>, BindingAnnotationRule> xprovideBindingAnnotationRuleMap() {
         final Map<Class<? extends Annotation>, BindingAnnotationRule> ruleMap = newHashMap();
         ruleMap.put(Resource.class, new BindingAnnotationRule());
-        ruleMap.put(Binding.class, new BindingAnnotationRule().determineNonBinding(new NonBindingDeterminer() {
-            public boolean isNonBinding(Annotation bindingAnno) {
-                return BindingType.NONE.equals(((Binding) bindingAnno).bindingType());
-            }
-        }));
         return ruleMap;
     }
 

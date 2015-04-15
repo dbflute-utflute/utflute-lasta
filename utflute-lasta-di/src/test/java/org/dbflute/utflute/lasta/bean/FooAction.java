@@ -18,8 +18,6 @@ package org.dbflute.utflute.lasta.bean;
 import javax.annotation.Resource;
 import javax.transaction.TransactionManager;
 
-import org.dbflute.lasta.di.core.annotation.Binding;
-import org.dbflute.lasta.di.core.annotation.BindingType;
 import org.dbflute.utflute.lasta.dbflute.exbhv.FooBhv;
 
 /**
@@ -42,10 +40,9 @@ public class FooAction {
     @Resource
     private FooFacade fooFacade; // private field
 
-    @Binding
+    @Resource
     protected FooLogic fooLogic; // container annotation
 
-    @Binding(bindingType = BindingType.NONE)
     protected FooService fooService; // specify none
 
     protected TransactionManager transactionManager; // setter only no annotation

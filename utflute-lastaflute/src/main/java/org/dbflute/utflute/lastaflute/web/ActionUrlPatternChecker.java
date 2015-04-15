@@ -83,7 +83,7 @@ public class ActionUrlPatternChecker implements PoliceStoryJavaClassHandler {
             analyzer.analyzeUrlPattern(method, urlPattern, box);
             final List<String> urlParamNameList = box.getUrlPatternVarList(); // not use required list
 
-            // TODO jflute lastaflute: [G] UTFlute urlParam argument check
+            // TODO jflute lastaflute: [F] function: UTFlute urlParam argument check
             @SuppressWarnings("unused")
             final Set<String> urlParamSet = new HashSet<String>(urlParamNameList);
             //final List<Field> targetFieldList = new ArrayList<Field>();

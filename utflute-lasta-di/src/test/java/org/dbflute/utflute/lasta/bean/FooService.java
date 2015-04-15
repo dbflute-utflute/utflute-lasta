@@ -1,8 +1,7 @@
 package org.dbflute.utflute.lasta.bean;
 
+import javax.annotation.Resource;
 import javax.transaction.TransactionManager;
-
-import org.dbflute.lasta.di.core.annotation.Binding;
 
 /**
  * @author jflute
@@ -10,6 +9,6 @@ import org.dbflute.lasta.di.core.annotation.Binding;
  */
 public class FooService {
 
-    @Binding
+    @Resource
     protected TransactionManager transactionManager;
 }

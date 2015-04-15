@@ -23,8 +23,6 @@ import javax.annotation.Resource;
 import junit.framework.AssertionFailedError;
 
 import org.dbflute.helper.message.ExceptionMessageBuilder;
-import org.dbflute.lasta.di.core.annotation.Binding;
-import org.dbflute.lasta.di.core.annotation.BindingType;
 import org.dbflute.utflute.core.policestory.javaclass.PoliceStoryJavaClassHandler;
 import org.dbflute.util.Srl;
 
@@ -71,11 +69,7 @@ public class SmartDeployDependencyChecker implements PoliceStoryJavaClassHandler
     }
 
     protected boolean hasInjectionAnnotation(Class<?> clazz, Field field) {
-        if (field.getAnnotation(Resource.class) != null) {
-            return true;
-        }
-        final Binding binding = field.getAnnotation(Binding.class);
-        return binding != null && !BindingType.NONE.equals(binding.bindingType());
+        return field.getAnnotation(Resource.class) != null;
     }
 
     protected void processTargetClass(Class<?> clazz, Field field, Class<?> injectedType) {

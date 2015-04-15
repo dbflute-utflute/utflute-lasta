@@ -29,7 +29,6 @@ public class FooLogic {
         return fooService;
     }
 
-    @Binding(bindingType = BindingType.NONE)
     public void setFooService(FooService fooService) {
         this.fooService = fooService;
     }
