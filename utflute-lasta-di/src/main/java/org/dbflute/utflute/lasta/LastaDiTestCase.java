@@ -30,7 +30,6 @@ import org.dbflute.lasta.di.core.exception.ComponentNotFoundException;
 import org.dbflute.lasta.di.core.exception.ComponentNotFoundRuntimeException;
 import org.dbflute.lasta.di.core.exception.TooManyRegistrationRuntimeException;
 import org.dbflute.lasta.di.core.factory.SingletonLaContainerFactory;
-import org.dbflute.lasta.di.core.smart.Env;
 import org.dbflute.lasta.di.core.smart.SmartDeployMode;
 import org.dbflute.lasta.di.naming.NamingConvention;
 import org.dbflute.utflute.core.InjectionTestCase;
@@ -266,8 +265,6 @@ public abstract class LastaDiTestCase extends InjectionTestCase {
     //                                                                     Seasar Handling
     //                                                                     ===============
     protected void xprepareUnitTestEnv() {
-        Env.setFilePath("env_ut.txt");
-        Env.setValueIfAbsent("ut");
         SmartDeployMode.setValue(SmartDeployMode.WARM);
     }
 
