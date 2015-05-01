@@ -22,7 +22,7 @@
 		<dependency>
 			<groupId>org.dbflute.lasta</groupId>
 			<artifactId>lasta-di</artifactId>
-			<version>${lasta.di.version}</version>
+			<version>0.6.0-A-SNAPSHOT</version>
 		</dependency>
 	</dependencies>
 </project>

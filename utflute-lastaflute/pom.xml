@@ -30,7 +30,7 @@
 		<dependency>
 			<groupId>org.dbflute.lasta</groupId>
 			<artifactId>lastaflute</artifactId>
-			<version>${lastaflute.version}</version>
+			<version>0.6.0-A-SNAPSHOT</version>
 		</dependency>
 
 		<!-- ================ -->
