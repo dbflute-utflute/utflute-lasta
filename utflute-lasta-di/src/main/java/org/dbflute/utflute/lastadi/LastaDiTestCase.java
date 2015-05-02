@@ -85,7 +85,7 @@ public abstract class LastaDiTestCase extends InjectionTestCase {
         final String configFile = prepareConfigFile();
         if (xisInitializedContainer()) {
             if (xcanRecycleContainer(configFile)) {
-                log("...Recycling seasar: " + configFile);
+                log("...Recycling lasta_di: " + configFile);
                 xrecycleContainerInstance(configFile);
                 return configFile; // no need to initialize
             } else { // changed
@@ -262,8 +262,8 @@ public abstract class LastaDiTestCase extends InjectionTestCase {
     }
 
     // ===================================================================================
-    //                                                                     Seasar Handling
-    //                                                                     ===============
+    //                                                                   Lasta Di Handling
+    //                                                                   =================
     protected void xprepareUnitTestEnv() {
         SmartDeployMode.setValue(SmartDeployMode.WARM);
     }
