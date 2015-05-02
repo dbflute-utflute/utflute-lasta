@@ -14,28 +14,25 @@
 	<description>The unit test library for LastaFlute (with DBFlute)</description>
 
 	<dependencies>
+		<!-- utflute of lasta_di -->
 		<dependency>
 			<groupId>org.dbflute.utflute</groupId>
 			<artifactId>utflute-lasta-di</artifactId>
 			<version>${utflute.core.version}</version>
 		</dependency>
-		<dependency>
-			<groupId>org.dbflute.utflute</groupId>
-			<artifactId>utflute-mocklet</artifactId>
-			<version>${utflute.core.version}</version>
-		</dependency>
-		<dependency>
-			<groupId>org.lastaflute</groupId>
-			<artifactId>lastaflute</artifactId>
-			<version>${lastaflute.version}</version>
-		</dependency>
-
 		<!-- transaction -->
 		<dependency>
 			<groupId>javax.transaction</groupId>
 			<artifactId>javax.transaction-api</artifactId>
 			<version>1.2</version>
 			<scope>provided</scope>
+		</dependency>
+
+		<!-- lastaflute -->
+		<dependency>
+			<groupId>org.lastaflute</groupId>
+			<artifactId>lastaflute</artifactId>
+			<version>${lastaflute.version}</version>
 		</dependency>
 		<!-- servlet -->
 		<dependency>
@@ -49,6 +46,13 @@
 			<artifactId>javax.servlet.jsp-api</artifactId>
 			<version>2.3.1</version>
 			<scope>provided</scope>
+		</dependency>
+
+		<!-- mock of servlet -->
+		<dependency>
+			<groupId>org.dbflute.utflute</groupId>
+			<artifactId>utflute-mocklet</artifactId>
+			<version>${utflute.core.version}</version>
 		</dependency>
 	</dependencies>
 </project>
