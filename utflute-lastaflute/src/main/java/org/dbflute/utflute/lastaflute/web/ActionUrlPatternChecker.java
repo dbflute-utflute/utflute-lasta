@@ -27,11 +27,11 @@ import java.util.Set;
 import junit.framework.AssertionFailedError;
 
 import org.dbflute.helper.message.ExceptionMessageBuilder;
-import org.dbflute.lastaflute.web.ActionForm;
-import org.dbflute.lastaflute.web.Execute;
-import org.dbflute.lastaflute.web.ruts.config.analyzer.UrlPatternAnalyzer;
-import org.dbflute.lastaflute.web.ruts.config.analyzer.UrlPatternAnalyzer.UrlPatternBox;
 import org.dbflute.utflute.core.policestory.javaclass.PoliceStoryJavaClassHandler;
+import org.lastaflute.web.ActionForm;
+import org.lastaflute.web.Execute;
+import org.lastaflute.web.ruts.config.analyzer.UrlPatternAnalyzer;
+import org.lastaflute.web.ruts.config.analyzer.UrlPatternAnalyzer.UrlPatternBox;
 
 /**
  * @author jflute

@@ -25,19 +25,19 @@ import javax.transaction.SystemException;
 import javax.transaction.Transaction;
 import javax.transaction.TransactionManager;
 
-import org.dbflute.lasta.di.core.SingletonLaContainer;
-import org.dbflute.lasta.di.core.exception.ComponentNotFoundException;
-import org.dbflute.lasta.di.core.exception.ComponentNotFoundRuntimeException;
-import org.dbflute.lasta.di.core.exception.TooManyRegistrationRuntimeException;
-import org.dbflute.lasta.di.core.factory.SingletonLaContainerFactory;
-import org.dbflute.lasta.di.core.smart.SmartDeployMode;
-import org.dbflute.lasta.di.naming.NamingConvention;
 import org.dbflute.utflute.core.InjectionTestCase;
 import org.dbflute.utflute.core.binding.BindingAnnotationRule;
 import org.dbflute.utflute.core.binding.ComponentBinder;
 import org.dbflute.utflute.core.transaction.TransactionFailureException;
 import org.dbflute.utflute.core.transaction.TransactionResource;
 import org.dbflute.util.Srl;
+import org.lastaflute.di.core.SingletonLaContainer;
+import org.lastaflute.di.core.exception.ComponentNotFoundException;
+import org.lastaflute.di.core.exception.ComponentNotFoundRuntimeException;
+import org.lastaflute.di.core.exception.TooManyRegistrationRuntimeException;
+import org.lastaflute.di.core.factory.SingletonLaContainerFactory;
+import org.lastaflute.di.core.smart.SmartDeployMode;
+import org.lastaflute.di.naming.NamingConvention;
 
 /**
  * @author jflute
