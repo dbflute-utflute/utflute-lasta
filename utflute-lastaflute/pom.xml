@@ -14,9 +14,6 @@
 	<description>The unit test library for LastaFlute (with DBFlute)</description>
 
 	<dependencies>
-		<!-- =============== -->
-		<!-- |   compile   | -->
-		<!-- =============== -->
 		<dependency>
 			<groupId>org.dbflute.utflute</groupId>
 			<artifactId>utflute-lasta-di</artifactId>
@@ -33,9 +30,6 @@
 			<version>${lastaflute.version}</version>
 		</dependency>
 
-		<!-- ================ -->
-		<!-- |   provided   | -->
-		<!-- ================ -->
 		<!-- transaction -->
 		<dependency>
 			<groupId>javax.transaction</groupId>
