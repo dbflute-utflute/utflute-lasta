@@ -28,7 +28,7 @@
 			<version>${utflute.core.version}</version>
 		</dependency>
 		<dependency>
-			<groupId>org.dbflute.lasta</groupId>
+			<groupId>org.lastaflute</groupId>
 			<artifactId>lastaflute</artifactId>
 			<version>${lastaflute.version}</version>
 		</dependency>
