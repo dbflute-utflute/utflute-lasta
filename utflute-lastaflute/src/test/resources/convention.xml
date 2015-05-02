@@ -3,8 +3,8 @@
 	"http://dbflute.org/meta/lastadi10.dtd">
 <components>
 	<component class="org.dbflute.lasta.di.naming.StyledNamingConvention">
-		<initMethod name="addRootPackageName">
+		<postConstruct name="addRootPackageName">
 			<arg>"org.dbflute.utflute.lasta"</arg>
-		</initMethod>
+		</postConstruct>
 	</component>
 </components>

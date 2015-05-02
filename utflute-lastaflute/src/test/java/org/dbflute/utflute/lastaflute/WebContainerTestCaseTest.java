@@ -15,7 +15,7 @@
  */
 package org.dbflute.utflute.lastaflute;
 
-import org.dbflute.utflute.lasta.LastaDiTestCase;
+import org.dbflute.utflute.lastadi.LastaDiTestCase;
 
 /**
  * @author jflute

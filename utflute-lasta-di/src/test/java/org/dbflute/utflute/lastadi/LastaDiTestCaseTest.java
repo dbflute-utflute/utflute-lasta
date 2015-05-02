@@ -13,9 +13,9 @@
  * either express or implied. See the License for the specific language
  * governing permissions and limitations under the License.
  */
-package org.dbflute.utflute.lasta;
+package org.dbflute.utflute.lastadi;
 
-import org.dbflute.utflute.lasta.LastaDiTestCase;
+import org.dbflute.utflute.lastadi.LastaDiTestCase;
 
 /**
  * @author jflute

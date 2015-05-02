@@ -28,7 +28,7 @@ import org.dbflute.lasta.di.core.ExternalContext;
 import org.dbflute.lasta.di.core.LaContainer;
 import org.dbflute.lasta.di.core.factory.SingletonLaContainerFactory;
 import org.dbflute.lastaflute.web.LastaFilter;
-import org.dbflute.utflute.lasta.ContainerTestCase;
+import org.dbflute.utflute.lastadi.ContainerTestCase;
 import org.dbflute.utflute.lastaflute.web.ActionUrlPatternChecker;
 import org.dbflute.utflute.mocklet.MockletHttpServletRequest;
 import org.dbflute.utflute.mocklet.MockletHttpServletRequestImpl;
@@ -45,10 +45,6 @@ import org.dbflute.utflute.mocklet.MockletServletContextImpl;
  * @since 0.5.1 (2015/03/22 Sunday)
  */
 public abstract class WebContainerTestCase extends ContainerTestCase {
-
-    // ===================================================================================
-    //                                                                          Definition
-    //                                                                          ==========
 
     // ===================================================================================
     //                                                                           Attribute
@@ -117,7 +113,7 @@ public abstract class WebContainerTestCase extends ContainerTestCase {
                     return servletConfig.getServletContext();
                 }
 
-                public Enumeration<?> getInitParameterNames() {
+                public Enumeration<String> getInitParameterNames() {
                     return null;
                 }
 

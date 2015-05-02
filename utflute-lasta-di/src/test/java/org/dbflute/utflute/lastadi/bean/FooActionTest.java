@@ -13,10 +13,10 @@
  * either express or implied. See the License for the specific language
  * governing permissions and limitations under the License.
  */
-package org.dbflute.utflute.lasta.bean;
+package org.dbflute.utflute.lastadi.bean;
 
-import org.dbflute.utflute.lasta.ContainerTestCase;
-import org.dbflute.utflute.lasta.dbflute.exbhv.FooBhv;
+import org.dbflute.utflute.lastadi.ContainerTestCase;
+import org.dbflute.utflute.lastadi.dbflute.exbhv.FooBhv;
 
 /**
  * @author jflute
@@ -46,12 +46,12 @@ public class FooActionTest extends ContainerTestCase {
         assertNull(action.fooHelper);
         assertNotNull(action.facadeInstance());
         assertNotNull(action.facadeInstance().myBehaviorInstance());
-        assertNull(action.facadeInstance().superBehaviorInstance());
+        assertNotNull(action.facadeInstance().superBehaviorInstance()); // can inject it
         assertNull(action.facadeInstance().fooService);
         assertNotNull(action.fooLogic);
         assertNotNull(action.fooLogic.behaviorToString());
         assertNotNull(action.fooLogic.fooHelper);
-        assertNull(action.fooLogic.fooService);
+        assertNotNull(action.fooLogic.fooService); // can inject under org.dbflute
         assertNotNull(action.fooLogic.getTransactionManager());
         assertNull(action.fooService);
         assertNotNull(action.transactionManager);
@@ -84,7 +84,7 @@ public class FooActionTest extends ContainerTestCase {
         assertNotNull(action.fooLogic);
         assertNotNull(action.fooLogic.behaviorToString());
         assertNotNull(action.fooLogic.fooHelper);
-        assertNull(action.fooLogic.fooService);
+        assertNotNull(action.fooLogic.fooService);
         assertNotNull(action.fooLogic.getTransactionManager());
         assertNotNull(action.transactionManager);
         assertSame(bhv, action.fooBhv);

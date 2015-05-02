@@ -5,7 +5,7 @@
 	<parent>
 		<groupId>org.dbflute.utflute</groupId>
 		<artifactId>utflute-base</artifactId>
-		<version>0.5.0-sp2</version>
+		<version>0.5.0-sp3</version>
 	</parent>
 	<artifactId>utflute-lastaflute</artifactId>
 	<packaging>jar</packaging>
@@ -30,23 +30,30 @@
 		<dependency>
 			<groupId>org.dbflute.lasta</groupId>
 			<artifactId>lastaflute</artifactId>
-			<version>0.6.0-A-SNAPSHOT</version>
+			<version>${lastaflute.version}</version>
 		</dependency>
 
 		<!-- ================ -->
 		<!-- |   provided   | -->
 		<!-- ================ -->
+		<!-- transaction -->
+		<dependency>
+			<groupId>javax.transaction</groupId>
+			<artifactId>javax.transaction-api</artifactId>
+			<version>1.2</version>
+			<scope>provided</scope>
+		</dependency>
 		<!-- servlet -->
 		<dependency>
 			<groupId>javax.servlet</groupId>
-			<artifactId>servlet-api</artifactId>
-			<version>2.4</version>
+			<artifactId>javax.servlet-api</artifactId>
+			<version>3.1.0</version>
 			<scope>provided</scope>
 		</dependency>
 		<dependency>
-			<groupId>javax.servlet</groupId>
-			<artifactId>jsp-api</artifactId>
-			<version>2.0</version>
+			<groupId>javax.servlet.jsp</groupId>
+			<artifactId>javax.servlet.jsp-api</artifactId>
+			<version>2.3.1</version>
 			<scope>provided</scope>
 		</dependency>
 	</dependencies>

@@ -1,4 +1,4 @@
-package org.dbflute.utflute.lasta.dbflute.exbhv;
+package org.dbflute.utflute.lastadi.dbflute.exbhv;
 
 import javax.transaction.TransactionManager;
 

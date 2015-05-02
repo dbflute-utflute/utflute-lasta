@@ -2,14 +2,15 @@
 <!DOCTYPE components PUBLIC "-//DBFLUTE//DTD LastaDi 1.0//EN" 
 	"http://dbflute.org/meta/lastadi10.dtd">
 <components>
-	<include path="j2ee.xml"/>
+	<include path="convention.xml"/>
+	<include path="jta.xml"/>
 
 	<!-- prototype mock like creator -->
-	<component name="fooController" class="org.dbflute.utflute.lasta.bean.FooControllerImpl" instance="prototype"/>
-	<component name="fooFacade" class="org.dbflute.utflute.lasta.bean.FooFacade" instance="prototype"/>
-	<component name="fooLogic" class="org.dbflute.utflute.lasta.bean.FooLogic" instance="prototype"/>
-	<component name="fooService" class="org.dbflute.utflute.lasta.bean.FooService" instance="prototype"/>
+	<component name="fooController" class="org.dbflute.utflute.lastadi.bean.FooControllerImpl" instance="prototype"/>
+	<component name="fooFacade" class="org.dbflute.utflute.lastadi.bean.FooFacade" instance="prototype"/>
+	<component name="fooLogic" class="org.dbflute.utflute.lastadi.bean.FooLogic" instance="prototype"/>
+	<component name="fooService" class="org.dbflute.utflute.lastadi.bean.FooService" instance="prototype"/>
 
 	<!-- DBFlute mock -->
-	<component name="fooBhv" class="org.dbflute.utflute.lasta.dbflute.exbhv.FooBhv"/>
+	<component name="fooBhv" class="org.dbflute.utflute.lastadi.dbflute.exbhv.FooBhv"/>
 </components>

@@ -13,9 +13,9 @@
  * either express or implied. See the License for the specific language
  * governing permissions and limitations under the License.
  */
-package org.dbflute.utflute.lasta.recycle;
+package org.dbflute.utflute.lastadi.recycle;
 
-import org.dbflute.utflute.lasta.ContainerTestCase;
+import org.dbflute.utflute.lastadi.ContainerTestCase;
 
 /**
  * @author jflute

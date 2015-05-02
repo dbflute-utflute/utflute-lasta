@@ -13,13 +13,13 @@
  * either express or implied. See the License for the specific language
  * governing permissions and limitations under the License.
  */
-package org.dbflute.utflute.lasta;
+package org.dbflute.utflute.lastadi;
 
 import java.lang.reflect.Field;
 
 import javax.sql.DataSource;
 
-import org.dbflute.utflute.lasta.s2container.SmartDeployDependencyChecker;
+import org.dbflute.utflute.lastadi.injection.SmartDeployDependencyChecker;
 
 /**
  * @author jflute
@@ -36,9 +36,7 @@ public abstract class ContainerTestCase extends LastaDiTestCase {
     // ===================================================================================
     //                                                                         JDBC Helper
     //                                                                         ===========
-    /**
-     * {@inheritDoc}
-     */
+    /** {@inheritDoc} */
     @Override
     protected DataSource getDataSource() { // user method
         return _xdataSource;

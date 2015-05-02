@@ -1,4 +1,4 @@
-package org.dbflute.utflute.lasta.bean;
+package org.dbflute.utflute.lastadi.bean;
 
 import javax.annotation.Resource;
 import javax.transaction.TransactionManager;

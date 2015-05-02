@@ -13,7 +13,7 @@
  * either express or implied. See the License for the specific language
  * governing permissions and limitations under the License.
  */
-package org.dbflute.utflute.lasta.s2container;
+package org.dbflute.utflute.lastadi.injection;
 
 import java.io.File;
 import java.lang.reflect.Field;

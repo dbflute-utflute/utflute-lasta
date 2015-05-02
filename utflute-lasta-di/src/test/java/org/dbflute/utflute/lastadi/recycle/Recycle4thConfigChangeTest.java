@@ -13,15 +13,20 @@
  * either express or implied. See the License for the specific language
  * governing permissions and limitations under the License.
  */
-package org.dbflute.utflute.lasta.recycle;
+package org.dbflute.utflute.lastadi.recycle;
 
-import org.dbflute.utflute.lasta.ContainerTestCase;
+import org.dbflute.utflute.lastadi.ContainerTestCase;
 
 /**
  * @author jflute
  * @since 0.5.1 (2015/03/22 Sunday)
  */
-public class Recycle2ndTest extends ContainerTestCase {
+public class Recycle4thConfigChangeTest extends ContainerTestCase {
+
+    @Override
+    protected String prepareConfigFile() {
+        return "unitbean.xml";
+    }
 
     public void test_first() throws Exception {
         // confirm log
