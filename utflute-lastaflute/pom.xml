@@ -38,6 +38,7 @@
 		<!-- =============== -->
 		<!-- |   compile   | -->
 		<!-- =============== -->
+		<!-- lastaflute -->
 		<dependency>
 			<groupId>org.lastaflute</groupId>
 			<artifactId>lastaflute</artifactId>
@@ -47,13 +48,6 @@
 		<!-- ================ -->
 		<!-- |   provided   | -->
 		<!-- ================ -->
-		<!-- transaction -->
-		<dependency>
-			<groupId>javax.transaction</groupId>
-			<artifactId>javax.transaction-api</artifactId>
-			<version>1.2</version>
-			<scope>provided</scope>
-		</dependency>
 		<!-- servlet -->
 		<!-- old version for mocklet for now -->
 		<!-- 
