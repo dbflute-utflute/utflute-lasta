@@ -25,7 +25,6 @@ import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpServletRequest;
 
 import org.dbflute.utflute.lastadi.ContainerTestCase;
-import org.dbflute.utflute.lastaflute.web.ActionUrlPatternChecker;
 import org.dbflute.utflute.mocklet.MockletHttpServletRequest;
 import org.dbflute.utflute.mocklet.MockletHttpServletRequestImpl;
 import org.dbflute.utflute.mocklet.MockletHttpServletResponse;
@@ -277,20 +276,5 @@ public abstract class WebContainerTestCase extends ContainerTestCase {
         if (session != null) {
             session.setAttribute(name, value);
         }
-    }
-
-    // ===================================================================================
-    //                                                                    SAStruts Checker
-    //                                                                    ================
-    protected void checkActionUrlPattern() {
-        doCheckActionUrlPattern("Action");
-    }
-
-    protected void doCheckActionUrlPattern(String actionSuffix) {
-        policeStoryOfJavaClassChase(createActionUrlPatternChecker(actionSuffix));
-    }
-
-    protected ActionUrlPatternChecker createActionUrlPatternChecker(String actionSuffix) {
-        return new ActionUrlPatternChecker(actionSuffix);
     }
 }
