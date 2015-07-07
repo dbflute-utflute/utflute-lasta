@@ -15,8 +15,10 @@
  */
 package org.dbflute.utflute.lastaflute;
 
+import java.util.Date;
 import java.util.Enumeration;
 
+import javax.annotation.Resource;
 import javax.servlet.FilterConfig;
 import javax.servlet.ServletConfig;
 import javax.servlet.ServletContext;
@@ -34,6 +36,11 @@ import org.dbflute.utflute.mocklet.MockletServletConfig;
 import org.dbflute.utflute.mocklet.MockletServletConfigImpl;
 import org.dbflute.utflute.mocklet.MockletServletContext;
 import org.dbflute.utflute.mocklet.MockletServletContextImpl;
+import org.lastaflute.core.direction.FwAssistantDirector;
+import org.lastaflute.core.direction.FwCoreDirection;
+import org.lastaflute.core.magic.ThreadCacheContext;
+import org.lastaflute.core.magic.TransactionTimeContext;
+import org.lastaflute.core.time.TimeManager;
 import org.lastaflute.di.core.ExternalContext;
 import org.lastaflute.di.core.LaContainer;
 import org.lastaflute.di.core.factory.SingletonLaContainerFactory;
@@ -49,20 +56,51 @@ public abstract class WebContainerTestCase extends ContainerTestCase {
     //                                                                           Attribute
     //                                                                           =========
     /** The cached configuration of servlet. (NullAllowed: when no web mock or beginning or ending) */
-    protected static MockletServletConfig _xcachedServletConfig;
+    private static MockletServletConfig _xcachedServletConfig;
 
     // -----------------------------------------------------
     //                                              Web Mock
     //                                              --------
     /** The mock request of the test case execution. (NullAllowed: when no web mock or beginning or ending) */
-    protected MockletHttpServletRequest _xmockRequest;
+    private MockletHttpServletRequest _xmockRequest;
 
     /** The mock response of the test case execution. (NullAllowed: when no web mock or beginning or ending) */
-    protected MockletHttpServletResponse _xmockResponse;
+    private MockletHttpServletResponse _xmockResponse;
+
+    // -----------------------------------------------------
+    //                                  LastaFlute Component
+    //                                  --------------------
+    @Resource
+    private FwAssistantDirector assistantDirector;
+    @Resource
+    private TimeManager timeManager;
 
     // ===================================================================================
     //                                                                            Settings
     //                                                                            ========
+    @Override
+    public void setUp() throws Exception {
+        super.setUp();
+        initializeThreadCacheContext();
+        initializeTransactionTime();
+        initializeAssistantDirector();
+    }
+
+    protected void initializeThreadCacheContext() {
+        ThreadCacheContext.initialize();
+    }
+
+    protected void initializeTransactionTime() {
+        // because of non-UserTransaction transaction in UTFlute
+        final Date transactionTime = timeManager.flashDate();
+        TransactionTimeContext.setTransactionTime(transactionTime);
+    }
+
+    protected void initializeAssistantDirector() {
+        final FwCoreDirection direction = assistantDirector.assistCoreDirection();
+        direction.assistCurtainBeforeListener().listen(assistantDirector);
+    }
+
     @Override
     protected void xprepareTestCaseContainer() {
         super.xprepareTestCaseContainer();
@@ -78,9 +116,15 @@ public abstract class WebContainerTestCase extends ContainerTestCase {
 
     @Override
     public void tearDown() throws Exception {
+        TransactionTimeContext.clear();
+        ThreadCacheContext.clear();
+        xclearWebMockContext();
+        super.tearDown();
+    }
+
+    protected void xclearWebMockContext() {
         _xmockRequest = null;
         _xmockResponse = null;
-        super.tearDown();
     }
 
     // ===================================================================================
@@ -276,5 +320,32 @@ public abstract class WebContainerTestCase extends ContainerTestCase {
         if (session != null) {
             session.setAttribute(name, value);
         }
+    }
+
+    // ===================================================================================
+    //                                                                            Accessor
+    //                                                                            ========
+    protected static MockletServletConfig xgetCachedServletConfig() {
+        return _xcachedServletConfig;
+    }
+
+    protected static void xsetCachedServletConfig(MockletServletConfig xcachedServletConfig) {
+        _xcachedServletConfig = xcachedServletConfig;
+    }
+
+    protected MockletHttpServletRequest xgetMockRequest() {
+        return _xmockRequest;
+    }
+
+    protected void xsetMockRequest(MockletHttpServletRequest xmockRequest) {
+        _xmockRequest = xmockRequest;
+    }
+
+    protected MockletHttpServletResponse xgetMockResponse() {
+        return _xmockResponse;
+    }
+
+    protected void xsetMockResponse(MockletHttpServletResponse xmockResponse) {
+        _xmockResponse = xmockResponse;
     }
 }

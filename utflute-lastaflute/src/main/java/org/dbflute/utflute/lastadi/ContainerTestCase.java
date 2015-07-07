@@ -17,6 +17,7 @@ package org.dbflute.utflute.lastadi;
 
 import java.lang.reflect.Field;
 
+import javax.annotation.Resource;
 import javax.sql.DataSource;
 
 import org.dbflute.utflute.lastadi.injection.SmartDeployDependencyChecker;
@@ -31,7 +32,8 @@ public abstract class ContainerTestCase extends LastaDiTestCase {
     //                                                                           Attribute
     //                                                                           =========
     /** The (main) data source for database. (NotNull: after injection) */
-    protected DataSource _xdataSource;
+    @Resource
+    private DataSource _xdataSource;
 
     // ===================================================================================
     //                                                                         JDBC Helper
