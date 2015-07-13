@@ -41,6 +41,7 @@ import org.lastaflute.core.direction.FwCoreDirection;
 import org.lastaflute.core.magic.ThreadCacheContext;
 import org.lastaflute.core.magic.TransactionTimeContext;
 import org.lastaflute.core.time.TimeManager;
+import org.lastaflute.db.dbflute.accesscontext.PreparedAccessContext;
 import org.lastaflute.di.core.ExternalContext;
 import org.lastaflute.di.core.LaContainer;
 import org.lastaflute.di.core.factory.SingletonLaContainerFactory;
@@ -78,29 +79,9 @@ public abstract class WebContainerTestCase extends ContainerTestCase {
     // ===================================================================================
     //                                                                            Settings
     //                                                                            ========
-    @Override
-    public void setUp() throws Exception {
-        super.setUp();
-        initializeThreadCacheContext();
-        initializeTransactionTime();
-        initializeAssistantDirector();
-    }
-
-    protected void initializeThreadCacheContext() {
-        ThreadCacheContext.initialize();
-    }
-
-    protected void initializeTransactionTime() {
-        // because of non-UserTransaction transaction in UTFlute
-        final Date transactionTime = timeManager.flashDate();
-        TransactionTimeContext.setTransactionTime(transactionTime);
-    }
-
-    protected void initializeAssistantDirector() {
-        final FwCoreDirection direction = assistantDirector.assistCoreDirection();
-        direction.assistCurtainBeforeListener().listen(assistantDirector);
-    }
-
+    // -----------------------------------------------------
+    //                                     Prepare Container
+    //                                     -----------------
     @Override
     protected void xprepareTestCaseContainer() {
         super.xprepareTestCaseContainer();
@@ -114,12 +95,56 @@ public abstract class WebContainerTestCase extends ContainerTestCase {
         }
     }
 
+    // -----------------------------------------------------
+    //                                     Begin Transaction
+    //                                     -----------------
     @Override
-    public void tearDown() throws Exception {
+    protected void xbeginTestCaseTransaction() {
+        xprepareLastaFluteContext(); // nearly actual timing
+        super.xbeginTestCaseTransaction();
+    }
+
+    protected void xprepareLastaFluteContext() {
+        initializeThreadCacheContext();
+        initializeTransactionTime();
+        initializePreparedAccessContext();
+        initializeAssistantDirector();
+    }
+
+    protected void initializeThreadCacheContext() {
+        ThreadCacheContext.initialize();
+    }
+
+    protected void initializeTransactionTime() {
+        // because of non-UserTransaction transaction in UTFlute
+        final Date transactionTime = timeManager.flashDate();
+        TransactionTimeContext.setTransactionTime(transactionTime);
+    }
+
+    protected void initializePreparedAccessContext() {
+        // though non-UserTransaction, for e.g. transaction in asynchronous
+        PreparedAccessContext.setAccessContextOnThread(getAccessContext()); // inherit one of test case
+    }
+
+    protected void initializeAssistantDirector() {
+        final FwCoreDirection direction = assistantDirector.assistCoreDirection();
+        direction.assistCurtainBeforeListener().listen(assistantDirector);
+    }
+
+    // -----------------------------------------------------
+    //                                       End Transaction
+    //                                       ---------------
+    @Override
+    protected void xrollbackTestCaseTransaction() {
+        super.xrollbackTestCaseTransaction();
+        xclearLastaFluteContext();
+        xclearWebMockContext();
+    }
+
+    protected void xclearLastaFluteContext() {
+        PreparedAccessContext.clearAccessContextOnThread();
         TransactionTimeContext.clear();
         ThreadCacheContext.clear();
-        xclearWebMockContext();
-        super.tearDown();
     }
 
     protected void xclearWebMockContext() {
@@ -137,7 +162,7 @@ public abstract class WebContainerTestCase extends ContainerTestCase {
     protected void xinitializeContainer(String configFile) {
         if (isSuppressWebMock()) { // library
             super.xinitializeContainer(configFile);
-        } else { // web (Seasar contains web components as default)
+        } else { // web (LastaFlute contains web components as default)
             log("...Initializing seasar as web: " + configFile);
             xdoInitializeContainerAsWeb(configFile);
         }
