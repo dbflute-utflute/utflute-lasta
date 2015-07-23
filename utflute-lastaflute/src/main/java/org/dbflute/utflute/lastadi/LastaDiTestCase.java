@@ -52,10 +52,10 @@ public abstract class LastaDiTestCase extends InjectionTestCase {
     //                                         Static Cached
     //                                         -------------
     /** The cached configuration file of DI container. (NullAllowed: null means beginning or ending) */
-    protected static String _xcachedConfigFile;
+    private static String _xcachedConfigFile;
 
     /** The cached determination of suppressing web mock. (NullAllowed: null means beginning or ending) */
-    protected static Boolean _xcachedSuppressWebMock;
+    private static Boolean _xcachedSuppressWebMock;
 
     // ===================================================================================
     //                                                                            Settings
@@ -327,5 +327,24 @@ public abstract class LastaDiTestCase extends InjectionTestCase {
         } catch (ComponentNotFoundException | ComponentNotFoundRuntimeException ignored) {
             return false;
         }
+    }
+
+    // ===================================================================================
+    //                                                                            Accessor
+    //                                                                            ========
+    protected static String xgetCachedConfigFile() {
+        return _xcachedConfigFile;
+    }
+
+    protected static void xsetCachedConfigFile(String xcachedConfigFile) {
+        _xcachedConfigFile = xcachedConfigFile;
+    }
+
+    protected static Boolean xgetCachedSuppressWebMock() {
+        return _xcachedSuppressWebMock;
+    }
+
+    protected static void xsetCachedSuppressWebMock(Boolean xcachedSuppressWebMock) {
+        _xcachedSuppressWebMock = xcachedSuppressWebMock;
     }
 }

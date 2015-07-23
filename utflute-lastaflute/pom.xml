@@ -5,7 +5,7 @@
 	<parent>
 		<groupId>org.dbflute.utflute</groupId>
 		<artifactId>utflute-base</artifactId>
-		<version>0.5.0-sp3</version>
+		<version>0.5.0-sp7</version>
 	</parent>
 	<artifactId>utflute-lastaflute</artifactId>
 	<packaging>jar</packaging>
@@ -17,20 +17,11 @@
 		<!-- =============== -->
 		<!-- |   compile   | -->
 		<!-- =============== -->
+		<!-- lastaflute -->
 		<dependency>
-			<groupId>org.dbflute.utflute</groupId>
-			<artifactId>utflute-lasta-di</artifactId>
-			<version>${utflute.core.version}</version>
-		</dependency>
-		<dependency>
-			<groupId>org.dbflute.utflute</groupId>
-			<artifactId>utflute-mocklet</artifactId>
-			<version>${utflute.core.version}</version>
-		</dependency>
-		<dependency>
-			<groupId>org.dbflute.lasta</groupId>
+			<groupId>org.lastaflute</groupId>
 			<artifactId>lastaflute</artifactId>
-			<version>${lastaflute.version}</version>
+			<version>0.6.0-RCV</version>
 		</dependency>
 
 		<!-- ================ -->
@@ -44,6 +35,8 @@
 			<scope>provided</scope>
 		</dependency>
 		<!-- servlet -->
+		<!-- old version for mocklet for now -->
+		<!-- 
 		<dependency>
 			<groupId>javax.servlet</groupId>
 			<artifactId>javax.servlet-api</artifactId>
@@ -55,6 +48,19 @@
 			<artifactId>javax.servlet.jsp-api</artifactId>
 			<version>2.3.1</version>
 			<scope>provided</scope>
+		</dependency>
+		 -->
+		<dependency>
+			<groupId>javax.servlet</groupId>
+			<artifactId>servlet-api</artifactId>
+			<version>2.4</version>
+			<scope>provided</scope> 
+		</dependency>
+		<dependency>
+			<groupId>javax.servlet</groupId>
+			<artifactId>jsp-api</artifactId>
+			<version>2.0</version>
+			<scope>provided</scope> 
 		</dependency>
 	</dependencies>
 </project>

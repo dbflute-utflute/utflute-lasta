@@ -15,8 +15,10 @@
  */
 package org.dbflute.utflute.lastaflute;
 
+import java.util.Date;
 import java.util.Enumeration;
 
+import javax.annotation.Resource;
 import javax.servlet.FilterConfig;
 import javax.servlet.ServletConfig;
 import javax.servlet.ServletContext;
@@ -24,12 +26,7 @@ import javax.servlet.ServletException;
 import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpServletRequest;
 
-import org.dbflute.lasta.di.core.ExternalContext;
-import org.dbflute.lasta.di.core.LaContainer;
-import org.dbflute.lasta.di.core.factory.SingletonLaContainerFactory;
-import org.dbflute.lastaflute.web.LastaFilter;
 import org.dbflute.utflute.lastadi.ContainerTestCase;
-import org.dbflute.utflute.lastaflute.web.ActionUrlPatternChecker;
 import org.dbflute.utflute.mocklet.MockletHttpServletRequest;
 import org.dbflute.utflute.mocklet.MockletHttpServletRequestImpl;
 import org.dbflute.utflute.mocklet.MockletHttpServletResponse;
@@ -39,6 +36,16 @@ import org.dbflute.utflute.mocklet.MockletServletConfig;
 import org.dbflute.utflute.mocklet.MockletServletConfigImpl;
 import org.dbflute.utflute.mocklet.MockletServletContext;
 import org.dbflute.utflute.mocklet.MockletServletContextImpl;
+import org.lastaflute.core.direction.FwAssistantDirector;
+import org.lastaflute.core.direction.FwCoreDirection;
+import org.lastaflute.core.magic.ThreadCacheContext;
+import org.lastaflute.core.magic.TransactionTimeContext;
+import org.lastaflute.core.time.TimeManager;
+import org.lastaflute.db.dbflute.accesscontext.PreparedAccessContext;
+import org.lastaflute.di.core.ExternalContext;
+import org.lastaflute.di.core.LaContainer;
+import org.lastaflute.di.core.factory.SingletonLaContainerFactory;
+import org.lastaflute.web.LastaFilter;
 
 /**
  * @author jflute
@@ -50,20 +57,31 @@ public abstract class WebContainerTestCase extends ContainerTestCase {
     //                                                                           Attribute
     //                                                                           =========
     /** The cached configuration of servlet. (NullAllowed: when no web mock or beginning or ending) */
-    protected static MockletServletConfig _xcachedServletConfig;
+    private static MockletServletConfig _xcachedServletConfig;
 
     // -----------------------------------------------------
     //                                              Web Mock
     //                                              --------
     /** The mock request of the test case execution. (NullAllowed: when no web mock or beginning or ending) */
-    protected MockletHttpServletRequest _xmockRequest;
+    private MockletHttpServletRequest _xmockRequest;
 
     /** The mock response of the test case execution. (NullAllowed: when no web mock or beginning or ending) */
-    protected MockletHttpServletResponse _xmockResponse;
+    private MockletHttpServletResponse _xmockResponse;
+
+    // -----------------------------------------------------
+    //                                  LastaFlute Component
+    //                                  --------------------
+    @Resource
+    private FwAssistantDirector assistantDirector;
+    @Resource
+    private TimeManager timeManager;
 
     // ===================================================================================
     //                                                                            Settings
     //                                                                            ========
+    // -----------------------------------------------------
+    //                                     Prepare Container
+    //                                     -----------------
     @Override
     protected void xprepareTestCaseContainer() {
         super.xprepareTestCaseContainer();
@@ -77,11 +95,61 @@ public abstract class WebContainerTestCase extends ContainerTestCase {
         }
     }
 
+    // -----------------------------------------------------
+    //                                     Begin Transaction
+    //                                     -----------------
     @Override
-    public void tearDown() throws Exception {
+    protected void xbeginTestCaseTransaction() {
+        xprepareLastaFluteContext(); // nearly actual timing
+        super.xbeginTestCaseTransaction();
+    }
+
+    protected void xprepareLastaFluteContext() {
+        initializeThreadCacheContext();
+        initializeTransactionTime();
+        initializePreparedAccessContext();
+        initializeAssistantDirector();
+    }
+
+    protected void initializeThreadCacheContext() {
+        ThreadCacheContext.initialize();
+    }
+
+    protected void initializeTransactionTime() {
+        // because of non-UserTransaction transaction in UTFlute
+        final Date transactionTime = timeManager.flashDate();
+        TransactionTimeContext.setTransactionTime(transactionTime);
+    }
+
+    protected void initializePreparedAccessContext() {
+        // though non-UserTransaction, for e.g. transaction in asynchronous
+        PreparedAccessContext.setAccessContextOnThread(getAccessContext()); // inherit one of test case
+    }
+
+    protected void initializeAssistantDirector() {
+        final FwCoreDirection direction = assistantDirector.assistCoreDirection();
+        direction.assistCurtainBeforeListener().listen(assistantDirector);
+    }
+
+    // -----------------------------------------------------
+    //                                       End Transaction
+    //                                       ---------------
+    @Override
+    protected void xrollbackTestCaseTransaction() {
+        super.xrollbackTestCaseTransaction();
+        xclearLastaFluteContext();
+        xclearWebMockContext();
+    }
+
+    protected void xclearLastaFluteContext() {
+        PreparedAccessContext.clearAccessContextOnThread();
+        TransactionTimeContext.clear();
+        ThreadCacheContext.clear();
+    }
+
+    protected void xclearWebMockContext() {
         _xmockRequest = null;
         _xmockResponse = null;
-        super.tearDown();
     }
 
     // ===================================================================================
@@ -94,7 +162,7 @@ public abstract class WebContainerTestCase extends ContainerTestCase {
     protected void xinitializeContainer(String configFile) {
         if (isSuppressWebMock()) { // library
             super.xinitializeContainer(configFile);
-        } else { // web (Seasar contains web components as default)
+        } else { // web (LastaFlute contains web components as default)
             log("...Initializing seasar as web: " + configFile);
             xdoInitializeContainerAsWeb(configFile);
         }
@@ -280,17 +348,29 @@ public abstract class WebContainerTestCase extends ContainerTestCase {
     }
 
     // ===================================================================================
-    //                                                                    SAStruts Checker
-    //                                                                    ================
-    protected void checkActionUrlPattern() {
-        doCheckActionUrlPattern("Action");
+    //                                                                            Accessor
+    //                                                                            ========
+    protected static MockletServletConfig xgetCachedServletConfig() {
+        return _xcachedServletConfig;
     }
 
-    protected void doCheckActionUrlPattern(String actionSuffix) {
-        policeStoryOfJavaClassChase(createActionUrlPatternChecker(actionSuffix));
+    protected static void xsetCachedServletConfig(MockletServletConfig xcachedServletConfig) {
+        _xcachedServletConfig = xcachedServletConfig;
     }
 
-    protected ActionUrlPatternChecker createActionUrlPatternChecker(String actionSuffix) {
-        return new ActionUrlPatternChecker(actionSuffix);
+    protected MockletHttpServletRequest xgetMockRequest() {
+        return _xmockRequest;
+    }
+
+    protected void xsetMockRequest(MockletHttpServletRequest xmockRequest) {
+        _xmockRequest = xmockRequest;
+    }
+
+    protected MockletHttpServletResponse xgetMockResponse() {
+        return _xmockResponse;
+    }
+
+    protected void xsetMockResponse(MockletHttpServletResponse xmockResponse) {
+        _xmockResponse = xmockResponse;
     }
 }
