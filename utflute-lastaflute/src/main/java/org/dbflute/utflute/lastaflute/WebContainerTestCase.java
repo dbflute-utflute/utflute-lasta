@@ -169,6 +169,7 @@ public abstract class WebContainerTestCase extends ContainerTestCase {
     }
 
     protected void xdoInitializeContainerAsWeb(String configFile) {
+        SingletonLaContainerFactory.setConfigPath(configFile);
         final ServletConfig servletConfig = xprepareMockServletConfig(configFile);
         final LastaFilter filter = xcreateLastaFilter();
         try {
