@@ -41,7 +41,7 @@ import org.lastaflute.di.naming.NamingConvention;
 
 /**
  * @author jflute
- * @since 0.5.1 (2015/03/22 Sunday)
+ * @since 0.5.0-sp7 (2015/03/22 Sunday)
  */
 public abstract class LastaDiTestCase extends InjectionTestCase {
 
