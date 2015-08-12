@@ -128,7 +128,7 @@ public abstract class WebContainerTestCase extends ContainerTestCase {
 
     protected void initializeAssistantDirector() {
         final FwCoreDirection direction = assistantDirector.assistCoreDirection();
-        direction.assistCurtainBeforeListener().listen(assistantDirector);
+        direction.assistCurtainBeforeHook().hook(assistantDirector);
     }
 
     // -----------------------------------------------------
