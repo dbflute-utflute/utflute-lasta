@@ -27,7 +27,6 @@ import javax.transaction.TransactionManager;
 
 import org.dbflute.utflute.core.InjectionTestCase;
 import org.dbflute.utflute.core.binding.BindingAnnotationRule;
-import org.dbflute.utflute.core.binding.ComponentBinder;
 import org.dbflute.utflute.core.transaction.TransactionFailureException;
 import org.dbflute.utflute.core.transaction.TransactionResource;
 import org.dbflute.util.Srl;
@@ -209,13 +208,6 @@ public abstract class LastaDiTestCase extends InjectionTestCase {
     // ===================================================================================
     //                                                                   Component Binding
     //                                                                   =================
-    @Override
-    protected ComponentBinder createOuterComponentBinder(Object bean) {
-        final ComponentBinder binder = super.createOuterComponentBinder(bean);
-        binder.byTypeInterfaceOnly();
-        return binder;
-    }
-
     @Override
     protected Map<Class<? extends Annotation>, BindingAnnotationRule> xprovideBindingAnnotationRuleMap() {
         final Map<Class<? extends Annotation>, BindingAnnotationRule> ruleMap = newHashMap();

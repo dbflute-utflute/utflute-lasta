@@ -211,9 +211,7 @@ public abstract class LastaDiTestCase extends InjectionTestCase {
     //                                                                   =================
     @Override
     protected ComponentBinder createOuterComponentBinder(Object bean) {
-        final ComponentBinder binder = super.createOuterComponentBinder(bean);
-        binder.byTypeInterfaceOnly();
-        return binder;
+        return super.createOuterComponentBinder(bean);
     }
 
     @Override
