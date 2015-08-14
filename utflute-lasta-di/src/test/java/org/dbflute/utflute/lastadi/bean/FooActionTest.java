@@ -43,7 +43,7 @@ public class FooActionTest extends ContainerTestCase {
         assertNotNull(action.fooBhv.getTransactionManager());
         assertNull(action.fooController);
         assertNotNull(action.barController);
-        assertNull(action.fooHelper);
+        assertNotNull(action.fooHelper);
         assertNotNull(action.facadeInstance());
         assertNotNull(action.facadeInstance().myBehaviorInstance());
         assertNotNull(action.facadeInstance().superBehaviorInstance()); // can inject it

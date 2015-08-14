@@ -35,7 +35,7 @@ public class FooAction {
     protected FooController barController; // name wrong: but interface so injected
 
     @Resource
-    protected FooFacade fooHelper; // name wrong: concrete so not injected
+    protected FooFacade fooHelper; // name wrong: concrete but injected at Lasta Di
 
     @Resource
     private FooFacade fooFacade; // private field
