@@ -15,15 +15,11 @@
  */
 package org.dbflute.utflute.lastadi;
 
-import java.lang.reflect.Field;
-
 import javax.sql.DataSource;
-
-import org.dbflute.utflute.lastadi.injection.SmartDeployDependencyChecker;
 
 /**
  * @author jflute
- * @since 0.5.1 (2015/03/22 Sunday)
+ * @since 0.5.0-sp7 (2015/03/22 Sunday)
  */
 public abstract class ContainerTestCase extends LastaDiTestCase {
 
@@ -40,45 +36,5 @@ public abstract class ContainerTestCase extends LastaDiTestCase {
     @Override
     protected DataSource getDataSource() { // user method
         return _xdataSource;
-    }
-
-    // ===================================================================================
-    //                                                                  Dependency Checker
-    //                                                                  ==================
-    protected void checkDependencyToLogic() {
-        doCheckDependencyTo("Logic", "Logic");
-    }
-
-    protected void checkDependencyToService() {
-        doCheckDependencyTo("Service", "Service");
-    }
-
-    protected void checkDependencyToHelper() {
-        doCheckDependencyTo("Helper", "Helper");
-    }
-
-    protected void checkDependencyToBehavior() {
-        doCheckDependencyTo("Behavior", "Bhv");
-    }
-
-    protected void doCheckDependencyTo(String title, String suffix) {
-        policeStoryOfJavaClassChase(createSmartDeployDependencyChecker(title, suffix));
-    }
-
-    protected SmartDeployDependencyChecker createSmartDeployDependencyChecker(String title, String suffix) {
-        return new EmbeddedSmartDeployDependencyChecker(title, suffix);
-    }
-
-    protected class EmbeddedSmartDeployDependencyChecker extends SmartDeployDependencyChecker {
-
-        public EmbeddedSmartDeployDependencyChecker(String title, String suffix) {
-            super(title, suffix);
-        }
-
-        @Override
-        protected void processTargetClass(Class<?> clazz, Field field, Class<?> injectedType) {
-            final String injectedClassName = extractInjectedClassName(injectedType);
-            log(clazz.getSimpleName() + "." + field.getName() + " depends on " + injectedClassName);
-        }
     }
 }

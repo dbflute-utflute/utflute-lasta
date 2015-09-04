@@ -41,7 +41,7 @@ import org.lastaflute.di.naming.NamingConvention;
 
 /**
  * @author jflute
- * @since 0.5.1 (2015/03/22 Sunday)
+ * @since 0.5.0-sp7 (2015/03/22 Sunday)
  */
 public abstract class LastaDiTestCase extends InjectionTestCase {
 
@@ -211,9 +211,7 @@ public abstract class LastaDiTestCase extends InjectionTestCase {
     //                                                                   =================
     @Override
     protected ComponentBinder createOuterComponentBinder(Object bean) {
-        final ComponentBinder binder = super.createOuterComponentBinder(bean);
-        binder.byTypeInterfaceOnly();
-        return binder;
+        return super.createOuterComponentBinder(bean);
     }
 
     @Override
