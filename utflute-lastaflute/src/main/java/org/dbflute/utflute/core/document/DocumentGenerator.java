@@ -16,16 +16,17 @@
 package org.dbflute.utflute.core.document;
 
 import java.io.BufferedWriter;
+import java.io.File;
 import java.io.IOException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.lang.reflect.Parameter;
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
+import java.nio.charset.Charset;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.nio.file.StandardOpenOption;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
@@ -97,21 +98,22 @@ public class DocumentGenerator {
     // ===================================================================================
     //                                                                         Action Meta
     //                                                                         ===========
-    public void saveLastaDocMeta(String filePath) {
+    public void saveLastaDocMeta() {
         List<ActionDocMeta> actionDocMetaList = generateActionDocMetaList();
         Map<String, Object> lastaDocDetailMap = DfCollectionUtil.newLinkedHashMap();
         lastaDocDetailMap.put("actionDocMetaList", actionDocMetaList);
         String json = getJsonManager().toJson(lastaDocDetailMap);
 
-        Path path = Paths.get(filePath);
-        if (Files.exists(path)) {
+        Path path = Paths.get(getLastaDocDir(), "lasta-doc.json");
+        if (!Files.exists(path.getParent())) {
             try {
-                Files.delete(path);
+                Files.createDirectories(path.getParent());
             } catch (IOException e) {
                 throw new RuntimeException(e);
             }
         }
-        try (BufferedWriter bw = Files.newBufferedWriter(path, StandardOpenOption.CREATE)) {
+
+        try (BufferedWriter bw = Files.newBufferedWriter(path, Charset.forName("UTF-8"))) {
             bw.write(json);
         } catch (IOException e) {
             throw new RuntimeException(e);
@@ -131,6 +133,13 @@ public class DocumentGenerator {
         });
 
         return list;
+    }
+
+    protected String getLastaDocDir() {
+        if (new File("./pom.xml").exists()) {
+            return "./target/lasta-doc/";
+        }
+        return "./build/lasta-doc/";
     }
 
     protected List<String> findActionComponentNameList() {
