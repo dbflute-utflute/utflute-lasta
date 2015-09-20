@@ -94,14 +94,14 @@ public class DocumentGenerator {
     // ===================================================================================
     //                                                                         Action Meta
     //                                                                         ===========
-    public List<ActionMetaBean> generateActionMetaBeanList() {
+    public List<ActionDocMeta> generateActionDocMetaList() {
         List<String> actionComponentNameList = findActionComponentNameList();
-        List<ActionMetaBean> list = DfCollectionUtil.newArrayList();
+        List<ActionDocMeta> list = DfCollectionUtil.newArrayList();
         ModuleConfig moduleConfig = LaModuleConfigUtil.getModuleConfig();
         actionComponentNameList.forEach(componentName -> {
             moduleConfig.findActionMapping(componentName).alwaysPresent(actionMapping -> {
                 actionMapping.getExecuteMap().values().forEach(execute -> {
-                    list.add(createActionMetaBean(execute));
+                    list.add(createActionDocMeta(execute));
                 });
             });
         });
@@ -148,23 +148,23 @@ public class DocumentGenerator {
         return componentNameList;
     }
 
-    private ActionMetaBean createActionMetaBean(ActionExecute execute) {
+    private ActionDocMeta createActionDocMeta(ActionExecute execute) {
         Class<?> componentClass = execute.getActionMapping().getActionDef().getComponentClass();
-        ActionMetaBean actionMetaBean = new ActionMetaBean();
+        ActionDocMeta actionDocMeta = new ActionDocMeta();
         UrlChain urlChain = new UrlChain(componentClass);
         if (!"index".equals(execute.getUrlPattern())) {
             urlChain.moreUrl(execute.getUrlPattern());
         }
 
-        actionMetaBean.setUrl(getActionPathResolver().toActionUrl(componentClass, urlChain));
+        actionDocMeta.setUrl(getActionPathResolver().toActionUrl(componentClass, urlChain));
         Method method = execute.getExecuteMethod();
-        actionMetaBean.setClassName(method.getDeclaringClass().getName());
-        actionMetaBean.setMethodName(method.getName());
+        actionDocMeta.setClassName(method.getDeclaringClass().getName());
+        actionDocMeta.setMethodName(method.getName());
 
-        actionMetaBean.setAnnotationList(Arrays.stream(method.getDeclaringClass().getAnnotations()).map(annotation -> {
+        actionDocMeta.setAnnotationList(Arrays.stream(method.getDeclaringClass().getAnnotations()).map(annotation -> {
             return adjustmentTypeName(annotation.annotationType());
         }).collect(Collectors.toList()));
-        actionMetaBean.getAnnotationList().addAll(Arrays.stream(method.getAnnotations()).map(annotation -> {
+        actionDocMeta.getAnnotationList().addAll(Arrays.stream(method.getAnnotations()).map(annotation -> {
             return adjustmentTypeName(annotation.annotationType());
         }).collect(Collectors.toList()));
 
@@ -173,33 +173,33 @@ public class DocumentGenerator {
             StringBuilder builder = new StringBuilder();
             builder.append("{").append(parameter.getName()).append(":");
             builder.append(adjustmentTypeName(parameter.getParameterizedType())).append("}");
-            actionMetaBean.setUrl(actionMetaBean.getUrl().replaceFirst("\\{\\}", builder.toString()));
+            actionDocMeta.setUrl(actionDocMeta.getUrl().replaceFirst("\\{\\}", builder.toString()));
         }
 
         if (sourceParserHandler != null) {
-            sourceParserHandler.reflect(actionMetaBean, method, srcDirList);
+            sourceParserHandler.reflect(actionDocMeta, method, srcDirList);
         }
 
-        execute.getFormMeta().ifPresent(formMetaBean -> {
-            actionMetaBean.setFormMetaBean(new TypeMetaBean());
-            formMetaBean.getListFormParameterParameterizedType().ifPresent(type -> {
-                actionMetaBean.getFormMetaBean().setType(adjustmentTypeName(type));
+        execute.getFormMeta().ifPresent(formTypeDocMeta -> {
+            actionDocMeta.setFormTypeDocMeta(new TypeDocMeta());
+            formTypeDocMeta.getListFormParameterParameterizedType().ifPresent(type -> {
+                actionDocMeta.getFormTypeDocMeta().setType(adjustmentTypeName(type));
             }).orElse(() -> {
-                actionMetaBean.getFormMetaBean().setType(adjustmentTypeName(formMetaBean.getFormType()));
+                actionDocMeta.getFormTypeDocMeta().setType(adjustmentTypeName(formTypeDocMeta.getFormType()));
             });
-            Class<?> formType = formMetaBean.getListFormParameterGenericType().orElse(formMetaBean.getFormType());
-            actionMetaBean.getFormMetaBean().setNestMetaBeanList(createTypeMetaBean(actionMetaBean.getFormMetaBean(), formType, depth));
+            Class<?> formType = formTypeDocMeta.getListFormParameterGenericType().orElse(formTypeDocMeta.getFormType());
+            actionDocMeta.getFormTypeDocMeta().setNestTypeDocMetaList(createTypeDocMeta(actionDocMeta.getFormTypeDocMeta(), formType, depth));
         });
 
-        TypeMetaBean returnMetaBean = new TypeMetaBean();
-        returnMetaBean.setType(adjustmentTypeName(method.getGenericReturnType()));
+        TypeDocMeta returnTypeDocMeta = new TypeDocMeta();
+        returnTypeDocMeta.setType(adjustmentTypeName(method.getGenericReturnType()));
         Class<?> returnClass = DfReflectionUtil.getGenericFirstClass(method.getGenericReturnType());
         if (returnClass != null) {
             if (List.class.isAssignableFrom(returnClass)) {
                 try {
                     String JsonResponseName = JsonResponse.class.getSimpleName();
                     Matcher matcher =
-                            Pattern.compile(".+<([^,]+)>").matcher(returnMetaBean.getType().replaceAll(JsonResponseName + "<(.*)>", "$1"));
+                            Pattern.compile(".+<([^,]+)>").matcher(returnTypeDocMeta.getType().replaceAll(JsonResponseName + "<(.*)>", "$1"));
                     if (matcher.matches()) {
                         returnClass = DfReflectionUtil.forName(matcher.group(1));
                     }
@@ -210,21 +210,21 @@ public class DocumentGenerator {
 
             List<Class<? extends Object>> ignoreList = Arrays.asList(Void.class, Integer.class, Long.class, Byte.class);
             if (returnClass != null && !ignoreList.contains(returnClass)) {
-                returnMetaBean.setNestMetaBeanList(createTypeMetaBean(returnMetaBean, returnClass, depth));
+                returnTypeDocMeta.setNestTypeDocMetaList(createTypeDocMeta(returnTypeDocMeta, returnClass, depth));
             }
         }
 
-        actionMetaBean.setReturnMetaBean(returnMetaBean);
-        return actionMetaBean;
+        actionDocMeta.setReturnTypeDocMeta(returnTypeDocMeta);
+        return actionDocMeta;
     }
 
-    private List<TypeMetaBean> createTypeMetaBean(TypeMetaBean typeMetaBean, Class<?> clazz, int depth) {
+    private List<TypeDocMeta> createTypeDocMeta(TypeDocMeta typeDocMeta, Class<?> clazz, int depth) {
         if (depth < 0) {
             return DfCollectionUtil.newArrayList();
         }
 
         return Arrays.asList(clazz.getFields()).stream().map(field -> {
-            TypeMetaBean bean = new TypeMetaBean();
+            TypeDocMeta bean = new TypeDocMeta();
             bean.setName(field.getName());
             bean.setType(adjustmentTypeName(field.getType()));
             bean.setAnnotationList(Arrays.stream(field.getAnnotations()).map(annotation -> {
@@ -233,10 +233,10 @@ public class DocumentGenerator {
 
             List<String> targetTypeSuffixNameList = getTargetTypeSuffixNameList();
             if (targetTypeSuffixNameList.stream().anyMatch(suffix -> field.getType().getName().contains(suffix))) {
-                bean.setNestMetaBeanList(createTypeMetaBean(bean, field.getType(), depth - 1));
+                bean.setNestTypeDocMetaList(createTypeDocMeta(bean, field.getType(), depth - 1));
             } else if (targetTypeSuffixNameList.stream().anyMatch(suffix -> field.getGenericType().getTypeName().contains(suffix))) {
                 Class<?> typeArgumentClass = (Class<?>) ((ParameterizedType) field.getGenericType()).getActualTypeArguments()[0];
-                bean.setNestMetaBeanList(createTypeMetaBean(bean, typeArgumentClass, depth - 1));
+                bean.setNestTypeDocMetaList(createTypeDocMeta(bean, typeArgumentClass, depth - 1));
                 bean.setType(bean.getType() + "<" + typeArgumentClass.getName() + ">");
             }
             if (sourceParserHandler != null) {
@@ -269,30 +269,30 @@ public class DocumentGenerator {
     // ===================================================================================
     //                                                                     Action Property
     //                                                                     ===============
-    public Map<String, Map<String, String>> generateActionPropertyNameMap(List<ActionMetaBean> actionMetaBeanList) {
-        Map<String, Map<String, String>> propertyNameMap = actionMetaBeanList.stream().collect(Collectors.toMap(key -> {
+    public Map<String, Map<String, String>> generateActionPropertyNameMap(List<ActionDocMeta> actionDocMetaList) {
+        Map<String, Map<String, String>> propertyNameMap = actionDocMetaList.stream().collect(Collectors.toMap(key -> {
             return key.getUrl().replaceAll("\\{.*", "").replaceAll("/$", "").replaceAll("/", "_");
         } , value -> {
-            return convertPropertyNameMap("", value.getFormMetaBean());
+            return convertPropertyNameMap("", value.getFormTypeDocMeta());
         }));
         return propertyNameMap;
     }
 
-    protected Map<String, String> convertPropertyNameMap(String parentName, TypeMetaBean typeMetaBean) {
-        if (typeMetaBean == null) {
+    protected Map<String, String> convertPropertyNameMap(String parentName, TypeDocMeta typeDocMeta) {
+        if (typeDocMeta == null) {
             return DfCollectionUtil.newLinkedHashMap();
         }
 
         Map<String, String> propertyNameMap = DfCollectionUtil.newLinkedHashMap();
 
-        String name = calculateName(parentName, typeMetaBean.getName(), typeMetaBean.getType());
+        String name = calculateName(parentName, typeDocMeta.getName(), typeDocMeta.getType());
         if (DfStringUtil.is_NotNull_and_NotEmpty(name)) {
             propertyNameMap.put(name, "");
         }
 
-        if (typeMetaBean.getNestMetaBeanList() != null) {
-            typeMetaBean.getNestMetaBeanList().forEach(nestMetaBean -> {
-                propertyNameMap.putAll(convertPropertyNameMap(name, nestMetaBean));
+        if (typeDocMeta.getNestTypeDocMetaList() != null) {
+            typeDocMeta.getNestTypeDocMetaList().forEach(nestDocMeta -> {
+                propertyNameMap.putAll(convertPropertyNameMap(name, nestDocMeta));
             });
         }
 

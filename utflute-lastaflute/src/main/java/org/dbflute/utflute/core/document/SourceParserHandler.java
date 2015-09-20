@@ -28,7 +28,7 @@ public interface SourceParserHandler {
     // ===================================================================================
     //                                                                             Reflect
     //                                                                             =======
-    void reflect(ActionMetaBean bean, Method method, List<String> srcDirList);
+    void reflect(ActionDocMeta bean, Method method, List<String> srcDirList);
 
-    void reflect(TypeMetaBean bean, Class<?> clazz, List<String> srcDirList);
+    void reflect(TypeDocMeta bean, Class<?> clazz, List<String> srcDirList);
 }

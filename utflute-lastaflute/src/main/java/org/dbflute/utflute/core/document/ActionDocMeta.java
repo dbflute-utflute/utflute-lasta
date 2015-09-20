@@ -23,8 +23,7 @@ import org.dbflute.util.DfCollectionUtil;
  * @author p1us2er0
  * @since 0.5.0-sp9 (2015/09/18 Friday)
  */
-//TODO jflute class suffix naming. Bean or Document or none(Meta)  by p1us2er0 (2015/09/18)
-public class ActionMetaBean {
+public class ActionDocMeta {
 
     // ===================================================================================
     //                                                                           Attribute
@@ -34,17 +33,17 @@ public class ActionMetaBean {
     /** class name. */
     private String className;
     /** class comment. */
-    private String classCommnet;
+    private String classComment;
     /** method mame. */
     private String methodName;
     /** method comment. */
-    private String methodCommnet;
+    private String methodComment;
     /** annotation list. */
     private List<String> annotationList = DfCollectionUtil.newArrayList();
     /** form meta bean. */
-    private TypeMetaBean formMetaBean;
+    private TypeDocMeta formTypeDocMeta;
     /** return Meta bean. */
-    private TypeMetaBean returnMetaBean;
+    private TypeDocMeta returnTypeDocMeta;
 
     // ===================================================================================
     //                                                                            Accessor
@@ -65,12 +64,12 @@ public class ActionMetaBean {
         this.className = className;
     }
 
-    public String getClassCommnet() {
-        return classCommnet;
+    public String getClassComment() {
+        return classComment;
     }
 
-    public void setClassCommnet(String classCommnet) {
-        this.classCommnet = classCommnet;
+    public void setClassComment(String classComment) {
+        this.classComment = classComment;
     }
 
     public String getMethodName() {
@@ -81,12 +80,12 @@ public class ActionMetaBean {
         this.methodName = methodName;
     }
 
-    public String getMethodCommnet() {
-        return methodCommnet;
+    public String getMethodComment() {
+        return methodComment;
     }
 
-    public void setMethodCommnet(String methodCommnet) {
-        this.methodCommnet = methodCommnet;
+    public void setMethodComment(String methodComment) {
+        this.methodComment = methodComment;
     }
 
     public List<String> getAnnotationList() {
@@ -97,19 +96,19 @@ public class ActionMetaBean {
         this.annotationList = annotationList;
     }
 
-    public TypeMetaBean getFormMetaBean() {
-        return formMetaBean;
+    public TypeDocMeta getFormTypeDocMeta() {
+        return formTypeDocMeta;
     }
 
-    public void setFormMetaBean(TypeMetaBean formMetaBean) {
-        this.formMetaBean = formMetaBean;
+    public void setFormTypeDocMeta(TypeDocMeta formTypeDocMeta) {
+        this.formTypeDocMeta = formTypeDocMeta;
     }
 
-    public TypeMetaBean getReturnMetaBean() {
-        return returnMetaBean;
+    public TypeDocMeta getReturnTypeDocMeta() {
+        return returnTypeDocMeta;
     }
 
-    public void setReturnMetaBean(TypeMetaBean returnMetaBean) {
-        this.returnMetaBean = returnMetaBean;
+    public void setReturnTypeDocMeta(TypeDocMeta returnTypeDocMeta) {
+        this.returnTypeDocMeta = returnTypeDocMeta;
     }
 }

@@ -23,7 +23,7 @@ import org.dbflute.util.DfCollectionUtil;
  * @author p1us2er0
  * @since 0.5.0-sp9 (2015/09/18 Friday)
  */
-public class TypeMetaBean {
+public class TypeDocMeta {
 
     // ===================================================================================
     //                                                                           Attribute
@@ -31,13 +31,13 @@ public class TypeMetaBean {
     /** name. */
     private String name;
     /** comment. */
-    private String commnet;
+    private String comment;
     /** type. */
     private String type;
     /** annotation list. */
     private List<String> annotationList = DfCollectionUtil.newArrayList();
     /** nest meta bean list. */
-    private List<TypeMetaBean> nestMetaBeanList = DfCollectionUtil.newArrayList();
+    private List<TypeDocMeta> nestTypeDocMetaList = DfCollectionUtil.newArrayList();
 
     // ===================================================================================
     //                                                                            Accessor
@@ -50,12 +50,12 @@ public class TypeMetaBean {
         this.name = name;
     }
 
-    public String getCommnet() {
-        return commnet;
+    public String getComment() {
+        return comment;
     }
 
-    public void setCommnet(String commnet) {
-        this.commnet = commnet;
+    public void setComment(String comment) {
+        this.comment = comment;
     }
 
     public String getType() {
@@ -74,11 +74,11 @@ public class TypeMetaBean {
         this.annotationList = annotationList;
     }
 
-    public List<TypeMetaBean> getNestMetaBeanList() {
-        return nestMetaBeanList;
+    public List<TypeDocMeta> getNestTypeDocMetaList() {
+        return nestTypeDocMetaList;
     }
 
-    public void setNestMetaBeanList(List<TypeMetaBean> nestMetaBeanList) {
-        this.nestMetaBeanList = nestMetaBeanList;
+    public void setNestTypeDocMetaList(List<TypeDocMeta> nestTypeDocMetaList) {
+        this.nestTypeDocMetaList = nestTypeDocMetaList;
     }
 }

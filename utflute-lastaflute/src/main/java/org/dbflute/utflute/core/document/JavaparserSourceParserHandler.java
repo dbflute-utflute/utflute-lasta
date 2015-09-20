@@ -51,32 +51,32 @@ public class JavaparserSourceParserHandler implements SourceParserHandler {
     // ===================================================================================
     //                                                                             Reflect
     //                                                                             =======
-    public void reflect(ActionMetaBean bean, Method method, List<String> srcDirList) {
+    public void reflect(ActionDocMeta bean, Method method, List<String> srcDirList) {
         List<String> parameterNameList = DfCollectionUtil.newArrayList();
         parseClass(method.getDeclaringClass(), srcDirList).ifPresent(compilationUnit -> {
 
-            VoidVisitorAdapter<ActionMetaBean> voidVisitorAdapter = new VoidVisitorAdapter<ActionMetaBean>() {
+            VoidVisitorAdapter<ActionDocMeta> voidVisitorAdapter = new VoidVisitorAdapter<ActionDocMeta>() {
 
                 @Override
-                public void visit(ClassOrInterfaceDeclaration classOrInterfaceDeclaration, ActionMetaBean actionMetaBean) {
+                public void visit(ClassOrInterfaceDeclaration classOrInterfaceDeclaration, ActionDocMeta actionDocMeta) {
                     if (classOrInterfaceDeclaration.getComment() != null
                             && DfStringUtil.is_NotNull_and_NotEmpty(classOrInterfaceDeclaration.getComment().toString())) {
-                        actionMetaBean.setClassCommnet(classOrInterfaceDeclaration.getComment().toString());
+                        actionDocMeta.setClassComment(classOrInterfaceDeclaration.getComment().toString());
                     }
-                    super.visit(classOrInterfaceDeclaration, actionMetaBean);
+                    super.visit(classOrInterfaceDeclaration, actionDocMeta);
                 }
 
                 @Override
-                public void visit(MethodDeclaration methodDeclaration, ActionMetaBean actionMetaBean) {
-                    if (methodDeclaration.getName().equals(actionMetaBean.getMethodName())) {
+                public void visit(MethodDeclaration methodDeclaration, ActionDocMeta actionDocMeta) {
+                    if (methodDeclaration.getName().equals(actionDocMeta.getMethodName())) {
                         if (methodDeclaration.getComment() != null
                                 && DfStringUtil.is_NotNull_and_NotEmpty(methodDeclaration.getComment().toString())) {
-                            actionMetaBean.setMethodCommnet(methodDeclaration.getComment().toString());
+                            actionDocMeta.setMethodComment(methodDeclaration.getComment().toString());
                         }
                         parameterNameList.addAll(methodDeclaration.getParameters().stream().map(parameter -> parameter.getId().getName())
                                 .collect(Collectors.toList()));
                     }
-                    super.visit(methodDeclaration, actionMetaBean);
+                    super.visit(methodDeclaration, actionDocMeta);
                 }
             };
             voidVisitorAdapter.visit(compilationUnit, bean);
@@ -85,24 +85,24 @@ public class JavaparserSourceParserHandler implements SourceParserHandler {
         for (int i = 0; i < method.getParameters().length; i++) {
             if (parameterNameList.size() > i) {
                 Parameter parameter = method.getParameters()[i];
-                bean.setUrl(bean.getUrl().replaceFirst("\\{" + parameter.getName() + ":", parameterNameList.get(i)));
+                bean.setUrl(bean.getUrl().replace("{" + parameter.getName() + ":", "{" +parameterNameList.get(i) + ":"));
             }
         }
     }
 
-    public void reflect(TypeMetaBean bean, Class<?> clazz, List<String> srcDirList) {
+    public void reflect(TypeDocMeta bean, Class<?> clazz, List<String> srcDirList) {
         parseClass(clazz, srcDirList).ifPresent(compilationUnit -> {
-            VoidVisitorAdapter<TypeMetaBean> voidVisitorAdapter = new VoidVisitorAdapter<TypeMetaBean>() {
+            VoidVisitorAdapter<TypeDocMeta> voidVisitorAdapter = new VoidVisitorAdapter<TypeDocMeta>() {
                 @Override
-                public void visit(FieldDeclaration fieldDeclaration, TypeMetaBean typeMetaBean) {
+                public void visit(FieldDeclaration fieldDeclaration, TypeDocMeta typeDocMeta) {
                     if (fieldDeclaration.getVariables().stream()
-                            .anyMatch(variable -> variable.getId().getName().equals(typeMetaBean.getName()))) {
+                            .anyMatch(variable -> variable.getId().getName().equals(typeDocMeta.getName()))) {
                         if (fieldDeclaration.getComment() != null
                                 && DfStringUtil.is_NotNull_and_NotEmpty(fieldDeclaration.getComment().toString())) {
-                            typeMetaBean.setCommnet(fieldDeclaration.getComment().toString());
+                            typeDocMeta.setComment(fieldDeclaration.getComment().toString());
                         }
                     }
-                    super.visit(fieldDeclaration, typeMetaBean);
+                    super.visit(fieldDeclaration, typeDocMeta);
                 }
             };
 
