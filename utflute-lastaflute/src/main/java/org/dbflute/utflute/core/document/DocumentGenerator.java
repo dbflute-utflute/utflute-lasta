@@ -15,6 +15,7 @@
  */
 package org.dbflute.utflute.core.document;
 
+import java.io.BufferedWriter;
 import java.io.IOException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
@@ -24,6 +25,7 @@ import java.lang.reflect.Type;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.nio.file.StandardOpenOption;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
@@ -36,6 +38,7 @@ import java.util.stream.Stream;
 import org.dbflute.util.DfCollectionUtil;
 import org.dbflute.util.DfReflectionUtil;
 import org.dbflute.util.DfStringUtil;
+import org.lastaflute.core.json.JsonManager;
 import org.lastaflute.di.core.ComponentDef;
 import org.lastaflute.di.core.LaContainer;
 import org.lastaflute.di.core.factory.SingletonLaContainerFactory;
@@ -94,6 +97,27 @@ public class DocumentGenerator {
     // ===================================================================================
     //                                                                         Action Meta
     //                                                                         ===========
+    public void saveLastaDocMeta(String filePath) {
+        List<ActionDocMeta> actionDocMetaList = generateActionDocMetaList();
+        Map<String, Object> lastaDocDetailMap = DfCollectionUtil.newLinkedHashMap();
+        lastaDocDetailMap.put("actionDocMetaList", actionDocMetaList);
+        String json = getJsonManager().toJson(lastaDocDetailMap);
+
+        Path path = Paths.get(filePath);
+        if (Files.exists(path)) {
+            try {
+                Files.delete(path);
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
+        }
+        try (BufferedWriter bw = Files.newBufferedWriter(path, StandardOpenOption.CREATE)) {
+            bw.write(json);
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
     public List<ActionDocMeta> generateActionDocMetaList() {
         List<String> actionComponentNameList = findActionComponentNameList();
         List<ActionDocMeta> list = DfCollectionUtil.newArrayList();
@@ -264,6 +288,10 @@ public class DocumentGenerator {
 
     protected ActionPathResolver getActionPathResolver() {
         return SingletonLaContainerFactory.getContainer().getComponent(ActionPathResolver.class);
+    }
+
+    protected JsonManager getJsonManager() {
+        return SingletonLaContainerFactory.getContainer().getComponent(JsonManager.class);
     }
 
     // ===================================================================================
