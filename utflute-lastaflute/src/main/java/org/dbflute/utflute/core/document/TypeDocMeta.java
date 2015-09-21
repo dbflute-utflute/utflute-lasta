@@ -30,10 +30,10 @@ public class TypeDocMeta {
     //                                                                           =========
     /** name. */
     private String name;
-    /** comment. */
-    private String comment;
     /** type. */
     private String type;
+    /** comment. */
+    private String comment;
     /** annotation list. */
     private List<String> annotationList = DfCollectionUtil.newArrayList();
     /** nest meta bean list. */
@@ -50,20 +50,20 @@ public class TypeDocMeta {
         this.name = name;
     }
 
-    public String getComment() {
-        return comment;
-    }
-
-    public void setComment(String comment) {
-        this.comment = comment;
-    }
-
     public String getType() {
         return type;
     }
 
     public void setType(String type) {
         this.type = type;
+    }
+
+    public String getComment() {
+        return comment;
+    }
+
+    public void setComment(String comment) {
+        this.comment = comment;
     }
 
     public List<String> getAnnotationList() {

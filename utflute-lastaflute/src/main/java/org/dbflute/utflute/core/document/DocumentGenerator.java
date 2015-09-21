@@ -191,7 +191,7 @@ public class DocumentGenerator {
 
         actionDocMeta.setUrl(getActionPathResolver().toActionUrl(componentClass, urlChain));
         Method method = execute.getExecuteMethod();
-        actionDocMeta.setClassName(method.getDeclaringClass().getName());
+        actionDocMeta.setType(method.getDeclaringClass().getName());
         actionDocMeta.setMethodName(method.getName());
 
         actionDocMeta.setAnnotationList(Arrays.stream(method.getDeclaringClass().getAnnotations()).map(annotation -> {

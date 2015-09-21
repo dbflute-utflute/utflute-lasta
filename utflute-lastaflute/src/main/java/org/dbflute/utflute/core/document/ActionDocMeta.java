@@ -30,10 +30,10 @@ public class ActionDocMeta {
     //                                                                           =========
     /** url. */
     private String url;
-    /** class name. */
-    private String className;
-    /** class comment. */
-    private String classComment;
+    /** type name. */
+    private String type;
+    /** type comment. */
+    private String typeComment;
     /** method mame. */
     private String methodName;
     /** method comment. */
@@ -56,20 +56,20 @@ public class ActionDocMeta {
         this.url = url;
     }
 
-    public String getClassName() {
-        return className;
+    public String getType() {
+        return type;
     }
 
-    public void setClassName(String className) {
-        this.className = className;
+    public void setType(String type) {
+        this.type = type;
     }
 
-    public String getClassComment() {
-        return classComment;
+    public String getTypeComment() {
+        return typeComment;
     }
 
-    public void setClassComment(String classComment) {
-        this.classComment = classComment;
+    public void setTypeComment(String typeComment) {
+        this.typeComment = typeComment;
     }
 
     public String getMethodName() {

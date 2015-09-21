@@ -61,7 +61,7 @@ public class JavaparserSourceParserHandler implements SourceParserHandler {
                 public void visit(ClassOrInterfaceDeclaration classOrInterfaceDeclaration, ActionDocMeta actionDocMeta) {
                     if (classOrInterfaceDeclaration.getComment() != null
                             && DfStringUtil.is_NotNull_and_NotEmpty(classOrInterfaceDeclaration.getComment().toString())) {
-                        actionDocMeta.setClassComment(classOrInterfaceDeclaration.getComment().toString());
+                        actionDocMeta.setTypeComment(classOrInterfaceDeclaration.getComment().toString());
                     }
                     super.visit(classOrInterfaceDeclaration, actionDocMeta);
                 }
