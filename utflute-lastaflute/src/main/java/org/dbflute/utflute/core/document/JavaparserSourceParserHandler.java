@@ -121,7 +121,10 @@ public class JavaparserSourceParserHandler implements SourceParserHandler {
         for (String srcDir : srcDirList) {
             File file = new File(srcDir + clazz.getName().replaceAll("\\.", "/") + ".java");
             if (!file.exists()) {
-                continue;
+                file = new File(srcDir + clazz.getName().replaceAll("\\.", "/").replaceAll("\\$.*", "") + ".java");    
+                if (!file.exists()) {    
+                    continue;
+                }
             }
 
             try (FileInputStream in = new FileInputStream(file)) {

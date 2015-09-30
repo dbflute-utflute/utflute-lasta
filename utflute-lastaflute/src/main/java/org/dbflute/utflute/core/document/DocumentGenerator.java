@@ -23,6 +23,7 @@ import java.lang.reflect.Modifier;
 import java.lang.reflect.Parameter;
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
+import java.lang.reflect.TypeVariable;
 import java.nio.charset.Charset;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -221,12 +222,25 @@ public class DocumentGenerator {
                 actionDocMeta.getFormTypeDocMeta().setType(adjustmentTypeName(formTypeDocMeta.getFormType()));
             });
             Class<?> formType = formTypeDocMeta.getListFormParameterGenericType().orElse(formTypeDocMeta.getFormType());
-            actionDocMeta.getFormTypeDocMeta().setNestTypeDocMetaList(createTypeDocMeta(actionDocMeta.getFormTypeDocMeta(), formType, depth));
+            actionDocMeta.getFormTypeDocMeta().setNestTypeDocMetaList(
+                    createTypeDocMeta(actionDocMeta.getFormTypeDocMeta(), formType, DfCollectionUtil.newLinkedHashMap(), depth));
         });
 
         TypeDocMeta returnTypeDocMeta = new TypeDocMeta();
         returnTypeDocMeta.setType(adjustmentTypeName(method.getGenericReturnType()));
         Class<?> returnClass = DfReflectionUtil.getGenericFirstClass(method.getGenericReturnType());
+
+        Map<String, Class<?>> genericParameterTypesMap = DfCollectionUtil.newLinkedHashMap();
+        Type[] parameterTypes = DfReflectionUtil.getGenericParameterTypes(method.getGenericReturnType());
+        // TODO p1us2er0 optimisation (2015/09/30)
+        TypeVariable<?>[] typeVariables = returnClass.getTypeParameters();
+        Arrays.stream(parameterTypes).forEach(parameterType -> {
+            Type[] genericParameterTypes = DfReflectionUtil.getGenericParameterTypes(parameterTypes[0]);
+            IntStream.range(0, typeVariables.length).forEach(index -> {
+                genericParameterTypesMap.put(typeVariables[index].getTypeName(), (Class<?>) genericParameterTypes[0]);
+            });
+        });
+
         if (returnClass != null) {
             if (List.class.isAssignableFrom(returnClass)) {
                 try {
@@ -240,10 +254,9 @@ public class DocumentGenerator {
 
                 }
             }
-
-            List<Class<? extends Object>> ignoreList = Arrays.asList(Void.class, Integer.class, Long.class, Byte.class);
+            List<Class<? extends Object>> ignoreList = Arrays.asList(Void.class, Integer.class, Long.class, Byte.class, Map.class);
             if (returnClass != null && !ignoreList.contains(returnClass)) {
-                returnTypeDocMeta.setNestTypeDocMetaList(createTypeDocMeta(returnTypeDocMeta, returnClass, depth));
+                returnTypeDocMeta.setNestTypeDocMetaList(createTypeDocMeta(returnTypeDocMeta, returnClass, genericParameterTypesMap, depth));
             }
         }
 
@@ -251,25 +264,27 @@ public class DocumentGenerator {
         return actionDocMeta;
     }
 
-    private List<TypeDocMeta> createTypeDocMeta(TypeDocMeta typeDocMeta, Class<?> clazz, int depth) {
+    private List<TypeDocMeta> createTypeDocMeta(TypeDocMeta typeDocMeta, Class<?> clazz, Map<String, Class<?>> genericParameterTypesMap, int depth) {
         if (depth < 0) {
             return DfCollectionUtil.newArrayList();
         }
 
         return Arrays.asList(clazz.getFields()).stream().map(field -> {
+            Class<?> genericClass = genericParameterTypesMap.get(field.getGenericType().getTypeName());
+            Class<?> type = genericClass != null ? genericClass : field.getType();
             TypeDocMeta bean = new TypeDocMeta();
             bean.setName(field.getName());
-            bean.setType(adjustmentTypeName(field.getType()));
+            bean.setType(adjustmentTypeName(type));
             bean.setAnnotationList(Arrays.stream(field.getAnnotations()).map(annotation -> {
                 return adjustmentTypeName(annotation.annotationType());
             }).collect(Collectors.toList()));
 
             List<String> targetTypeSuffixNameList = getTargetTypeSuffixNameList();
-            if (targetTypeSuffixNameList.stream().anyMatch(suffix -> field.getType().getName().contains(suffix))) {
-                bean.setNestTypeDocMetaList(createTypeDocMeta(bean, field.getType(), depth - 1));
+            if (targetTypeSuffixNameList.stream().anyMatch(suffix -> type.getName().contains(suffix))) {
+                bean.setNestTypeDocMetaList(createTypeDocMeta(bean, type, genericParameterTypesMap, depth - 1));
             } else if (targetTypeSuffixNameList.stream().anyMatch(suffix -> field.getGenericType().getTypeName().contains(suffix))) {
                 Class<?> typeArgumentClass = (Class<?>) ((ParameterizedType) field.getGenericType()).getActualTypeArguments()[0];
-                bean.setNestTypeDocMetaList(createTypeDocMeta(bean, typeArgumentClass, depth - 1));
+                bean.setNestTypeDocMetaList(createTypeDocMeta(bean, typeArgumentClass, genericParameterTypesMap, depth - 1));
                 bean.setType(bean.getType() + "<" + typeArgumentClass.getName() + ">");
             }
             if (sourceParserHandler != null) {
