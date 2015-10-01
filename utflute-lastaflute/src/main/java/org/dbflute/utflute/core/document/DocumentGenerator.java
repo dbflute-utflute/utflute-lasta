@@ -83,7 +83,14 @@ public class DocumentGenerator {
     //                                                                         ===========
     // TODO jflute option of setting, constructor or method arguments(lamda).  by p1us2er0 (2015/09/18)
     public DocumentGenerator() {
-        this(DfCollectionUtil.newArrayList(SRC_DIR));
+        this.srcDirList = DfCollectionUtil.newArrayList();
+        String commonDir = "../" + new File(".").getAbsoluteFile().getParentFile().getName().replaceAll("-.*", "-common") + "/" + SRC_DIR;
+        if (new File(commonDir).exists()) {
+            this.srcDirList.add(commonDir);
+        }
+        this.srcDirList.add(SRC_DIR);
+        this.depth = DEPTH;
+        this.sourceParserHandler = new SourceParserHandlerFactory().handler();
     }
 
     public DocumentGenerator(List<String> srcDirList) {
@@ -153,7 +160,10 @@ public class DocumentGenerator {
                     return path.toString().endsWith("Action.java");
                 })) {
                     stream.forEach(path -> {
-                        String className = DfStringUtil.substringFirstRear(path.toFile().getPath(), srcDir);
+                        String className = DfStringUtil.substringFirstRear(path.toFile().getAbsolutePath(), srcDir);
+                        if (className.startsWith("/")) {
+                            className = className.substring(1);
+                        }
                         className = DfStringUtil.substringLastFront(className, ".java").replace('/', '.');
                         Class<?> clazz = DfReflectionUtil.forName(className);
 

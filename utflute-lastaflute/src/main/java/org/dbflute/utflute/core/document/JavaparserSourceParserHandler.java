@@ -20,12 +20,14 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Parameter;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
 import org.dbflute.optional.OptionalThing;
 import org.dbflute.util.DfCollectionUtil;
+import org.dbflute.util.DfReflectionUtil;
 import org.dbflute.util.DfStringUtil;
 
 import com.github.javaparser.JavaParser;
@@ -91,22 +93,30 @@ public class JavaparserSourceParserHandler implements SourceParserHandler {
     }
 
     public void reflect(TypeDocMeta bean, Class<?> clazz, List<String> srcDirList) {
-        parseClass(clazz, srcDirList).ifPresent(compilationUnit -> {
-            VoidVisitorAdapter<TypeDocMeta> voidVisitorAdapter = new VoidVisitorAdapter<TypeDocMeta>() {
-                @Override
-                public void visit(FieldDeclaration fieldDeclaration, TypeDocMeta typeDocMeta) {
-                    if (fieldDeclaration.getVariables().stream()
-                            .anyMatch(variable -> variable.getId().getName().equals(typeDocMeta.getName()))) {
-                        if (fieldDeclaration.getComment() != null
-                                && DfStringUtil.is_NotNull_and_NotEmpty(fieldDeclaration.getComment().toString())) {
-                            typeDocMeta.setComment(fieldDeclaration.getComment().toString());
-                        }
-                    }
-                    super.visit(fieldDeclaration, typeDocMeta);
-                }
-            };
 
-            voidVisitorAdapter.visit(compilationUnit, bean);
+        List<Class<?>> classList = DfCollectionUtil.newArrayList();
+        for (Class<?> targetClass = clazz; targetClass != null; targetClass = targetClass.getSuperclass()) {
+            classList.add(targetClass);
+        }
+        Collections.reverse(classList);
+        classList.forEach(targetClass -> {
+            parseClass(targetClass, srcDirList).ifPresent(compilationUnit -> {
+                VoidVisitorAdapter<TypeDocMeta> voidVisitorAdapter = new VoidVisitorAdapter<TypeDocMeta>() {
+                    @Override
+                    public void visit(FieldDeclaration fieldDeclaration, TypeDocMeta typeDocMeta) {
+                        if (fieldDeclaration.getVariables().stream()
+                                .anyMatch(variable -> variable.getId().getName().equals(typeDocMeta.getName()))) {
+                            if (fieldDeclaration.getComment() != null
+                                    && DfStringUtil.is_NotNull_and_NotEmpty(fieldDeclaration.getComment().toString())) {
+                                typeDocMeta.setComment(fieldDeclaration.getComment().toString());
+                            }
+                        }
+                        super.visit(fieldDeclaration, typeDocMeta);
+                    }
+                };
+
+                voidVisitorAdapter.visit(compilationUnit, bean);
+            });            
         });
     }
 
@@ -121,8 +131,8 @@ public class JavaparserSourceParserHandler implements SourceParserHandler {
         for (String srcDir : srcDirList) {
             File file = new File(srcDir + clazz.getName().replaceAll("\\.", "/") + ".java");
             if (!file.exists()) {
-                file = new File(srcDir + clazz.getName().replaceAll("\\.", "/").replaceAll("\\$.*", "") + ".java");    
-                if (!file.exists()) {    
+                file = new File(srcDir + clazz.getName().replaceAll("\\.", "/").replaceAll("\\$.*", "") + ".java");
+                if (!file.exists()) {
                     continue;
                 }
             }
