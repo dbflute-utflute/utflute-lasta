@@ -18,6 +18,7 @@ package org.dbflute.utflute.core.document;
 import java.io.BufferedWriter;
 import java.io.File;
 import java.io.IOException;
+import java.lang.annotation.Annotation;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.lang.reflect.Parameter;
@@ -29,8 +30,10 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Arrays;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.TreeMap;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
@@ -192,7 +195,7 @@ public class DocumentGenerator {
         return componentNameList;
     }
 
-    private ActionDocMeta createActionDocMeta(ActionExecute execute) {
+    protected ActionDocMeta createActionDocMeta(ActionExecute execute) {
         Class<?> componentClass = execute.getActionMapping().getActionDef().getComponentClass();
         ActionDocMeta actionDocMeta = new ActionDocMeta();
         UrlChain urlChain = new UrlChain(componentClass);
@@ -205,12 +208,10 @@ public class DocumentGenerator {
         actionDocMeta.setType(method.getDeclaringClass().getName());
         actionDocMeta.setMethodName(method.getName());
 
-        actionDocMeta.setAnnotationList(Arrays.stream(method.getDeclaringClass().getAnnotations()).map(annotation -> {
-            return adjustmentTypeName(annotation.annotationType());
-        }).collect(Collectors.toList()));
-        actionDocMeta.getAnnotationList().addAll(Arrays.stream(method.getAnnotations()).map(annotation -> {
-            return adjustmentTypeName(annotation.annotationType());
-        }).collect(Collectors.toList()));
+        List<Annotation> annotationList = DfCollectionUtil.newArrayList();
+        annotationList.addAll(Arrays.asList(method.getDeclaringClass().getAnnotations()));
+        annotationList.addAll(Arrays.asList(method.getAnnotations()));
+        actionDocMeta.setAnnotationList(analyzeAnnotationList(annotationList));
 
         for (int i = 0; i < method.getParameters().length; i++) {
             Parameter parameter = method.getParameters()[i];
@@ -236,45 +237,11 @@ public class DocumentGenerator {
                     createTypeDocMeta(actionDocMeta.getFormTypeDocMeta(), formType, DfCollectionUtil.newLinkedHashMap(), depth));
         });
 
-        TypeDocMeta returnTypeDocMeta = new TypeDocMeta();
-        returnTypeDocMeta.setType(adjustmentTypeName(method.getGenericReturnType()));
-        Class<?> returnClass = DfReflectionUtil.getGenericFirstClass(method.getGenericReturnType());
-
-        Map<String, Class<?>> genericParameterTypesMap = DfCollectionUtil.newLinkedHashMap();
-        Type[] parameterTypes = DfReflectionUtil.getGenericParameterTypes(method.getGenericReturnType());
-        // TODO p1us2er0 optimisation (2015/09/30)
-        TypeVariable<?>[] typeVariables = returnClass.getTypeParameters();
-        Arrays.stream(parameterTypes).forEach(parameterType -> {
-            Type[] genericParameterTypes = DfReflectionUtil.getGenericParameterTypes(parameterTypes[0]);
-            IntStream.range(0, typeVariables.length).forEach(index -> {
-                genericParameterTypesMap.put(typeVariables[index].getTypeName(), (Class<?>) genericParameterTypes[0]);
-            });
-        });
-
-        if (returnClass != null) {
-            if (List.class.isAssignableFrom(returnClass)) {
-                try {
-                    String JsonResponseName = JsonResponse.class.getSimpleName();
-                    Matcher matcher =
-                            Pattern.compile(".+<([^,]+)>").matcher(returnTypeDocMeta.getType().replaceAll(JsonResponseName + "<(.*)>", "$1"));
-                    if (matcher.matches()) {
-                        returnClass = DfReflectionUtil.forName(matcher.group(1));
-                    }
-                } catch (RuntimeException ignore) {
-
-                }
-            }
-            List<Class<? extends Object>> ignoreList = Arrays.asList(Void.class, Integer.class, Long.class, Byte.class, Map.class);
-            if (returnClass != null && !ignoreList.contains(returnClass)) {
-                returnTypeDocMeta.setNestTypeDocMetaList(createTypeDocMeta(returnTypeDocMeta, returnClass, genericParameterTypesMap, depth));
-            }
-        }
-
-        actionDocMeta.setReturnTypeDocMeta(returnTypeDocMeta);
+        actionDocMeta.setReturnTypeDocMeta(analyzeReturnClass(method));
         return actionDocMeta;
     }
 
-    private List<TypeDocMeta> createTypeDocMeta(TypeDocMeta typeDocMeta, Class<?> clazz, Map<String, Class<?>> genericParameterTypesMap, int depth) {
+    protected List<TypeDocMeta> createTypeDocMeta(TypeDocMeta typeDocMeta, Class<?> clazz, Map<String, Class<?>> genericParameterTypesMap, int depth) {
         if (depth < 0) {
             return DfCollectionUtil.newArrayList();
         }
@@ -285,9 +252,7 @@ public class DocumentGenerator {
             TypeDocMeta bean = new TypeDocMeta();
             bean.setName(field.getName());
             bean.setType(adjustmentTypeName(type));
-            bean.setAnnotationList(Arrays.stream(field.getAnnotations()).map(annotation -> {
-                return adjustmentTypeName(annotation.annotationType());
-            }).collect(Collectors.toList()));
+            bean.setAnnotationList(analyzeAnnotationList(Arrays.asList(field.getAnnotations())));
 
             List<String> targetTypeSuffixNameList = getTargetTypeSuffixNameList();
             if (targetTypeSuffixNameList.stream().anyMatch(suffix -> type.getName().contains(suffix))) {
@@ -316,6 +281,72 @@ public class DocumentGenerator {
         return typeName;
     }
 
+    protected List<String> analyzeAnnotationList(List<Annotation> annotationList) {
+        return annotationList.stream().map(annotation -> {
+            Class<? extends Annotation> annotationType = annotation.annotationType();
+            String typeName = adjustmentTypeName(annotationType);
+
+            Map<String, Object> methodMap = Arrays.stream(annotationType.getDeclaredMethods()).collect(Collectors.toMap(key -> {
+                return key.getName();
+            } , value -> {
+                Object data = DfReflectionUtil.invoke(value, annotation, (Object[]) null);
+                if (data != null && data.getClass().isArray()) {
+                    List<?> array = Arrays.asList((Object[]) data);
+                    if (array.isEmpty()) {
+                        return "";
+                    }
+                    data = array;
+                }
+                return data;
+            } , (v1, v2) -> v1, LinkedHashMap::new));
+
+            methodMap = methodMap.entrySet().stream().filter(method -> {
+                return !method.getKey().equals("message") && method.getValue() != null && !"".equals(method.getValue());
+            }).collect(Collectors.toMap(key -> key.getKey(), value -> value.getValue(), (v1, v2) -> v1, LinkedHashMap::new));
+            if (methodMap.isEmpty()) {
+                return typeName;
+            }
+            return typeName + methodMap;
+        }).collect(Collectors.toList());
+    }
+
+    protected TypeDocMeta analyzeReturnClass(Method method) {
+        TypeDocMeta returnTypeDocMeta = new TypeDocMeta();
+        returnTypeDocMeta.setType(adjustmentTypeName(method.getGenericReturnType()));
+        Class<?> returnClass = DfReflectionUtil.getGenericFirstClass(method.getGenericReturnType());
+
+        if (returnClass != null) {
+            // TODO p1us2er0 optimisation (2015/09/30)
+            Map<String, Class<?>> genericParameterTypesMap = DfCollectionUtil.newLinkedHashMap();
+            Type[] parameterTypes = DfReflectionUtil.getGenericParameterTypes(method.getGenericReturnType());
+            TypeVariable<?>[] typeVariables = returnClass.getTypeParameters();
+            Arrays.stream(parameterTypes).forEach(parameterType -> {
+                Type[] genericParameterTypes = DfReflectionUtil.getGenericParameterTypes(parameterTypes[0]);
+                IntStream.range(0, typeVariables.length).forEach(index -> {
+                    genericParameterTypesMap.put(typeVariables[index].getTypeName(), (Class<?>) genericParameterTypes[0]);
+                });
+            });
+
+            if (List.class.isAssignableFrom(returnClass)) {
+                try {
+                    String JsonResponseName = JsonResponse.class.getSimpleName();
+                    Matcher matcher =
+                            Pattern.compile(".+<([^,]+)>").matcher(returnTypeDocMeta.getType().replaceAll(JsonResponseName + "<(.*)>", "$1"));
+                    if (matcher.matches()) {
+                        returnClass = DfReflectionUtil.forName(matcher.group(1));
+                    }
+                } catch (RuntimeException ignore) {
+
+                }
+            }
+            List<Class<? extends Object>> ignoreList = Arrays.asList(Void.class, Integer.class, Long.class, Byte.class, Map.class);
+            if (returnClass != null && !ignoreList.contains(returnClass)) {
+                returnTypeDocMeta.setNestTypeDocMetaList(createTypeDocMeta(returnTypeDocMeta, returnClass, genericParameterTypesMap, depth));
+            }
+        }
+        return returnTypeDocMeta;
+    }
+
     protected List<String> getTargetTypeSuffixNameList() {
         return DfCollectionUtil.newArrayList("Form", "Body", "Bean");
     }
@@ -336,7 +367,7 @@ public class DocumentGenerator {
             return key.getUrl().replaceAll("\\{.*", "").replaceAll("/$", "").replaceAll("/", "_");
         } , value -> {
             return convertPropertyNameMap("", value.getFormTypeDocMeta());
-        }));
+        } , (v1, v2) -> v1, TreeMap::new));
         return propertyNameMap;
     }
 
