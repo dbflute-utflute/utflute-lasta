@@ -97,7 +97,7 @@ public class DocumentGenerator {
         }
         this.srcDirList.add(SRC_DIR);
         this.depth = DEPTH;
-        this.sourceParserReflector = OptionalThing.of(new SourceParserReflectorFactory().reflector(srcDirList));
+        this.sourceParserReflector = new SourceParserReflectorFactory().reflector(srcDirList);
     }
 
     public DocumentGenerator(List<String> srcDirList) {
@@ -107,7 +107,7 @@ public class DocumentGenerator {
     public DocumentGenerator(List<String> srcDirList, int depth) {
         this.srcDirList = srcDirList;
         this.depth = depth;
-        this.sourceParserReflector = OptionalThing.of(new SourceParserReflectorFactory().reflector(srcDirList));
+        this.sourceParserReflector = new SourceParserReflectorFactory().reflector(srcDirList);
     }
 
     // ===================================================================================
@@ -243,19 +243,20 @@ public class DocumentGenerator {
             actionDocMeta.setUrl(actionDocMeta.getUrl().replaceFirst("\\{\\}", builder.toString()));
         }
 
-        execute.getFormMeta().ifPresent(formTypeDocMeta -> {
-            actionDocMeta.setFormTypeDocMeta(new TypeDocMeta());
-            formTypeDocMeta.getListFormParameterParameterizedType().ifPresent(type -> {
-                actionDocMeta.getFormTypeDocMeta().setTypeName(adjustmentTypeName(type));
-                actionDocMeta.getFormTypeDocMeta().setSimpleTypeName(adjustmentSimpleTypeName(type));
-            }).orElse(() -> {
-                actionDocMeta.getFormTypeDocMeta().setTypeName(adjustmentTypeName(formTypeDocMeta.getFormType()));
-                actionDocMeta.getFormTypeDocMeta().setSimpleTypeName(adjustmentSimpleTypeName(formTypeDocMeta.getFormType()));
-            });
-            Class<?> formType = formTypeDocMeta.getListFormParameterGenericType().orElse(formTypeDocMeta.getFormType());
-            actionDocMeta.getFormTypeDocMeta().setNestTypeDocMetaList(
-                    createTypeDocMeta(actionDocMeta.getFormTypeDocMeta(), formType, DfCollectionUtil.newLinkedHashMap(), depth));
-        });
+        execute.getFormMeta().ifPresent(
+                formTypeDocMeta -> {
+                    actionDocMeta.setFormTypeDocMeta(new TypeDocMeta());
+                    formTypeDocMeta.getListFormParameterParameterizedType().ifPresent(type -> {
+                        actionDocMeta.getFormTypeDocMeta().setTypeName(adjustmentTypeName(type));
+                        actionDocMeta.getFormTypeDocMeta().setSimpleTypeName(adjustmentSimpleTypeName(type));
+                    }).orElse(() -> {
+                        actionDocMeta.getFormTypeDocMeta().setTypeName(adjustmentTypeName(formTypeDocMeta.getFormType()));
+                        actionDocMeta.getFormTypeDocMeta().setSimpleTypeName(adjustmentSimpleTypeName(formTypeDocMeta.getFormType()));
+                    });
+                    Class<?> formType = formTypeDocMeta.getListFormParameterGenericType().orElse(formTypeDocMeta.getFormType());
+                    actionDocMeta.getFormTypeDocMeta().setNestTypeDocMetaList(
+                            createTypeDocMeta(actionDocMeta.getFormTypeDocMeta(), formType, DfCollectionUtil.newLinkedHashMap(), depth));
+                });
 
         actionDocMeta.setReturnTypeDocMeta(analyzeReturnClass(method));
 
@@ -266,7 +267,8 @@ public class DocumentGenerator {
         return actionDocMeta;
     }
 
-    protected List<TypeDocMeta> createTypeDocMeta(TypeDocMeta typeDocMeta, Class<?> clazz, Map<String, Class<?>> genericParameterTypesMap, int depth) {
+    protected List<TypeDocMeta> createTypeDocMeta(TypeDocMeta typeDocMeta, Class<?> clazz, Map<String, Class<?>> genericParameterTypesMap,
+            int depth) {
         if (depth < 0) {
             return DfCollectionUtil.newArrayList();
         }
@@ -326,7 +328,7 @@ public class DocumentGenerator {
                 return true;
             }).collect(Collectors.toMap(key -> {
                 return key.getName();
-            } , value -> {
+            }, value -> {
                 Object data = DfReflectionUtil.invoke(value, annotation, (Object[]) null);
                 if (data != null && data.getClass().isArray()) {
                     List<?> list = Arrays.asList((Object[]) data);
@@ -338,7 +340,7 @@ public class DocumentGenerator {
                     }).collect(Collectors.toList());
                 }
                 return data;
-            } , (v1, v2) -> v1, LinkedHashMap::new));
+            }, (v1, v2) -> v1, LinkedHashMap::new));
 
             if (methodMap.isEmpty()) {
                 return typeName;
@@ -369,7 +371,8 @@ public class DocumentGenerator {
                 try {
                     String JsonResponseName = JsonResponse.class.getSimpleName();
                     Matcher matcher =
-                            Pattern.compile(".+<([^,]+)>").matcher(returnTypeDocMeta.getTypeName().replaceAll(JsonResponseName + "<(.*)>", "$1"));
+                            Pattern.compile(".+<([^,]+)>").matcher(
+                                    returnTypeDocMeta.getTypeName().replaceAll(JsonResponseName + "<(.*)>", "$1"));
                     if (matcher.matches()) {
                         returnClass = DfReflectionUtil.forName(matcher.group(1));
                     }
@@ -379,7 +382,8 @@ public class DocumentGenerator {
             }
             List<Class<? extends Object>> ignoreList = Arrays.asList(Void.class, Integer.class, Long.class, Byte.class, Map.class);
             if (returnClass != null && !ignoreList.contains(returnClass)) {
-                returnTypeDocMeta.setNestTypeDocMetaList(createTypeDocMeta(returnTypeDocMeta, returnClass, genericParameterTypesMap, depth));
+                returnTypeDocMeta
+                        .setNestTypeDocMetaList(createTypeDocMeta(returnTypeDocMeta, returnClass, genericParameterTypesMap, depth));
             }
         }
         return returnTypeDocMeta;
@@ -403,9 +407,9 @@ public class DocumentGenerator {
     public Map<String, Map<String, String>> generateActionPropertyNameMap(List<ActionDocMeta> actionDocMetaList) {
         Map<String, Map<String, String>> propertyNameMap = actionDocMetaList.stream().collect(Collectors.toMap(key -> {
             return key.getUrl().replaceAll("\\{.*", "").replaceAll("/$", "").replaceAll("/", "_");
-        } , value -> {
+        }, value -> {
             return convertPropertyNameMap("", value.getFormTypeDocMeta());
-        } , (v1, v2) -> v1, TreeMap::new));
+        }, (v1, v2) -> v1, TreeMap::new));
         return propertyNameMap;
     }
 

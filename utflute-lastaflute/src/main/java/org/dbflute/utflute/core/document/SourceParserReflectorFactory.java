@@ -17,6 +17,7 @@ package org.dbflute.utflute.core.document;
 
 import java.util.List;
 
+import org.dbflute.optional.OptionalThing;
 import org.dbflute.util.DfReflectionUtil;
 import org.dbflute.util.DfReflectionUtil.ReflectionFailureException;
 
@@ -32,9 +33,9 @@ public class SourceParserReflectorFactory {
     private static final String JAVA_PARSER_CLASS_NAME = "com.github.javaparser.JavaParser";
 
     // ===================================================================================
-    //                                                                             Reflector
-    //                                                                             =======
-    public SourceParserReflector reflector(List<String> srcDirList) {
+    //                                                                           Reflector
+    //                                                                           =========
+    public OptionalThing<SourceParserReflector> reflector(List<String> srcDirList) { // empty allowed if not found
         SourceParserReflector sourceParserReflector = null;
         try {
             DfReflectionUtil.forName(JAVA_PARSER_CLASS_NAME);
@@ -42,7 +43,8 @@ public class SourceParserReflectorFactory {
         } catch (ReflectionFailureException e) {
             sourceParserReflector = null;
         }
-
-        return sourceParserReflector;
+        return OptionalThing.ofNullable(sourceParserReflector, () -> {
+            throw new IllegalStateException("Not found the java parser: " + JAVA_PARSER_CLASS_NAME);
+        });
     }
 }
