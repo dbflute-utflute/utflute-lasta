@@ -15,6 +15,8 @@
  */
 package org.dbflute.utflute.core.document;
 
+import java.util.List;
+
 import org.dbflute.util.DfReflectionUtil;
 import org.dbflute.util.DfReflectionUtil.ReflectionFailureException;
 
@@ -22,7 +24,7 @@ import org.dbflute.util.DfReflectionUtil.ReflectionFailureException;
  * @author p1us2er0
  * @since 0.5.0-sp9 (2015/09/18 Friday)
  */
-public class SourceParserHandlerFactory {
+public class SourceParserReflectorFactory {
 
     // ===================================================================================
     //                                                                          Definition
@@ -30,17 +32,17 @@ public class SourceParserHandlerFactory {
     private static final String JAVA_PARSER_CLASS_NAME = "com.github.javaparser.JavaParser";
 
     // ===================================================================================
-    //                                                                             Handler
+    //                                                                             Reflector
     //                                                                             =======
-    public SourceParserHandler handler() {
-        SourceParserHandler sourceParserHandler = null;
+    public SourceParserReflector reflector(List<String> srcDirList) {
+        SourceParserReflector sourceParserReflector = null;
         try {
             DfReflectionUtil.forName(JAVA_PARSER_CLASS_NAME);
-            sourceParserHandler = new JavaparserSourceParserHandler();
+            sourceParserReflector = new JavaparserSourceParserReflector(srcDirList);
         } catch (ReflectionFailureException e) {
-            sourceParserHandler = null;
+            sourceParserReflector = null;
         }
 
-        return sourceParserHandler;
+        return sourceParserReflector;
     }
 }

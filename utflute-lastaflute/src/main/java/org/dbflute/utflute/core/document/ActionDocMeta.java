@@ -30,6 +30,8 @@ public class ActionDocMeta {
     //                                                                           =========
     /** url. */
     private String url;
+    /** description. */
+    private String description;
     /** type name. */
     private String typeName;
     /** simple type name. */
@@ -56,6 +58,14 @@ public class ActionDocMeta {
 
     public void setUrl(String url) {
         this.url = url;
+    }
+
+    public String getDescription() {
+        return description;
+    }
+
+    public void setDescription(String description) {
+        this.description = description;
     }
 
     public String getTypeName() {

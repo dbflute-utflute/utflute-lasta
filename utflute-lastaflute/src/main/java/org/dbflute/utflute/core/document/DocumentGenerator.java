@@ -30,6 +30,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Arrays;
+import java.util.Comparator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -41,6 +42,7 @@ import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
+import org.dbflute.optional.OptionalThing;
 import org.dbflute.util.DfCollectionUtil;
 import org.dbflute.util.DfReflectionUtil;
 import org.dbflute.util.DfStringUtil;
@@ -48,6 +50,7 @@ import org.lastaflute.core.json.JsonManager;
 import org.lastaflute.di.core.ComponentDef;
 import org.lastaflute.di.core.LaContainer;
 import org.lastaflute.di.core.factory.SingletonLaContainerFactory;
+import org.lastaflute.web.Execute;
 import org.lastaflute.web.UrlChain;
 import org.lastaflute.web.path.ActionPathResolver;
 import org.lastaflute.web.response.JsonResponse;
@@ -79,8 +82,8 @@ public class DocumentGenerator {
     /** depth. */
     private final int depth;
 
-    /** sourceParserHandler. */
-    private final SourceParserHandler sourceParserHandler;
+    /** sourceParserReflector. */
+    private final OptionalThing<SourceParserReflector> sourceParserReflector;
 
     // ===================================================================================
     //                                                                         Constructor
@@ -94,7 +97,7 @@ public class DocumentGenerator {
         }
         this.srcDirList.add(SRC_DIR);
         this.depth = DEPTH;
-        this.sourceParserHandler = new SourceParserHandlerFactory().handler();
+        this.sourceParserReflector = OptionalThing.of(new SourceParserReflectorFactory().reflector(srcDirList));
     }
 
     public DocumentGenerator(List<String> srcDirList) {
@@ -104,7 +107,7 @@ public class DocumentGenerator {
     public DocumentGenerator(List<String> srcDirList, int depth) {
         this.srcDirList = srcDirList;
         this.depth = depth;
-        this.sourceParserHandler = new SourceParserHandlerFactory().handler();
+        this.sourceParserReflector = OptionalThing.of(new SourceParserReflectorFactory().reflector(srcDirList));
     }
 
     // ===================================================================================
@@ -116,7 +119,7 @@ public class DocumentGenerator {
         lastaDocDetailMap.put("actionDocMetaList", actionDocMetaList);
         String json = getJsonManager().toJson(lastaDocDetailMap);
 
-        Path path = Paths.get(getLastaDocDir(), "lasta-doc.json");
+        Path path = Paths.get(getLastaDocDir(), "lastadoc.json");
         if (!Files.exists(path.getParent())) {
             try {
                 Files.createDirectories(path.getParent());
@@ -138,8 +141,25 @@ public class DocumentGenerator {
         ModuleConfig moduleConfig = LaModuleConfigUtil.getModuleConfig();
         actionComponentNameList.forEach(componentName -> {
             moduleConfig.findActionMapping(componentName).alwaysPresent(actionMapping -> {
-                actionMapping.getExecuteMap().values().forEach(execute -> {
-                    list.add(createActionDocMeta(execute));
+                Class<?> actionClass = actionMapping.getActionDef().getComponentClass();
+                List<Method> methodList = DfCollectionUtil.newArrayList();
+                sourceParserReflector.ifPresent(sourceParserReflector -> {
+                    methodList.addAll(sourceParserReflector.getMethodListOrderByDefinition(actionClass));
+                });
+
+                if (methodList.isEmpty()) {
+                    methodList.addAll(Arrays.stream(actionClass.getMethods()).sorted(Comparator.comparing(method -> {
+                        return method.getName();
+                    })).collect(Collectors.toList()));
+                }
+
+                methodList.forEach(method -> {
+                    if (method.getAnnotation(Execute.class) != null) {
+                        ActionExecute actionExecute = actionMapping.getActionExecute(method);
+                        if (actionExecute != null) {
+                            list.add(createActionDocMeta(actionMapping.getActionExecute(method)));
+                        }
+                    }
                 });
             });
         });
@@ -149,9 +169,9 @@ public class DocumentGenerator {
 
     protected String getLastaDocDir() {
         if (new File("./pom.xml").exists()) {
-            return "./target/lasta-doc/";
+            return "./target/lastadoc/";
         }
-        return "./build/lasta-doc/";
+        return "./build/lastadoc/";
     }
 
     protected List<String> findActionComponentNameList() {
@@ -223,10 +243,6 @@ public class DocumentGenerator {
             actionDocMeta.setUrl(actionDocMeta.getUrl().replaceFirst("\\{\\}", builder.toString()));
         }
 
-        if (sourceParserHandler != null) {
-            sourceParserHandler.reflect(actionDocMeta, method, srcDirList);
-        }
-
         execute.getFormMeta().ifPresent(formTypeDocMeta -> {
             actionDocMeta.setFormTypeDocMeta(new TypeDocMeta());
             formTypeDocMeta.getListFormParameterParameterizedType().ifPresent(type -> {
@@ -242,6 +258,11 @@ public class DocumentGenerator {
         });
 
         actionDocMeta.setReturnTypeDocMeta(analyzeReturnClass(method));
+
+        sourceParserReflector.ifPresent(sourceParserReflector -> {
+            sourceParserReflector.reflect(actionDocMeta, method);
+        });
+
         return actionDocMeta;
     }
 
@@ -269,23 +290,15 @@ public class DocumentGenerator {
                 bean.setTypeName(typeName + "<" + adjustmentTypeName(typeArgumentClass) + ">");
                 bean.setSimpleTypeName(typeName + "<" + adjustmentSimpleTypeName(typeArgumentClass) + ">");
             }
-            if (sourceParserHandler != null) {
-                sourceParserHandler.reflect(bean, clazz, srcDirList);
-            }
+            sourceParserReflector.ifPresent(sourceParserReflector -> {
+                sourceParserReflector.reflect(bean, clazz);
+            });
             return bean;
         }).collect(Collectors.toList());
     }
 
     protected String adjustmentTypeName(Type type) {
-        String typeName = type.getTypeName();
-        typeName = typeName.replaceAll("java\\.(lang|util|time)\\.", "");
-        typeName = typeName.replaceAll("javax\\.validation\\.constraints\\.", "");
-        typeName = typeName.replaceAll("javax\\.validation\\.", "");
-        typeName = typeName.replaceAll("org\\.hibernate\\.validator\\.constraints\\.", "");
-        typeName = typeName.replaceAll("org\\.dbflute\\.optional\\.OptionalThing<(.+)>", "$1\\?");
-        typeName = typeName.replaceAll("org\\.lastaflute\\.web\\.(response|validation)\\.", "");
-        typeName = typeName.replaceAll("org\\.lastaflute\\.web\\.", "");
-        return typeName;
+        return type.getTypeName();
     }
 
     protected String adjustmentSimpleTypeName(Type type) {

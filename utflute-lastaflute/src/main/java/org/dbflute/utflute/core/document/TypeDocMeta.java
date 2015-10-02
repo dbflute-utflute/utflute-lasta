@@ -34,6 +34,8 @@ public class TypeDocMeta {
     private String typeName;
     /** simple type name. */
     private String simpleTypeName;
+    /** value. */
+    private String value;
     /** comment. */
     private String comment;
     /** annotation list. */
@@ -66,6 +68,14 @@ public class TypeDocMeta {
 
     public void setSimpleTypeName(String simpleTypeName) {
         this.simpleTypeName = simpleTypeName;
+    }
+
+    public String getValue() {
+        return value;
+    }
+
+    public void setValue(String value) {
+        this.value = value;
     }
 
     public String getComment() {
