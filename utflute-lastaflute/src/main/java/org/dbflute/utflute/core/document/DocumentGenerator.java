@@ -293,7 +293,7 @@ public class DocumentGenerator {
             return ((Class<?>) type).getSimpleName();
         }
         // TODO adjustment
-        return adjustmentTypeName(type);
+        return adjustmentTypeName(type).replaceAll("[a-z0-9]+\\.", "");
     }
 
     protected List<String> analyzeAnnotationList(List<Annotation> annotationList) {
