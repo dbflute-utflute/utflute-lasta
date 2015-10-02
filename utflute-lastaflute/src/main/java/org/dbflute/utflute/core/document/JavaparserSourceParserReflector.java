@@ -121,13 +121,15 @@ public class JavaparserSourceParserReflector implements SourceParserReflector {
 
                         @Override
                         public void visit(ReturnStmt returnStmt, ActionDocMeta actionDocMeta) {
-                            String returnStmtStr = returnStmt.getExpr().toStringWithoutComments();
-                            Pattern pattern = Pattern.compile("^[^)]+\\)");
-                            Matcher matcher = pattern.matcher(returnStmtStr);
-                            if (!returnMap.containsKey(methodDeclaration.getName())) {
-                                returnMap.put(methodDeclaration.getName(), DfCollectionUtil.newArrayList());
+                            if (returnStmt.getExpr() != null) {
+                                String returnStmtStr = returnStmt.getExpr().toStringWithoutComments();
+                                Pattern pattern = Pattern.compile("^[^)]+\\)");
+                                Matcher matcher = pattern.matcher(returnStmtStr);
+                                if (!returnMap.containsKey(methodDeclaration.getName())) {
+                                    returnMap.put(methodDeclaration.getName(), DfCollectionUtil.newArrayList());
+                                }
+                                returnMap.get(methodDeclaration.getName()).add(matcher.find() ? matcher.group(0) : "##unanalyzable##");
                             }
-                            returnMap.get(methodDeclaration.getName()).add(matcher.find() ? matcher.group(0) : "##unanalyzable##");
                             super.visit(returnStmt, actionDocMeta);
                         }
                     }, actionDocMeta);
