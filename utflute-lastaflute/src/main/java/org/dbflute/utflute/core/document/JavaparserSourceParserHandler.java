@@ -27,7 +27,6 @@ import java.util.stream.Collectors;
 
 import org.dbflute.optional.OptionalThing;
 import org.dbflute.util.DfCollectionUtil;
-import org.dbflute.util.DfReflectionUtil;
 import org.dbflute.util.DfStringUtil;
 
 import com.github.javaparser.JavaParser;
@@ -36,6 +35,7 @@ import com.github.javaparser.ast.CompilationUnit;
 import com.github.javaparser.ast.body.ClassOrInterfaceDeclaration;
 import com.github.javaparser.ast.body.FieldDeclaration;
 import com.github.javaparser.ast.body.MethodDeclaration;
+import com.github.javaparser.ast.comments.Comment;
 import com.github.javaparser.ast.visitor.VoidVisitorAdapter;
 
 /**
@@ -61,20 +61,14 @@ public class JavaparserSourceParserHandler implements SourceParserHandler {
 
                 @Override
                 public void visit(ClassOrInterfaceDeclaration classOrInterfaceDeclaration, ActionDocMeta actionDocMeta) {
-                    if (classOrInterfaceDeclaration.getComment() != null
-                            && DfStringUtil.is_NotNull_and_NotEmpty(classOrInterfaceDeclaration.getComment().toString())) {
-                        actionDocMeta.setTypeComment(classOrInterfaceDeclaration.getComment().toString());
-                    }
+                    actionDocMeta.setTypeComment(adjustmentComment(classOrInterfaceDeclaration.getComment()));
                     super.visit(classOrInterfaceDeclaration, actionDocMeta);
                 }
 
                 @Override
                 public void visit(MethodDeclaration methodDeclaration, ActionDocMeta actionDocMeta) {
                     if (methodDeclaration.getName().equals(actionDocMeta.getMethodName())) {
-                        if (methodDeclaration.getComment() != null
-                                && DfStringUtil.is_NotNull_and_NotEmpty(methodDeclaration.getComment().toString())) {
-                            actionDocMeta.setMethodComment(methodDeclaration.getComment().toString());
-                        }
+                        actionDocMeta.setMethodComment(adjustmentComment(methodDeclaration.getComment()));
                         parameterNameList.addAll(methodDeclaration.getParameters().stream().map(parameter -> parameter.getId().getName())
                                 .collect(Collectors.toList()));
                     }
@@ -106,10 +100,7 @@ public class JavaparserSourceParserHandler implements SourceParserHandler {
                     public void visit(FieldDeclaration fieldDeclaration, TypeDocMeta typeDocMeta) {
                         if (fieldDeclaration.getVariables().stream()
                                 .anyMatch(variable -> variable.getId().getName().equals(typeDocMeta.getName()))) {
-                            if (fieldDeclaration.getComment() != null
-                                    && DfStringUtil.is_NotNull_and_NotEmpty(fieldDeclaration.getComment().toString())) {
-                                typeDocMeta.setComment(fieldDeclaration.getComment().toString());
-                            }
+                            typeDocMeta.setComment(adjustmentComment(fieldDeclaration.getComment()));
                         }
                         super.visit(fieldDeclaration, typeDocMeta);
                     }
@@ -118,6 +109,14 @@ public class JavaparserSourceParserHandler implements SourceParserHandler {
                 voidVisitorAdapter.visit(compilationUnit, bean);
             });            
         });
+    }
+
+    protected String adjustmentComment(Comment comment) {
+        if (comment == null
+                || DfStringUtil.is_Null_or_Empty(comment.toString())) {
+            return null;
+        }
+        return comment.toStringWithoutComments();
     }
 
     // ===================================================================================

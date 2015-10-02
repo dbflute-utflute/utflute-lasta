@@ -33,6 +33,7 @@ import java.util.Arrays;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.TreeMap;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -205,7 +206,8 @@ public class DocumentGenerator {
 
         actionDocMeta.setUrl(getActionPathResolver().toActionUrl(componentClass, urlChain));
         Method method = execute.getExecuteMethod();
-        actionDocMeta.setType(method.getDeclaringClass().getName());
+        actionDocMeta.setTypeName(adjustmentTypeName(method.getDeclaringClass()));
+        actionDocMeta.setSimpleTypeName(adjustmentSimpleTypeName(method.getDeclaringClass()));
         actionDocMeta.setMethodName(method.getName());
 
         List<Annotation> annotationList = DfCollectionUtil.newArrayList();
@@ -217,7 +219,7 @@ public class DocumentGenerator {
             Parameter parameter = method.getParameters()[i];
             StringBuilder builder = new StringBuilder();
             builder.append("{").append(parameter.getName()).append(":");
-            builder.append(adjustmentTypeName(parameter.getParameterizedType())).append("}");
+            builder.append(adjustmentSimpleTypeName(parameter.getParameterizedType())).append("}");
             actionDocMeta.setUrl(actionDocMeta.getUrl().replaceFirst("\\{\\}", builder.toString()));
         }
 
@@ -228,9 +230,11 @@ public class DocumentGenerator {
         execute.getFormMeta().ifPresent(formTypeDocMeta -> {
             actionDocMeta.setFormTypeDocMeta(new TypeDocMeta());
             formTypeDocMeta.getListFormParameterParameterizedType().ifPresent(type -> {
-                actionDocMeta.getFormTypeDocMeta().setType(adjustmentTypeName(type));
+                actionDocMeta.getFormTypeDocMeta().setTypeName(adjustmentTypeName(type));
+                actionDocMeta.getFormTypeDocMeta().setSimpleTypeName(adjustmentSimpleTypeName(type));
             }).orElse(() -> {
-                actionDocMeta.getFormTypeDocMeta().setType(adjustmentTypeName(formTypeDocMeta.getFormType()));
+                actionDocMeta.getFormTypeDocMeta().setTypeName(adjustmentTypeName(formTypeDocMeta.getFormType()));
+                actionDocMeta.getFormTypeDocMeta().setSimpleTypeName(adjustmentSimpleTypeName(formTypeDocMeta.getFormType()));
             });
             Class<?> formType = formTypeDocMeta.getListFormParameterGenericType().orElse(formTypeDocMeta.getFormType());
             actionDocMeta.getFormTypeDocMeta().setNestTypeDocMetaList(
@@ -251,7 +255,8 @@ public class DocumentGenerator {
             Class<?> type = genericClass != null ? genericClass : field.getType();
             TypeDocMeta bean = new TypeDocMeta();
             bean.setName(field.getName());
-            bean.setType(adjustmentTypeName(type));
+            bean.setTypeName(adjustmentTypeName(type));
+            bean.setSimpleTypeName(adjustmentSimpleTypeName(type));
             bean.setAnnotationList(analyzeAnnotationList(Arrays.asList(field.getAnnotations())));
 
             List<String> targetTypeSuffixNameList = getTargetTypeSuffixNameList();
@@ -260,7 +265,9 @@ public class DocumentGenerator {
             } else if (targetTypeSuffixNameList.stream().anyMatch(suffix -> field.getGenericType().getTypeName().contains(suffix))) {
                 Class<?> typeArgumentClass = (Class<?>) ((ParameterizedType) field.getGenericType()).getActualTypeArguments()[0];
                 bean.setNestTypeDocMetaList(createTypeDocMeta(bean, typeArgumentClass, genericParameterTypesMap, depth - 1));
-                bean.setType(bean.getType() + "<" + typeArgumentClass.getName() + ">");
+                String typeName = bean.getTypeName();
+                bean.setTypeName(typeName + "<" + adjustmentTypeName(typeArgumentClass) + ">");
+                bean.setSimpleTypeName(typeName + "<" + adjustmentSimpleTypeName(typeArgumentClass) + ">");
             }
             if (sourceParserHandler != null) {
                 sourceParserHandler.reflect(bean, clazz, srcDirList);
@@ -281,28 +288,45 @@ public class DocumentGenerator {
         return typeName;
     }
 
+    protected String adjustmentSimpleTypeName(Type type) {
+        if (type instanceof Class<?>) {
+            return ((Class<?>) type).getSimpleName();
+        }
+        // TODO adjustment
+        return adjustmentTypeName(type);
+    }
+
     protected List<String> analyzeAnnotationList(List<Annotation> annotationList) {
         return annotationList.stream().map(annotation -> {
             Class<? extends Annotation> annotationType = annotation.annotationType();
-            String typeName = adjustmentTypeName(annotationType);
+            String typeName = adjustmentSimpleTypeName(annotationType);
 
-            Map<String, Object> methodMap = Arrays.stream(annotationType.getDeclaredMethods()).collect(Collectors.toMap(key -> {
+            Map<String, Object> methodMap = Arrays.stream(annotationType.getDeclaredMethods()).filter(method -> {
+                Object value = DfReflectionUtil.invoke(method, annotation, (Object[]) null);
+                Object defaultValue = method.getDefaultValue();
+                if (Objects.equals(value, defaultValue)) {
+                    return false;
+                }
+                if (method.getReturnType().isArray() && Arrays.equals((Object[]) value, (Object[]) defaultValue)) {
+                    return false;
+                }
+                return true;
+            }).collect(Collectors.toMap(key -> {
                 return key.getName();
             } , value -> {
                 Object data = DfReflectionUtil.invoke(value, annotation, (Object[]) null);
                 if (data != null && data.getClass().isArray()) {
-                    List<?> array = Arrays.asList((Object[]) data);
-                    if (array.isEmpty()) {
+                    List<?> list = Arrays.asList((Object[]) data);
+                    if (list.isEmpty()) {
                         return "";
                     }
-                    data = array;
+                    data = list.stream().map(o -> {
+                        return o instanceof Class<?> ? adjustmentSimpleTypeName(((Class<?>) o)) : o;
+                    }).collect(Collectors.toList());
                 }
                 return data;
             } , (v1, v2) -> v1, LinkedHashMap::new));
 
-            methodMap = methodMap.entrySet().stream().filter(method -> {
-                return !method.getKey().equals("message") && method.getValue() != null && !"".equals(method.getValue());
-            }).collect(Collectors.toMap(key -> key.getKey(), value -> value.getValue(), (v1, v2) -> v1, LinkedHashMap::new));
             if (methodMap.isEmpty()) {
                 return typeName;
             }
@@ -312,7 +336,8 @@ public class DocumentGenerator {
 
     protected TypeDocMeta analyzeReturnClass(Method method) {
         TypeDocMeta returnTypeDocMeta = new TypeDocMeta();
-        returnTypeDocMeta.setType(adjustmentTypeName(method.getGenericReturnType()));
+        returnTypeDocMeta.setTypeName(adjustmentTypeName(method.getGenericReturnType()));
+        returnTypeDocMeta.setSimpleTypeName(adjustmentSimpleTypeName(method.getGenericReturnType()));
         Class<?> returnClass = DfReflectionUtil.getGenericFirstClass(method.getGenericReturnType());
 
         if (returnClass != null) {
@@ -331,7 +356,7 @@ public class DocumentGenerator {
                 try {
                     String JsonResponseName = JsonResponse.class.getSimpleName();
                     Matcher matcher =
-                            Pattern.compile(".+<([^,]+)>").matcher(returnTypeDocMeta.getType().replaceAll(JsonResponseName + "<(.*)>", "$1"));
+                            Pattern.compile(".+<([^,]+)>").matcher(returnTypeDocMeta.getTypeName().replaceAll(JsonResponseName + "<(.*)>", "$1"));
                     if (matcher.matches()) {
                         returnClass = DfReflectionUtil.forName(matcher.group(1));
                     }
@@ -378,7 +403,7 @@ public class DocumentGenerator {
 
         Map<String, String> propertyNameMap = DfCollectionUtil.newLinkedHashMap();
 
-        String name = calculateName(parentName, typeDocMeta.getName(), typeDocMeta.getType());
+        String name = calculateName(parentName, typeDocMeta.getName(), typeDocMeta.getTypeName());
         if (DfStringUtil.is_NotNull_and_NotEmpty(name)) {
             propertyNameMap.put(name, "");
         }
