@@ -289,9 +289,19 @@ public class DocumentGenerator {
                 Class<?> typeArgumentClass = (Class<?>) ((ParameterizedType) field.getGenericType()).getActualTypeArguments()[0];
                 bean.setNestTypeDocMetaList(createTypeDocMeta(bean, typeArgumentClass, genericParameterTypesMap, depth - 1));
                 String typeName = bean.getTypeName();
-                bean.setTypeName(typeName + "<" + adjustmentTypeName(typeArgumentClass) + ">");
-                bean.setSimpleTypeName(typeName + "<" + adjustmentSimpleTypeName(typeArgumentClass) + ">");
+                bean.setTypeName(adjustmentTypeName(typeName) + "<" + adjustmentTypeName(typeArgumentClass) + ">");
+                bean.setSimpleTypeName(adjustmentSimpleTypeName(typeName) + "<" + adjustmentSimpleTypeName(typeArgumentClass) + ">");
+            } else {
+                String genericTypeName = field.getGenericType().getTypeName().replaceAll(".*\\<(.+)\\>", "$1");
+                genericClass = genericParameterTypesMap.get(genericTypeName);
+                if (genericClass != null) {
+                    bean.setNestTypeDocMetaList(createTypeDocMeta(bean, genericClass, genericParameterTypesMap, depth - 1));
+                    String typeName = bean.getTypeName();
+                    bean.setTypeName(adjustmentTypeName(typeName) + "<" +  adjustmentTypeName(genericClass) + ">");
+                    bean.setSimpleTypeName(adjustmentSimpleTypeName(typeName) + "<" + adjustmentSimpleTypeName(genericClass) + ">");
+                }
             }
+
             sourceParserReflector.ifPresent(sourceParserReflector -> {
                 sourceParserReflector.reflect(bean, clazz);
             });
@@ -300,7 +310,11 @@ public class DocumentGenerator {
     }
 
     protected String adjustmentTypeName(Type type) {
-        return type.getTypeName();
+        return adjustmentTypeName(type.getTypeName());
+    }
+
+    protected String adjustmentTypeName(String typeName) {
+        return typeName;
     }
 
     protected String adjustmentSimpleTypeName(Type type) {
@@ -308,7 +322,11 @@ public class DocumentGenerator {
             return ((Class<?>) type).getSimpleName();
         }
         // TODO adjustment
-        return adjustmentTypeName(type).replaceAll("[a-z0-9]+\\.", "");
+        return adjustmentSimpleTypeName(adjustmentTypeName(type));
+    }
+
+    protected String adjustmentSimpleTypeName(String typeName) {
+        return typeName.replaceAll("[a-z0-9]+\\.", "");
     }
 
     protected List<String> analyzeAnnotationList(List<Annotation> annotationList) {
@@ -368,22 +386,16 @@ public class DocumentGenerator {
             });
 
             if (List.class.isAssignableFrom(returnClass)) {
-                try {
-                    String JsonResponseName = JsonResponse.class.getSimpleName();
-                    Matcher matcher =
-                            Pattern.compile(".+<([^,]+)>").matcher(
-                                    returnTypeDocMeta.getTypeName().replaceAll(JsonResponseName + "<(.*)>", "$1"));
-                    if (matcher.matches()) {
-                        returnClass = DfReflectionUtil.forName(matcher.group(1));
-                    }
-                } catch (RuntimeException ignore) {
-
+                String returnClassName = returnTypeDocMeta.getTypeName().replaceAll(JsonResponse.class.getSimpleName() + "<(.*)>", "$1");
+                Matcher matcher = Pattern.compile(".+<([^,]+)>").matcher(returnClassName);
+                if (matcher.matches()) {
+                    returnClass = DfReflectionUtil.forName(matcher.group(1));
                 }
             }
-            List<Class<? extends Object>> ignoreList = Arrays.asList(Void.class, Integer.class, Long.class, Byte.class, Map.class);
-            if (returnClass != null && !ignoreList.contains(returnClass)) {
-                returnTypeDocMeta
-                        .setNestTypeDocMetaList(createTypeDocMeta(returnTypeDocMeta, returnClass, genericParameterTypesMap, depth));
+            List<Class<? extends Object>> nativeClassList = getNativeClassList();
+            if (returnClass != null && !nativeClassList.contains(returnClass)) {
+                List<TypeDocMeta> typeDocMeta = createTypeDocMeta(returnTypeDocMeta, returnClass, genericParameterTypesMap, depth);
+                returnTypeDocMeta.setNestTypeDocMetaList(typeDocMeta);
             }
         }
         return returnTypeDocMeta;
@@ -391,6 +403,10 @@ public class DocumentGenerator {
 
     protected List<String> getTargetTypeSuffixNameList() {
         return DfCollectionUtil.newArrayList("Form", "Body", "Bean");
+    }
+
+    protected List<Class<?>> getNativeClassList() {
+        return Arrays.asList(Void.class, Integer.class, Long.class, Byte.class, String.class, Map.class);
     }
 
     protected ActionPathResolver getActionPathResolver() {

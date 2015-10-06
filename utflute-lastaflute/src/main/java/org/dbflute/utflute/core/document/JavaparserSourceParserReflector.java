@@ -180,6 +180,11 @@ public class JavaparserSourceParserReflector implements SourceParserReflector {
                             String comment = adjustmentComment(fieldDeclaration.getComment());
                             if (DfStringUtil.is_NotNull_and_NotEmpty(comment)) {
                                 typeDocMeta.setComment(comment);
+                                Pattern pattern = Pattern.compile("/?\\*\\*? (.+[.。]?) \\*?");
+                                Matcher matcher = pattern.matcher(comment);
+                                if (matcher.find()) {
+                                    typeDocMeta.setDescription(matcher.group(1));
+                                }
                             }
                         }
                         super.visit(fieldDeclaration, typeDocMeta);
@@ -195,7 +200,7 @@ public class JavaparserSourceParserReflector implements SourceParserReflector {
         if (comment == null || DfStringUtil.is_Null_or_Empty(comment.toString())) {
             return null;
         }
-        return comment.toStringWithoutComments();
+        return comment.toStringWithoutComments().replaceAll("\r?\n$", "").replaceAll("(\r?\n) {2,}", "$1 ");
     }
 
     // ===================================================================================

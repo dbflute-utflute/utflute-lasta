@@ -30,12 +30,12 @@ public class ActionDocMeta {
     //                                                                           =========
     /** url. */
     private String url;
-    /** description. */
-    private String description;
     /** type name. */
     private String typeName;
     /** simple type name. */
     private String simpleTypeName;
+    /** description. */
+    private String description;
     /** type comment. */
     private String typeComment;
     /** method mame. */
@@ -60,14 +60,6 @@ public class ActionDocMeta {
         this.url = url;
     }
 
-    public String getDescription() {
-        return description;
-    }
-
-    public void setDescription(String description) {
-        this.description = description;
-    }
-
     public String getTypeName() {
         return typeName;
     }
@@ -82,6 +74,14 @@ public class ActionDocMeta {
 
     public void setSimpleTypeName(String simpleTypeName) {
         this.simpleTypeName = simpleTypeName;
+    }
+
+    public String getDescription() {
+        return description;
+    }
+
+    public void setDescription(String description) {
+        this.description = description;
     }
 
     public String getTypeComment() {
