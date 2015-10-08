@@ -273,7 +273,7 @@ public class DocumentGenerator {
             return DfCollectionUtil.newArrayList();
         }
 
-        return Arrays.asList(clazz.getFields()).stream().map(field -> {
+        return Arrays.asList(clazz.getDeclaredFields()).stream().map(field -> {
             Class<?> genericClass = genericParameterTypesMap.get(field.getGenericType().getTypeName());
             Class<?> type = genericClass != null ? genericClass : field.getType();
             TypeDocMeta bean = new TypeDocMeta();
@@ -358,7 +358,7 @@ public class DocumentGenerator {
                     }).collect(Collectors.toList());
                 }
                 return data;
-            }, (v1, v2) -> v1, LinkedHashMap::new));
+            }, (v1, v2) -> v1, TreeMap::new));
 
             if (methodMap.isEmpty()) {
                 return typeName;

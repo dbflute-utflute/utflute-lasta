@@ -68,9 +68,10 @@ public class JavaparserSourceParserReflector implements SourceParserReflector {
     // ===================================================================================
     //                                                                             Reflect
     //                                                                             =======
+    @Override
     public List<Method> getMethodListOrderByDefinition(Class<?> clazz) {
         // TODO adjustment
-        List<String> methodDeclarationList  = DfCollectionUtil.newArrayList();
+        List<String> methodDeclarationList = DfCollectionUtil.newArrayList();
         parseClass(clazz).ifPresent(compilationUnit -> {
             VoidVisitorAdapter<Void> voidVisitorAdapter = new VoidVisitorAdapter<Void>() {
                 public void visit(final MethodDeclaration methodDeclaration, final Void arg) {
@@ -88,6 +89,7 @@ public class JavaparserSourceParserReflector implements SourceParserReflector {
         return methodList;
     }
 
+    @Override
     public void reflect(ActionDocMeta meta, Method method) {
         parseClass(method.getDeclaringClass()).ifPresent(compilationUnit -> {
             List<String> parameterNameList = DfCollectionUtil.newArrayList();
@@ -140,7 +142,7 @@ public class JavaparserSourceParserReflector implements SourceParserReflector {
             List<String> descriptionList = DfCollectionUtil.newArrayList();
             Arrays.asList(meta.getTypeComment(), meta.getMethodComment()).forEach(comment -> {
                 if (DfStringUtil.is_NotNull_and_NotEmpty(comment)) {
-                    Pattern pattern = Pattern.compile("\\* (.+[.。])");
+                    Pattern pattern = Pattern.compile("\\* (.+)[.。]?.*\r?\n");
                     Matcher matcher = pattern.matcher(comment);
                     if (matcher.find()) {
                         descriptionList.add(matcher.group(1));
@@ -148,13 +150,13 @@ public class JavaparserSourceParserReflector implements SourceParserReflector {
                 }
             });
             if (!descriptionList.isEmpty()) {
-                meta.setDescription(String.join("", descriptionList));
+                meta.setDescription(String.join(", ", descriptionList));
             }
 
             for (int i = 0; i < method.getParameters().length; i++) {
                 if (parameterNameList.size() > i) {
                     Parameter parameter = method.getParameters()[i];
-                    meta.setUrl(meta.getUrl().replace("{" + parameter.getName() + ":", "{" +parameterNameList.get(i) + ":"));
+                    meta.setUrl(meta.getUrl().replace("{" + parameter.getName() + ":", "{" + parameterNameList.get(i) + ":"));
                 }
             }
             if (returnMap.containsKey(method.getName()) && !returnMap.get(method.getName()).isEmpty()) {
@@ -180,7 +182,7 @@ public class JavaparserSourceParserReflector implements SourceParserReflector {
                             String comment = adjustmentComment(fieldDeclaration.getComment());
                             if (DfStringUtil.is_NotNull_and_NotEmpty(comment)) {
                                 typeDocMeta.setComment(comment);
-                                Pattern pattern = Pattern.compile("/?\\*\\*? (.+[.。]?) \\*?");
+                                Pattern pattern = Pattern.compile("/?\\*\\*? ?([^ .。]+).*\\*");
                                 Matcher matcher = pattern.matcher(comment);
                                 if (matcher.find()) {
                                     typeDocMeta.setDescription(matcher.group(1));
