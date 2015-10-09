@@ -35,6 +35,7 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Set;
 import java.util.TreeMap;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -72,6 +73,12 @@ public class DocumentGenerator {
 
     /** depth. */
     private static final int DEPTH = 4;
+
+    /** list of suppressed fields, e.g. enhanced fields by JaCoCo. */
+    private static final Set<String> SUPPRESSED_FIELD_SET;
+    static {
+        SUPPRESSED_FIELD_SET = DfCollectionUtil.newHashSet("$jacocoData");
+    }
 
     // ===================================================================================
     //                                                                           Attribute
@@ -275,7 +282,7 @@ public class DocumentGenerator {
 
         return Arrays.asList(clazz.getDeclaredFields()).stream().filter(field -> {
             return !suppressField(field);
-        }) .map(field -> {
+        }).map(field -> {
             Class<?> genericClass = genericParameterTypesMap.get(field.getGenericType().getTypeName());
             Class<?> type = genericClass != null ? genericClass : field.getType();
             TypeDocMeta bean = new TypeDocMeta();
@@ -312,7 +319,7 @@ public class DocumentGenerator {
     }
 
     protected boolean suppressField(Field field) {
-        return Arrays.asList("$jacocoData").contains(field.getName()) || Modifier.isStatic(field.getModifiers());
+        return SUPPRESSED_FIELD_SET.contains(field.getName()) || Modifier.isStatic(field.getModifiers());
     }
 
     protected String adjustmentTypeName(Type type) {
