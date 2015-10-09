@@ -19,6 +19,7 @@ import java.io.BufferedWriter;
 import java.io.File;
 import java.io.IOException;
 import java.lang.annotation.Annotation;
+import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.lang.reflect.Parameter;
@@ -272,7 +273,9 @@ public class DocumentGenerator {
             return DfCollectionUtil.newArrayList();
         }
 
-        return Arrays.asList(clazz.getDeclaredFields()).stream().map(field -> {
+        return Arrays.asList(clazz.getDeclaredFields()).stream().filter(field -> {
+            return !suppressField(field);
+        }) .map(field -> {
             Class<?> genericClass = genericParameterTypesMap.get(field.getGenericType().getTypeName());
             Class<?> type = genericClass != null ? genericClass : field.getType();
             TypeDocMeta bean = new TypeDocMeta();
@@ -306,6 +309,10 @@ public class DocumentGenerator {
             });
             return bean;
         }).collect(Collectors.toList());
+    }
+
+    protected boolean suppressField(Field field) {
+        return Arrays.asList("$jacocoData").contains(field.getName()) || Modifier.isStatic(field.getModifiers());
     }
 
     protected String adjustmentTypeName(Type type) {
