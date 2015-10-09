@@ -22,13 +22,14 @@ import java.util.List;
  * @author p1us2er0
  * @since 0.5.0-sp9 (2015/09/18 Friday)
  */
-// TODO jflute class naming. Handler or Provider or ...  by p1us2er0 (2015/09/18)
-public interface SourceParserHandler {
+public interface SourceParserReflector {
 
     // ===================================================================================
     //                                                                             Reflect
     //                                                                             =======
-    void reflect(ActionDocMeta bean, Method method, List<String> srcDirList);
+    List<Method> getMethodListOrderByDefinition(Class<?> clazz);
 
-    void reflect(TypeDocMeta bean, Class<?> clazz, List<String> srcDirList);
+    void reflect(ActionDocMeta bean, Method method);
+
+    void reflect(TypeDocMeta bean, Class<?> clazz);
 }

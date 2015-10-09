@@ -5,7 +5,7 @@
 	<parent>
 		<groupId>org.dbflute.utflute</groupId>
 		<artifactId>utflute-base</artifactId>
-		<version>0.5.0-sp9</version>
+		<version>0.5.1</version>
 	</parent>
 	<artifactId>utflute-lasta-di</artifactId>
 	<packaging>jar</packaging>
@@ -22,7 +22,7 @@
 		<dependency>
 			<groupId>org.lastaflute</groupId>
 			<artifactId>lasta-di</artifactId>
-			<version>0.6.3</version>
+			<version>0.6.4</version>
 		</dependency>
 		<dependency>
 			<groupId>javax.transaction</groupId>
