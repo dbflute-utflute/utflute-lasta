@@ -31,7 +31,6 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.Comparator;
-import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -46,7 +45,7 @@ import org.dbflute.optional.OptionalThing;
 import org.dbflute.util.DfCollectionUtil;
 import org.dbflute.util.DfReflectionUtil;
 import org.dbflute.util.DfStringUtil;
-import org.lastaflute.core.json.JsonManager;
+import org.lastaflute.core.json.GsonJsonParser;
 import org.lastaflute.di.core.ComponentDef;
 import org.lastaflute.di.core.LaContainer;
 import org.lastaflute.di.core.factory.SingletonLaContainerFactory;
@@ -117,7 +116,7 @@ public class DocumentGenerator {
         List<ActionDocMeta> actionDocMetaList = generateActionDocMetaList();
         Map<String, Object> lastaDocDetailMap = DfCollectionUtil.newLinkedHashMap();
         lastaDocDetailMap.put("actionDocMetaList", actionDocMetaList);
-        String json = getJsonManager().toJson(lastaDocDetailMap);
+        String json = createJsonParser().toJson(lastaDocDetailMap);
 
         Path path = Paths.get(getLastaDocDir(), "lastadoc.json");
         if (!Files.exists(path.getParent())) {
@@ -297,7 +296,7 @@ public class DocumentGenerator {
                 if (genericClass != null) {
                     bean.setNestTypeDocMetaList(createTypeDocMeta(bean, genericClass, genericParameterTypesMap, depth - 1));
                     String typeName = bean.getTypeName();
-                    bean.setTypeName(adjustmentTypeName(typeName) + "<" +  adjustmentTypeName(genericClass) + ">");
+                    bean.setTypeName(adjustmentTypeName(typeName) + "<" + adjustmentTypeName(genericClass) + ">");
                     bean.setSimpleTypeName(adjustmentSimpleTypeName(typeName) + "<" + adjustmentSimpleTypeName(genericClass) + ">");
                 }
             }
@@ -413,8 +412,10 @@ public class DocumentGenerator {
         return SingletonLaContainerFactory.getContainer().getComponent(ActionPathResolver.class);
     }
 
-    protected JsonManager getJsonManager() {
-        return SingletonLaContainerFactory.getContainer().getComponent(JsonManager.class);
+    protected GsonJsonParser createJsonParser() {
+        return new GsonJsonParser(builder -> builder.serializeNulls().setPrettyPrinting(), op -> {});
+        // not to depend on application settings
+        //return SingletonLaContainerFactory.getContainer().getComponent(JsonManager.class);
     }
 
     // ===================================================================================
