@@ -19,6 +19,7 @@ import java.io.BufferedWriter;
 import java.io.File;
 import java.io.IOException;
 import java.lang.annotation.Annotation;
+import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.lang.reflect.Parameter;
@@ -34,6 +35,7 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Set;
 import java.util.TreeMap;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -71,6 +73,12 @@ public class DocumentGenerator {
 
     /** depth. */
     private static final int DEPTH = 4;
+
+    /** list of suppressed fields, e.g. enhanced fields by JaCoCo. */
+    private static final Set<String> SUPPRESSED_FIELD_SET;
+    static {
+        SUPPRESSED_FIELD_SET = DfCollectionUtil.newHashSet("$jacocoData");
+    }
 
     // ===================================================================================
     //                                                                           Attribute
@@ -272,7 +280,9 @@ public class DocumentGenerator {
             return DfCollectionUtil.newArrayList();
         }
 
-        return Arrays.asList(clazz.getDeclaredFields()).stream().map(field -> {
+        return Arrays.asList(clazz.getDeclaredFields()).stream().filter(field -> {
+            return !suppressField(field);
+        }).map(field -> {
             Class<?> genericClass = genericParameterTypesMap.get(field.getGenericType().getTypeName());
             Class<?> type = genericClass != null ? genericClass : field.getType();
             TypeDocMeta bean = new TypeDocMeta();
@@ -306,6 +316,10 @@ public class DocumentGenerator {
             });
             return bean;
         }).collect(Collectors.toList());
+    }
+
+    protected boolean suppressField(Field field) {
+        return SUPPRESSED_FIELD_SET.contains(field.getName()) || Modifier.isStatic(field.getModifiers());
     }
 
     protected String adjustmentTypeName(Type type) {
