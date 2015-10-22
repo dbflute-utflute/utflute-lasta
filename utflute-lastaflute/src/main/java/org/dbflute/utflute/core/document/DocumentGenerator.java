@@ -192,10 +192,10 @@ public class DocumentGenerator {
                 })) {
                     stream.forEach(path -> {
                         String className = DfStringUtil.substringFirstRear(path.toFile().getAbsolutePath(), srcDir);
-                        if (className.startsWith("/")) {
+                        if (className.startsWith(File.separator)) {
                             className = className.substring(1);
                         }
-                        className = DfStringUtil.substringLastFront(className, ".java").replace('/', '.');
+                        className = DfStringUtil.substringLastFront(className, ".java").replace(File.separatorChar, '.');
                         Class<?> clazz = DfReflectionUtil.forName(className);
 
                         if (clazz.isInterface() || Modifier.isAbstract(clazz.getModifiers())) {

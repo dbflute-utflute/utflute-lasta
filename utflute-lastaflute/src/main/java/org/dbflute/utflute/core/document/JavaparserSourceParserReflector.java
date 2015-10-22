@@ -165,6 +165,7 @@ public class JavaparserSourceParserReflector implements SourceParserReflector {
         });
     }
 
+    @Override
     public void reflect(TypeDocMeta bean, Class<?> clazz) {
 
         List<Class<?>> classList = DfCollectionUtil.newArrayList();
@@ -182,7 +183,7 @@ public class JavaparserSourceParserReflector implements SourceParserReflector {
                             String comment = adjustmentComment(fieldDeclaration.getComment());
                             if (DfStringUtil.is_NotNull_and_NotEmpty(comment)) {
                                 typeDocMeta.setComment(comment);
-                                Pattern pattern = Pattern.compile("/?\\*\\*? ?([^ .。]+).*\\*");
+                                Pattern pattern = Pattern.compile("/?\\*\\*? ?([^.。]+).* ?\\*");
                                 Matcher matcher = pattern.matcher(comment);
                                 if (matcher.find()) {
                                     typeDocMeta.setDescription(matcher.group(1));
@@ -214,9 +215,9 @@ public class JavaparserSourceParserReflector implements SourceParserReflector {
         }
 
         for (String srcDir : srcDirList) {
-            File file = new File(srcDir + clazz.getName().replaceAll("\\.", "/") + ".java");
+            File file = new File(srcDir + clazz.getName().replace('.', File.separatorChar) + ".java");
             if (!file.exists()) {
-                file = new File(srcDir + clazz.getName().replaceAll("\\.", "/").replaceAll("\\$.*", "") + ".java");
+                file = new File(srcDir + clazz.getName().replace('.', File.separatorChar).replaceAll("\\$.*", "") + ".java");
                 if (!file.exists()) {
                     continue;
                 }
