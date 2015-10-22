@@ -191,7 +191,7 @@ public class DocumentGenerator {
                     return path.toString().endsWith("Action.java");
                 })) {
                     stream.forEach(path -> {
-                        String className = DfStringUtil.substringFirstRear(path.toFile().getAbsolutePath(), srcDir);
+                        String className = DfStringUtil.substringFirstRear(path.toFile().getAbsolutePath(), new File(srcDir).getAbsolutePath());
                         if (className.startsWith(File.separator)) {
                             className = className.substring(1);
                         }
