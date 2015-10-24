@@ -121,24 +121,25 @@ public class DocumentGenerator {
     //                                                                         Action Meta
     //                                                                         ===========
     public void saveLastaDocMeta() {
-        List<ActionDocMeta> actionDocMetaList = generateActionDocMetaList();
-        Map<String, Object> lastaDocDetailMap = DfCollectionUtil.newLinkedHashMap();
+        final List<ActionDocMeta> actionDocMetaList = generateActionDocMetaList();
+        final Map<String, Object> lastaDocDetailMap = DfCollectionUtil.newLinkedHashMap();
         lastaDocDetailMap.put("actionDocMetaList", actionDocMetaList);
-        String json = createJsonParser().toJson(lastaDocDetailMap);
+        final String json = createJsonParser().toJson(lastaDocDetailMap);
 
-        Path path = Paths.get(getLastaDocDir(), "lastadoc.json");
-        if (!Files.exists(path.getParent())) {
+        final Path path = Paths.get(getLastaDocDir(), "analyzed-lastadoc.json");
+        final Path parentPath = path.getParent();
+        if (!Files.exists(parentPath)) {
             try {
-                Files.createDirectories(path.getParent());
+                Files.createDirectories(parentPath);
             } catch (IOException e) {
-                throw new RuntimeException(e);
+                throw new IllegalStateException("Failed to create directory: " + parentPath, e);
             }
         }
 
         try (BufferedWriter bw = Files.newBufferedWriter(path, Charset.forName("UTF-8"))) {
             bw.write(json);
         } catch (IOException e) {
-            throw new RuntimeException(e);
+            throw new IllegalStateException("Failed to write the json to the file: " + path, e);
         }
     }
 
@@ -191,7 +192,8 @@ public class DocumentGenerator {
                     return path.toString().endsWith("Action.java");
                 })) {
                     stream.forEach(path -> {
-                        String className = DfStringUtil.substringFirstRear(path.toFile().getAbsolutePath(), new File(srcDir).getAbsolutePath());
+                        String className =
+                                DfStringUtil.substringFirstRear(path.toFile().getAbsolutePath(), new File(srcDir).getAbsolutePath());
                         if (className.startsWith(File.separator)) {
                             className = className.substring(1);
                         }
