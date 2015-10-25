@@ -272,53 +272,62 @@ public class DocumentGenerator {
             return DfCollectionUtil.newArrayList();
         }
 
-        return Arrays.asList(clazz.getDeclaredFields()).stream().filter(field -> {
-            return !suppressField(field);
-        }).map(field -> {
-            Class<?> genericClass = genericParameterTypesMap.get(field.getGenericType().getTypeName());
-            Class<?> type = genericClass != null ? genericClass : field.getType();
-            TypeDocMeta typeDocMeta = new TypeDocMeta();
-            typeDocMeta.setName(field.getName());
-            typeDocMeta.setTypeName(adjustmentTypeName(type));
-            typeDocMeta.setSimpleTypeName(adjustmentSimpleTypeName(type));
-            typeDocMeta.setAnnotationList(analyzeAnnotationList(Arrays.asList(field.getAnnotations())));
-            if (type.isEnum()) {
-                if (Classification.class.isAssignableFrom(type)) {
-                    typeDocMeta.setValue(Arrays.stream(type.getEnumConstants()).collect(Collectors.toMap(keyMapper -> {
-                        return ((Classification) keyMapper).code();
-                    } , valueMapper -> {
-                        return ((Classification) valueMapper).alias();
-                    })).toString());
-                } else {
-                    typeDocMeta.setValue(Arrays.stream(type.getEnumConstants()).toString());
-                }
-            }
+        return Arrays
+                .asList(clazz.getDeclaredFields())
+                .stream()
+                .filter(field -> {
+                    return !suppressField(field);
+                })
+                .map(field -> {
+                    Class<?> genericClass = genericParameterTypesMap.get(field.getGenericType().getTypeName());
+                    Class<?> type = genericClass != null ? genericClass : field.getType();
+                    TypeDocMeta typeDocMeta = new TypeDocMeta();
+                    typeDocMeta.setName(field.getName());
+                    typeDocMeta.setTypeName(adjustmentTypeName(type));
+                    typeDocMeta.setSimpleTypeName(adjustmentSimpleTypeName(type));
+                    typeDocMeta.setAnnotationList(analyzeAnnotationList(Arrays.asList(field.getAnnotations())));
+                    if (type.isEnum()) {
+                        if (Classification.class.isAssignableFrom(type)) {
+                            // cannot resolve type by maven compiler, explicitly cast it
+                            @SuppressWarnings("unchecked")
+                            final Class<Classification> clsType = ((Class<Classification>) type);
+                            typeDocMeta.setValue(Arrays.stream(clsType.getEnumConstants()).collect(Collectors.toMap(keyMapper -> {
+                                return ((Classification) keyMapper).code();
+                            }, valueMapper -> {
+                                return ((Classification) valueMapper).alias();
+                            })).toString());
+                        } else {
+                            typeDocMeta.setValue(Arrays.stream(type.getEnumConstants()).toString());
+                        }
+                    }
 
-            List<String> targetTypeSuffixNameList = getTargetTypeSuffixNameList();
-            if (targetTypeSuffixNameList.stream().anyMatch(suffix -> type.getName().contains(suffix))) {
-                typeDocMeta.setNestTypeDocMetaList(createTypeDocMeta(type, genericParameterTypesMap, depth - 1));
-            } else if (targetTypeSuffixNameList.stream().anyMatch(suffix -> field.getGenericType().getTypeName().contains(suffix))) {
-                Class<?> typeArgumentClass = (Class<?>) ((ParameterizedType) field.getGenericType()).getActualTypeArguments()[0];
-                typeDocMeta.setNestTypeDocMetaList(createTypeDocMeta(typeArgumentClass, genericParameterTypesMap, depth - 1));
-                String typeName = typeDocMeta.getTypeName();
-                typeDocMeta.setTypeName(adjustmentTypeName(typeName) + "<" + adjustmentTypeName(typeArgumentClass) + ">");
-                typeDocMeta.setSimpleTypeName(adjustmentSimpleTypeName(typeName) + "<" + adjustmentSimpleTypeName(typeArgumentClass) + ">");
-            } else {
-                String genericTypeName = field.getGenericType().getTypeName().replaceAll(".*\\<(.+)\\>", "$1");
-                genericClass = genericParameterTypesMap.get(genericTypeName);
-                if (genericClass != null) {
-                    typeDocMeta.setNestTypeDocMetaList(createTypeDocMeta(genericClass, genericParameterTypesMap, depth - 1));
-                    String typeName = typeDocMeta.getTypeName();
-                    typeDocMeta.setTypeName(adjustmentTypeName(typeName) + "<" + adjustmentTypeName(genericClass) + ">");
-                    typeDocMeta.setSimpleTypeName(adjustmentSimpleTypeName(typeName) + "<" + adjustmentSimpleTypeName(genericClass) + ">");
-                }
-            }
+                    List<String> targetTypeSuffixNameList = getTargetTypeSuffixNameList();
+                    if (targetTypeSuffixNameList.stream().anyMatch(suffix -> type.getName().contains(suffix))) {
+                        typeDocMeta.setNestTypeDocMetaList(createTypeDocMeta(type, genericParameterTypesMap, depth - 1));
+                    } else if (targetTypeSuffixNameList.stream().anyMatch(suffix -> field.getGenericType().getTypeName().contains(suffix))) {
+                        Class<?> typeArgumentClass = (Class<?>) ((ParameterizedType) field.getGenericType()).getActualTypeArguments()[0];
+                        typeDocMeta.setNestTypeDocMetaList(createTypeDocMeta(typeArgumentClass, genericParameterTypesMap, depth - 1));
+                        String typeName = typeDocMeta.getTypeName();
+                        typeDocMeta.setTypeName(adjustmentTypeName(typeName) + "<" + adjustmentTypeName(typeArgumentClass) + ">");
+                        typeDocMeta.setSimpleTypeName(adjustmentSimpleTypeName(typeName) + "<"
+                                + adjustmentSimpleTypeName(typeArgumentClass) + ">");
+                    } else {
+                        String genericTypeName = field.getGenericType().getTypeName().replaceAll(".*\\<(.+)\\>", "$1");
+                        genericClass = genericParameterTypesMap.get(genericTypeName);
+                        if (genericClass != null) {
+                            typeDocMeta.setNestTypeDocMetaList(createTypeDocMeta(genericClass, genericParameterTypesMap, depth - 1));
+                            String typeName = typeDocMeta.getTypeName();
+                            typeDocMeta.setTypeName(adjustmentTypeName(typeName) + "<" + adjustmentTypeName(genericClass) + ">");
+                            typeDocMeta.setSimpleTypeName(adjustmentSimpleTypeName(typeName) + "<" + adjustmentSimpleTypeName(genericClass)
+                                    + ">");
+                        }
+                    }
 
-            sourceParserReflector.ifPresent(sourceParserReflector -> {
-                sourceParserReflector.reflect(typeDocMeta, clazz);
-            });
-            return typeDocMeta;
-        }).collect(Collectors.toList());
+                    sourceParserReflector.ifPresent(sourceParserReflector -> {
+                        sourceParserReflector.reflect(typeDocMeta, clazz);
+                    });
+                    return typeDocMeta;
+                }).collect(Collectors.toList());
     }
 
     protected boolean suppressField(Field field) {
@@ -430,12 +439,12 @@ public class DocumentGenerator {
                 List<TypeDocMeta> typeDocMeta = createTypeDocMeta(returnClass, genericParameterTypesMap, depth);
                 returnTypeDocMeta.setNestTypeDocMetaList(typeDocMeta);
             }
-            
+
             if (sourceParserReflector.isPresent()) {
                 sourceParserReflector.get().reflect(returnTypeDocMeta, returnClass);
             }
         }
-        
+
         return returnTypeDocMeta;
     }
 
