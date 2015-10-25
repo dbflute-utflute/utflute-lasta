@@ -166,8 +166,7 @@ public class JavaparserSourceParserReflector implements SourceParserReflector {
     }
 
     @Override
-    public void reflect(TypeDocMeta bean, Class<?> clazz) {
-
+    public void reflect(TypeDocMeta typeDocMeta, Class<?> clazz) {
         List<Class<?>> classList = DfCollectionUtil.newArrayList();
         for (Class<?> targetClass = clazz; targetClass != null; targetClass = targetClass.getSuperclass()) {
             classList.add(targetClass);
@@ -176,6 +175,26 @@ public class JavaparserSourceParserReflector implements SourceParserReflector {
         classList.forEach(targetClass -> {
             parseClass(targetClass).ifPresent(compilationUnit -> {
                 VoidVisitorAdapter<TypeDocMeta> voidVisitorAdapter = new VoidVisitorAdapter<TypeDocMeta>() {
+
+                    @Override
+                    public void visit(ClassOrInterfaceDeclaration classOrInterfaceDeclaration, TypeDocMeta typeDocMeta) {
+                        if (DfStringUtil.is_Null_or_Empty(typeDocMeta.getComment()) &&
+                                classOrInterfaceDeclaration.getName().equals(typeDocMeta.getSimpleTypeName())) {
+                            String comment = adjustmentComment(classOrInterfaceDeclaration.getComment());
+                            if (DfStringUtil.is_NotNull_and_NotEmpty(comment)) {
+                                typeDocMeta.setComment(comment);
+                                if (DfStringUtil.is_NotNull_and_NotEmpty(comment)) {
+                                    Pattern pattern = Pattern.compile("\\* (.+)[.。]?.*\r?\n");
+                                    Matcher matcher = pattern.matcher(comment);
+                                    if (matcher.find()) {
+                                        typeDocMeta.setDescription(matcher.group(1));
+                                    }
+                                }
+                            }
+                        }
+                        super.visit(classOrInterfaceDeclaration, typeDocMeta);
+                    }
+
                     @Override
                     public void visit(FieldDeclaration fieldDeclaration, TypeDocMeta typeDocMeta) {
                         if (fieldDeclaration.getVariables().stream()
@@ -194,7 +213,7 @@ public class JavaparserSourceParserReflector implements SourceParserReflector {
                     }
                 };
 
-                voidVisitorAdapter.visit(compilationUnit, bean);
+                voidVisitorAdapter.visit(compilationUnit, typeDocMeta);
             });
         });
     }
