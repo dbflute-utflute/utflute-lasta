@@ -76,7 +76,14 @@ public class PoliceStoryJavaClassChase {
         }
         createFileHierarchyTracer().trace(srcDir, new FileHierarchyTracingHandler() {
             public boolean isTargetFileOrDir(File currentFile) {
-                return currentFile.isDirectory() || currentFile.getName().endsWith(".java");
+                if (currentFile.isDirectory()) {
+                    return true;
+                }
+                final String fileName = currentFile.getName();
+                if ("package-info.java".equals(fileName)) {
+                    return false; // except it
+                }
+                return fileName.endsWith(".java");
             }
 
             public void handleFile(File currentFile) throws IOException {
