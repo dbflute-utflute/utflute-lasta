@@ -509,7 +509,7 @@ public class DocumentGenerator {
             builder.append(parentName + ".");
         }
         builder.append(name);
-        if (type.startsWith("List")) {
+        if (name.endsWith("List")) {
             builder.append("[]");
         }
 
