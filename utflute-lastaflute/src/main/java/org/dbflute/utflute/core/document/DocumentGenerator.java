@@ -166,7 +166,7 @@ public class DocumentGenerator {
                 methodList.forEach(method -> {
                     if (method.getAnnotation(Execute.class) != null) {
                         ActionExecute actionExecute = actionMapping.getActionExecute(method);
-                        if (actionExecute != null) {
+                        if (actionExecute != null && !suppressActionExecute(actionExecute)) {
                             list.add(createActionDocMeta(actionMapping.getActionExecute(method)));
                         }
                     }
@@ -328,6 +328,10 @@ public class DocumentGenerator {
                     });
                     return typeDocMeta;
                 }).collect(Collectors.toList());
+    }
+
+    protected boolean suppressActionExecute(ActionExecute actionExecute) {
+        return false;
     }
 
     protected boolean suppressField(Field field) {
