@@ -24,11 +24,11 @@ import org.dbflute.utflute.core.policestory.javaclass.PoliceStoryJavaClassHandle
 /**
  * @author jflute
  */
-public class ActionComponentDefPolice implements PoliceStoryJavaClassHandler {
+public class ActionComponentPolice implements PoliceStoryJavaClassHandler {
 
     protected final Function<Class<?>, Object> componentProvider;
 
-    public ActionComponentDefPolice(Function<Class<?>, Object> componentProvider) {
+    public ActionComponentPolice(Function<Class<?>, Object> componentProvider) {
         this.componentProvider = componentProvider;
     }
 
