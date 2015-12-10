@@ -13,10 +13,13 @@
  * either express or implied. See the License for the specific language
  * governing permissions and limitations under the License.
  */
-package org.dbflute.utflute.core.document;
+package org.dbflute.utflute.core.document.reflector;
 
 import java.lang.reflect.Method;
 import java.util.List;
+
+import org.dbflute.utflute.core.document.meta.ActionDocMeta;
+import org.dbflute.utflute.core.document.meta.TypeDocMeta;
 
 /**
  * @author p1us2er0

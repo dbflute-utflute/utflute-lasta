@@ -45,6 +45,10 @@ import java.util.stream.Stream;
 
 import org.dbflute.jdbc.Classification;
 import org.dbflute.optional.OptionalThing;
+import org.dbflute.utflute.core.document.meta.ActionDocMeta;
+import org.dbflute.utflute.core.document.meta.TypeDocMeta;
+import org.dbflute.utflute.core.document.reflector.SourceParserReflector;
+import org.dbflute.utflute.core.document.reflector.SourceParserReflectorFactory;
 import org.dbflute.util.DfCollectionUtil;
 import org.dbflute.util.DfReflectionUtil;
 import org.dbflute.util.DfStringUtil;
@@ -63,6 +67,7 @@ import org.lastaflute.web.util.LaModuleConfigUtil;
 
 /**
  * @author p1us2er0
+ * @author jflute
  * @since 0.5.0-sp9 (2015/09/18 Friday)
  */
 public class DocumentGenerator {
@@ -71,13 +76,13 @@ public class DocumentGenerator {
     //                                                                          Definition
     //                                                                          ==========
     /** source directory. */
-    private static final String SRC_DIR = "src/main/java/";
+    protected static final String SRC_DIR = "src/main/java/";
 
     /** depth. */
-    private static final int DEPTH = 4;
+    protected static final int DEPTH = 4;
 
     /** list of suppressed fields, e.g. enhanced fields by JaCoCo. */
-    private static final Set<String> SUPPRESSED_FIELD_SET;
+    protected static final Set<String> SUPPRESSED_FIELD_SET;
     static {
         SUPPRESSED_FIELD_SET = DfCollectionUtil.newHashSet("$jacocoData");
     }
@@ -85,19 +90,18 @@ public class DocumentGenerator {
     // ===================================================================================
     //                                                                           Attribute
     //                                                                           =========
-    /** source directory. */
-    private final List<String> srcDirList;
+    /** source directory. (NotNull) */
+    protected final List<String> srcDirList;
 
     /** depth. */
-    private final int depth;
+    protected final int depth;
 
     /** sourceParserReflector. */
-    private final OptionalThing<SourceParserReflector> sourceParserReflector;
+    protected final OptionalThing<SourceParserReflector> sourceParserReflector;
 
     // ===================================================================================
     //                                                                         Constructor
     //                                                                         ===========
-    // TODO jflute option of setting, constructor or method arguments(lamda).  by p1us2er0 (2015/09/18)
     public DocumentGenerator() {
         this.srcDirList = DfCollectionUtil.newArrayList();
         String commonDir = "../" + new File(".").getAbsoluteFile().getParentFile().getName().replaceAll("-.*", "-common") + "/" + SRC_DIR;
@@ -106,7 +110,7 @@ public class DocumentGenerator {
         }
         this.srcDirList.add(SRC_DIR);
         this.depth = DEPTH;
-        this.sourceParserReflector = new SourceParserReflectorFactory().reflector(srcDirList);
+        this.sourceParserReflector = createSourceParserReflectorFactory().reflector(srcDirList);
     }
 
     public DocumentGenerator(List<String> srcDirList) {
@@ -116,7 +120,11 @@ public class DocumentGenerator {
     public DocumentGenerator(List<String> srcDirList, int depth) {
         this.srcDirList = srcDirList;
         this.depth = depth;
-        this.sourceParserReflector = new SourceParserReflectorFactory().reflector(srcDirList);
+        this.sourceParserReflector = createSourceParserReflectorFactory().reflector(srcDirList);
+    }
+
+    protected SourceParserReflectorFactory createSourceParserReflectorFactory() {
+        return new SourceParserReflectorFactory();
     }
 
     // ===================================================================================
@@ -145,6 +153,22 @@ public class DocumentGenerator {
         }
     }
 
+    protected GsonJsonParser createJsonParser() {
+        return new GsonJsonParser(builder -> builder.serializeNulls().setPrettyPrinting(), op -> {});
+        // not to depend on application settings
+        //return SingletonLaContainerFactory.getContainer().getComponent(JsonManager.class);
+    }
+
+    protected String getLastaDocDir() {
+        if (new File("./pom.xml").exists()) {
+            return "./target/lastadoc/";
+        }
+        return "./build/lastadoc/";
+    }
+
+    // -----------------------------------------------------
+    //                                    Generate Meta List
+    //                                    ------------------
     public List<ActionDocMeta> generateActionDocMetaList() {
         List<String> actionComponentNameList = findActionComponentNameList();
         List<ActionDocMeta> list = DfCollectionUtil.newArrayList();
@@ -177,13 +201,13 @@ public class DocumentGenerator {
         return list;
     }
 
-    protected String getLastaDocDir() {
-        if (new File("./pom.xml").exists()) {
-            return "./target/lastadoc/";
-        }
-        return "./build/lastadoc/";
+    protected boolean suppressActionExecute(ActionExecute actionExecute) {
+        return false;
     }
 
+    // -----------------------------------------------------
+    //                                 Find Action Component
+    //                                 ---------------------
     protected List<String> findActionComponentNameList() {
         List<String> componentNameList = DfCollectionUtil.newArrayList();
         LaContainer container = SingletonLaContainerFactory.getContainer().getRoot();
@@ -227,6 +251,9 @@ public class DocumentGenerator {
         return componentNameList;
     }
 
+    // -----------------------------------------------------
+    //                                      Create ActionDoc
+    //                                      ----------------
     protected ActionDocMeta createActionDocMeta(ActionExecute execute) {
         Class<?> componentClass = execute.getActionMapping().getActionDef().getComponentClass();
         ActionDocMeta actionDocMeta = new ActionDocMeta();
@@ -267,98 +294,16 @@ public class DocumentGenerator {
         return actionDocMeta;
     }
 
-    protected List<TypeDocMeta> createTypeDocMeta(Class<?> clazz, Map<String, Type> genericParameterTypesMap, int depth) {
-        if (depth < 0) {
-            return DfCollectionUtil.newArrayList();
-        }
-
-        Set<Field> fieldSet = DfCollectionUtil.newLinkedHashSet();
-        for (Class<?> targetClazz = clazz; targetClazz != Object.class; targetClazz = targetClazz.getSuperclass()) {
-            fieldSet.addAll(Arrays.asList(targetClazz.getDeclaredFields()));
-        }
-        return fieldSet.stream().filter(field -> {
-            return !suppressField(field);
-        }).map(field -> {
-            Type genericClass = genericParameterTypesMap.get(field.getGenericType().getTypeName());
-            Type type = genericClass != null ? genericClass : field.getType();
-            TypeDocMeta typeDocMeta = new TypeDocMeta();
-            typeDocMeta.setName(field.getName());
-            typeDocMeta.setTypeName(adjustTypeName(type));
-            typeDocMeta.setSimpleTypeName(adjustSimpleTypeName(type));
-            typeDocMeta.setAnnotationList(analyzeAnnotationList(Arrays.asList(field.getAnnotations())));
-            Class<?> typeClass = type instanceof Class ? (Class<?>) type : (Class<?>) DfReflectionUtil.getGenericParameterTypes(type)[0];
-            if (typeClass.isEnum()) {
-                if (Classification.class.isAssignableFrom(typeClass)) {
-                    // cannot resolve type by maven compiler, explicitly cast it
-                    @SuppressWarnings("unchecked")
-                    final Class<Classification> clsType = ((Class<Classification>) typeClass);
-                    typeDocMeta.setValue(Arrays.stream(clsType.getEnumConstants()).collect(Collectors.toMap(keyMapper -> {
-                        return ((Classification) keyMapper).code();
-                    } , valueMapper -> {
-                        return ((Classification) valueMapper).alias();
-                    })).toString());
-                } else {
-                    typeDocMeta.setValue(Arrays.stream(typeClass.getEnumConstants()).toString());
-                }
-            }
-
-            List<String> targetTypeSuffixNameList = getTargetTypeSuffixNameList();
-            if (targetTypeSuffixNameList.stream().anyMatch(suffix -> typeClass.getName().contains(suffix))) {
-                typeDocMeta.setNestTypeDocMetaList(createTypeDocMeta(typeClass, genericParameterTypesMap, depth - 1));
-            } else if (targetTypeSuffixNameList.stream().anyMatch(suffix -> field.getGenericType().getTypeName().contains(suffix))) {
-                Class<?> typeArgumentClass = (Class<?>) ((ParameterizedType) field.getGenericType()).getActualTypeArguments()[0];
-                typeDocMeta.setNestTypeDocMetaList(createTypeDocMeta(typeArgumentClass, genericParameterTypesMap, depth - 1));
-                String typeName = typeDocMeta.getTypeName();
-                typeDocMeta.setTypeName(adjustTypeName(typeName) + "<" + adjustTypeName(typeArgumentClass) + ">");
-                typeDocMeta.setSimpleTypeName(adjustSimpleTypeName(typeName) + "<" + adjustSimpleTypeName(typeArgumentClass) + ">");
-            } else {
-                if (field.getGenericType().getTypeName().matches(".*\\<(.+)\\>")) {
-                    String genericTypeName = field.getGenericType().getTypeName().replaceAll(".*\\<(.+)\\>", "$1");
-                    genericClass = genericParameterTypesMap.get(genericTypeName);
-                    if (genericClass != null) {
-                        typeDocMeta.setNestTypeDocMetaList(createTypeDocMeta((Class<?>) genericClass, genericParameterTypesMap, depth - 1));
-                        String typeName = typeDocMeta.getTypeName();
-                        typeDocMeta.setTypeName(adjustTypeName(typeName) + "<" + adjustTypeName(genericClass) + ">");
-                        typeDocMeta.setSimpleTypeName(adjustSimpleTypeName(typeName) + "<" + adjustSimpleTypeName(genericClass) + ">");
-                    }
-                }
-            }
-
-            sourceParserReflector.ifPresent(sourceParserReflector -> {
-                sourceParserReflector.reflect(typeDocMeta, clazz);
-            });
-            return typeDocMeta;
-        }).collect(Collectors.toList());
+    protected ActionPathResolver getActionPathResolver() {
+        return SingletonLaContainerFactory.getContainer().getComponent(ActionPathResolver.class);
     }
 
-    protected boolean suppressActionExecute(ActionExecute actionExecute) {
-        return false;
-    }
-
-    protected boolean suppressField(Field field) {
-        return SUPPRESSED_FIELD_SET.contains(field.getName()) || Modifier.isStatic(field.getModifiers());
-    }
-
-    protected String adjustTypeName(Type type) {
-        return adjustTypeName(type.getTypeName());
-    }
-
-    protected String adjustTypeName(String typeName) {
-        return typeName;
-    }
-
-    protected String adjustSimpleTypeName(Type type) {
-        if (type instanceof Class<?>) {
-            return ((Class<?>) type).getSimpleName();
-        }
-        // TODO adjust
-        return adjustSimpleTypeName(adjustTypeName(type));
-    }
-
-    protected String adjustSimpleTypeName(String typeName) {
-        return typeName.replaceAll("[a-z0-9]+\\.", "");
-    }
-
+    // ===================================================================================
+    //                                                                             Analyze
+    //                                                                             =======
+    // -----------------------------------------------------
+    //                                    Analyze Annotation
+    //                                    ------------------
     protected List<String> analyzeAnnotationList(List<Annotation> annotationList) {
         return annotationList.stream().map(annotation -> {
             Class<? extends Annotation> annotationType = annotation.annotationType();
@@ -397,6 +342,9 @@ public class DocumentGenerator {
         }).collect(Collectors.toList());
     }
 
+    // -----------------------------------------------------
+    //                                          Analyze Form
+    //                                          ------------
     protected TypeDocMeta analyzeFormClass(ActionFormMeta actionFormMeta) {
         TypeDocMeta typeDocMeta = new TypeDocMeta();
         actionFormMeta.getListFormParameterParameterizedType().ifPresent(type -> {
@@ -407,13 +355,16 @@ public class DocumentGenerator {
             typeDocMeta.setSimpleTypeName(adjustSimpleTypeName(actionFormMeta.getFormType()));
         });
         Class<?> formType = actionFormMeta.getListFormParameterGenericType().orElse(actionFormMeta.getFormType());
-        typeDocMeta.setNestTypeDocMetaList(createTypeDocMeta(formType, DfCollectionUtil.newLinkedHashMap(), depth));
+        typeDocMeta.setNestTypeDocMetaList(prepareTypeDocMetaList(formType, DfCollectionUtil.newLinkedHashMap(), depth));
         sourceParserReflector.ifPresent(sourceParserReflector -> {
             sourceParserReflector.reflect(typeDocMeta, formType);
         });
         return typeDocMeta;
     }
 
+    // -----------------------------------------------------
+    //                                        Analyze Return
+    //                                        --------------
     protected TypeDocMeta analyzeReturnClass(Method method) {
         TypeDocMeta returnTypeDocMeta = new TypeDocMeta();
         returnTypeDocMeta.setTypeName(adjustTypeName(method.getGenericReturnType()));
@@ -442,7 +393,7 @@ public class DocumentGenerator {
             }
             List<Class<? extends Object>> nativeClassList = getNativeClassList();
             if (returnClass != null && !nativeClassList.contains(returnClass)) {
-                List<TypeDocMeta> typeDocMeta = createTypeDocMeta(returnClass, genericParameterTypesMap, depth);
+                List<TypeDocMeta> typeDocMeta = prepareTypeDocMetaList(returnClass, genericParameterTypesMap, depth);
                 returnTypeDocMeta.setNestTypeDocMetaList(typeDocMeta);
             }
 
@@ -454,22 +405,94 @@ public class DocumentGenerator {
         return returnTypeDocMeta;
     }
 
-    protected List<String> getTargetTypeSuffixNameList() {
-        return DfCollectionUtil.newArrayList("Form", "Body", "Bean");
-    }
-
     protected List<Class<?>> getNativeClassList() {
         return Arrays.asList(Void.class, Integer.class, Long.class, Byte.class, String.class, Map.class);
     }
 
-    protected ActionPathResolver getActionPathResolver() {
-        return SingletonLaContainerFactory.getContainer().getComponent(ActionPathResolver.class);
+    // -----------------------------------------------------
+    //                                       Prepare TypeDoc
+    //                                       ---------------
+    protected List<TypeDocMeta> prepareTypeDocMetaList(Class<?> clazz, Map<String, Type> genericParameterTypesMap, int depth) {
+        if (depth < 0) {
+            return DfCollectionUtil.newArrayList();
+        }
+
+        Set<Field> fieldSet = DfCollectionUtil.newLinkedHashSet();
+        for (Class<?> targetClazz = clazz; targetClazz != Object.class; targetClazz = targetClazz.getSuperclass()) {
+            fieldSet.addAll(Arrays.asList(targetClazz.getDeclaredFields()));
+        }
+        return fieldSet.stream().filter(field -> {
+            return !suppressField(field);
+        }).map(field -> {
+            return createTypeDocMeta(clazz, genericParameterTypesMap, depth, field);
+        }).collect(Collectors.toList());
     }
 
-    protected GsonJsonParser createJsonParser() {
-        return new GsonJsonParser(builder -> builder.serializeNulls().setPrettyPrinting(), op -> {});
-        // not to depend on application settings
-        //return SingletonLaContainerFactory.getContainer().getComponent(JsonManager.class);
+    protected boolean suppressField(Field field) {
+        return SUPPRESSED_FIELD_SET.contains(field.getName()) || Modifier.isStatic(field.getModifiers());
+    }
+
+    protected TypeDocMeta createTypeDocMeta(Class<?> clazz, Map<String, Type> genericParameterTypesMap, int depth, Field field) {
+        Type genericClass = genericParameterTypesMap.get(field.getGenericType().getTypeName());
+        Type type = genericClass != null ? genericClass : field.getType();
+        TypeDocMeta meta = new TypeDocMeta();
+        meta.setName(field.getName());
+        meta.setTypeName(adjustTypeName(type));
+        meta.setSimpleTypeName(adjustSimpleTypeName(type));
+        meta.setAnnotationList(analyzeAnnotationList(Arrays.asList(field.getAnnotations())));
+        Class<?> typeClass = type instanceof Class ? (Class<?>) type : (Class<?>) DfReflectionUtil.getGenericParameterTypes(type)[0];
+        if (typeClass.isEnum()) {
+            meta.setValue(buildEnumValuesExp(typeClass));
+        }
+
+        List<String> targetTypeSuffixNameList = getTargetTypeSuffixNameList();
+        if (targetTypeSuffixNameList.stream().anyMatch(suffix -> typeClass.getName().contains(suffix))) {
+            meta.setNestTypeDocMetaList(prepareTypeDocMetaList(typeClass, genericParameterTypesMap, depth - 1));
+        } else if (targetTypeSuffixNameList.stream().anyMatch(suffix -> field.getGenericType().getTypeName().contains(suffix))) {
+            Class<?> typeArgumentClass = (Class<?>) ((ParameterizedType) field.getGenericType()).getActualTypeArguments()[0];
+            meta.setNestTypeDocMetaList(prepareTypeDocMetaList(typeArgumentClass, genericParameterTypesMap, depth - 1));
+            String typeName = meta.getTypeName();
+            meta.setTypeName(adjustTypeName(typeName) + "<" + adjustTypeName(typeArgumentClass) + ">");
+            meta.setSimpleTypeName(adjustSimpleTypeName(typeName) + "<" + adjustSimpleTypeName(typeArgumentClass) + ">");
+        } else {
+            if (field.getGenericType().getTypeName().matches(".*\\<(.+)\\>")) {
+                String genericTypeName = field.getGenericType().getTypeName().replaceAll(".*\\<(.+)\\>", "$1");
+                genericClass = genericParameterTypesMap.get(genericTypeName);
+                if (genericClass != null) {
+                    meta.setNestTypeDocMetaList(prepareTypeDocMetaList((Class<?>) genericClass, genericParameterTypesMap, depth - 1));
+                    String typeName = meta.getTypeName();
+                    meta.setTypeName(adjustTypeName(typeName) + "<" + adjustTypeName(genericClass) + ">");
+                    meta.setSimpleTypeName(adjustSimpleTypeName(typeName) + "<" + adjustSimpleTypeName(genericClass) + ">");
+                }
+            }
+        }
+
+        sourceParserReflector.ifPresent(sourceParserReflector -> {
+            sourceParserReflector.reflect(meta, clazz);
+        });
+        return meta;
+    }
+
+    protected String buildEnumValuesExp(Class<?> typeClass) {
+        // cannot resolve type by maven compiler, explicitly cast it
+        String valuesExp;
+        if (Classification.class.isAssignableFrom(typeClass)) {
+            @SuppressWarnings("unchecked")
+            final Class<Classification> clsType = ((Class<Classification>) typeClass);
+            valuesExp = Arrays.stream(clsType.getEnumConstants()).collect(Collectors.toMap(keyMapper -> {
+                return ((Classification) keyMapper).code();
+            }, valueMapper -> {
+                return ((Classification) valueMapper).alias();
+            })).toString(); // e.g. {FML = Formalized, PRV = Provisinal, ...}
+        } else {
+            Enum<?>[] constants = (Enum<?>[]) typeClass.getEnumConstants();
+            valuesExp = Arrays.stream(constants).collect(Collectors.toList()).toString(); // e.g. [SEA, LAND, PIARI]
+        }
+        return valuesExp;
+    }
+
+    protected List<String> getTargetTypeSuffixNameList() {
+        return DfCollectionUtil.newArrayList("Form", "Body", "Bean");
     }
 
     // ===================================================================================
@@ -520,5 +543,28 @@ public class DocumentGenerator {
         }
 
         return builder.toString();
+    }
+
+    // ===================================================================================
+    //                                                                     Adjust TypeName
+    //                                                                     ===============
+    protected String adjustTypeName(Type type) {
+        return adjustTypeName(type.getTypeName());
+    }
+
+    protected String adjustTypeName(String typeName) {
+        return typeName;
+    }
+
+    protected String adjustSimpleTypeName(Type type) {
+        if (type instanceof Class<?>) {
+            return ((Class<?>) type).getSimpleName();
+        }
+        // TODO adjust
+        return adjustSimpleTypeName(adjustTypeName(type));
+    }
+
+    protected String adjustSimpleTypeName(String typeName) {
+        return typeName.replaceAll("[a-z0-9]+\\.", "");
     }
 }
