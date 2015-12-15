@@ -477,7 +477,7 @@ public class MockletHttpServletRequestImpl implements MockletHttpServletRequest 
 
     public Locale getLocale() {
         if (locales.isEmpty()) {
-            return null;
+            return Locale.getDefault();
         }
         return locales.get(0);
     }
