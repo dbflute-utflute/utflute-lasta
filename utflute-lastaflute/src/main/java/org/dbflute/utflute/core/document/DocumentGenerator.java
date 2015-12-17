@@ -419,6 +419,9 @@ public class DocumentGenerator {
 
         Set<Field> fieldSet = DfCollectionUtil.newLinkedHashSet();
         for (Class<?> targetClazz = clazz; targetClazz != Object.class; targetClazz = targetClazz.getSuperclass()) {
+            if (targetClazz == null) { // e.g. interface: MultipartFormFile
+                break;
+            }
             fieldSet.addAll(Arrays.asList(targetClazz.getDeclaredFields()));
         }
         return fieldSet.stream().filter(field -> {
