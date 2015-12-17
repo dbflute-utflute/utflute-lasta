@@ -27,6 +27,7 @@ import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpServletRequest;
 
 import org.dbflute.utflute.lastadi.ContainerTestCase;
+import org.dbflute.utflute.lastaflute.mock.MockRuntimeFactory;
 import org.dbflute.utflute.mocklet.MockletHttpServletRequest;
 import org.dbflute.utflute.mocklet.MockletHttpServletRequestImpl;
 import org.dbflute.utflute.mocklet.MockletHttpServletResponse;
@@ -46,6 +47,7 @@ import org.lastaflute.di.core.ExternalContext;
 import org.lastaflute.di.core.LaContainer;
 import org.lastaflute.di.core.factory.SingletonLaContainerFactory;
 import org.lastaflute.web.LastaFilter;
+import org.lastaflute.web.ruts.process.ActionRuntime;
 
 /**
  * @author jflute
@@ -256,6 +258,17 @@ public abstract class WebContainerTestCase extends ContainerTestCase {
     // ===================================================================================
     //                                                                   Web Mock Handling
     //                                                                   =================
+    // -----------------------------------------------------
+    //                                            LastaFlute
+    //                                            ----------
+    protected ActionRuntime getMockHtmlRuntime() { // MockAction@sea()
+        return new MockRuntimeFactory().createHtmlRuntime();
+    }
+
+    protected ActionRuntime getMockJsonRuntime() { // MockAction@land()
+        return new MockRuntimeFactory().createJsonRuntime();
+    }
+
     // -----------------------------------------------------
     //                                               Request
     //                                               -------
