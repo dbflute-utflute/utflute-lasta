@@ -25,18 +25,12 @@ import org.lastaflute.web.LastaAction;
 /**
  * @author jflute
  */
-public class NonActionExtendsLastaActionPolice implements PoliceStoryJavaClassHandler {
+public class NonActionExtendsActionPolice implements PoliceStoryJavaClassHandler {
 
     public void handle(File srcFile, Class<?> clazz) {
         check(srcFile, clazz, getAssistSuffix());
         check(srcFile, clazz, getLogicSuffix());
         check(srcFile, clazz, getServiceSuffix());
-    }
-
-    protected void check(File srcFile, Class<?> clazz, String logicSuffix) {
-        if (clazz.getName().endsWith(logicSuffix) && LastaAction.class.isAssignableFrom(clazz)) {
-            throwLogicExtendsBaseActionException(srcFile, clazz, logicSuffix);
-        }
     }
 
     protected String getAssistSuffix() {
@@ -51,19 +45,24 @@ public class NonActionExtendsLastaActionPolice implements PoliceStoryJavaClassHa
         return "Service";
     }
 
+    protected void check(File srcFile, Class<?> clazz, String logicSuffix) {
+        if (clazz.getName().endsWith(logicSuffix) && LastaAction.class.isAssignableFrom(clazz)) {
+            throwLogicExtendsBaseActionException(srcFile, clazz, logicSuffix);
+        }
+    }
+
     protected void throwLogicExtendsBaseActionException(File srcFile, Class<?> clazz, String suffix) {
         final ExceptionMessageBuilder br = new ExceptionMessageBuilder();
-        br.addNotice("No no no, the " + Srl.initUncap(suffix) + " extends action.");
+        br.addNotice("No way, the " + Srl.initUncap(suffix) + " extends action.");
         br.addItem("Advice");
-        br.addElement(suffix + " cannot extend action.");
+        br.addElement(suffix + " is not Action.");
+        br.addElement("so the " + Srl.initUncap(suffix) + " cannot extend action.");
         br.addElement("For example:");
         br.addElement("  (x):");
         br.addElement("    public class Sea" + suffix + " extends LandBaseAction { // *Bad");
         br.addElement("  (o):");
         br.addElement("    public class Sea" + suffix + " { // Good");
-        br.addElement("  (o):");
-        br.addElement("    public class Sea" + suffix + " extends LandBase" + suffix + " { // Good");
-        br.addItem("Logic Class");
+        br.addItem(suffix);
         br.addElement(clazz.getName());
         br.addElement(srcFile);
         final String msg = br.buildExceptionMessage();
