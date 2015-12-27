@@ -44,7 +44,7 @@ public class WebPackageNinjaReferencePolice implements PoliceStoryJavaClassHandl
         final String myPackage = deriveMyPackage(clazz, webPackageKeyword); // e.g. sea (if sea.land.SeaLandAction)
         final String myRelativePackage = deriveMyRelativePackage(clazz, webPackageKeyword); // e.g. sea.land (if sea.land.SeaLandAction)
         new FilesystemPlayer().readLine(srcFile, "UTF-8", line -> {
-            if (line.startsWith("import ")) {
+            if (line.startsWith("import ") && !line.startsWith("import static ")) { /* static has difficult pattern */
                 final String imported = extractImported(line);
                 if (imported.contains(webPackageKeyword)) { // importing app.web class
                     final String rearImported = Srl.substringFirstRear(imported, webPackageKeyword);

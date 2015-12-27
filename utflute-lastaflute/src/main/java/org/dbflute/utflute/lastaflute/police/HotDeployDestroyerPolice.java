@@ -17,6 +17,7 @@ package org.dbflute.utflute.lastaflute.police;
 
 import java.io.File;
 import java.util.List;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -24,7 +25,6 @@ import org.dbflute.helper.message.ExceptionMessageBuilder;
 import org.dbflute.utflute.core.filesystem.FilesystemPlayer;
 import org.dbflute.utflute.core.policestory.javaclass.PoliceStoryJavaClassHandler;
 import org.dbflute.util.Srl;
-import org.lastaflute.core.util.ContainerUtil;
 import org.lastaflute.di.naming.NamingConvention;
 
 /**
@@ -32,16 +32,14 @@ import org.lastaflute.di.naming.NamingConvention;
  */
 public class HotDeployDestroyerPolice implements PoliceStoryJavaClassHandler {
 
-    protected NamingConvention namingConvention; // lazy loaded
+    protected final Function<Class<?>, Object> componentProvider;
+
+    public HotDeployDestroyerPolice(Function<Class<?>, Object> componentProvider) {
+        this.componentProvider = componentProvider;
+    }
 
     public void handle(File srcFile, Class<?> clazz) {
-        if (namingConvention == null) {
-            synchronized (this) {
-                if (namingConvention == null) {
-                    namingConvention = ContainerUtil.getComponent(NamingConvention.class);
-                }
-            }
-        }
+        final NamingConvention namingConvention = (NamingConvention) componentProvider.apply(NamingConvention.class);
         final String[] rootPackageNames = namingConvention.getRootPackageNames();
         final List<String> rootPrefixList = Stream.of(rootPackageNames).map(name -> name + ".").collect(Collectors.toList());
         final String fqcn = clazz.getName();
