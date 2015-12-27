@@ -52,7 +52,7 @@ public class NonWebHasWebReferencePolice implements PoliceStoryJavaClassHandler 
         final String webPackageKeyword = getWebPackageKeyword();
         new FilesystemPlayer().readLine(srcFile, "UTF-8", line -> {
             if (line.startsWith("import ")) {
-                final String imported = Srl.rtrim(Srl.substringFirstRear(line, "import "), ";");
+                final String imported = extractImported(line);
                 if (imported.contains(webPackageKeyword)) {
                     throwNonWebHasWebReferenceException(clazz, imported);
                 }
@@ -65,6 +65,10 @@ public class NonWebHasWebReferencePolice implements PoliceStoryJavaClassHandler 
 
     protected String getWebPackageKeyword() {
         return ".app.web.";
+    }
+
+    protected String extractImported(String line) {
+        return Srl.substringFirstFront(Srl.ltrim(Srl.substringFirstRear(line, "import "), "static "), ";");
     }
 
     protected boolean isWebComponent(String imported) {

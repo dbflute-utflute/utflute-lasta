@@ -65,7 +65,7 @@ public class WebPackageNinjaReferencePolice implements PoliceStoryJavaClassHandl
     }
 
     protected String extractImported(String line) {
-        return Srl.rtrim(Srl.substringFirstRear(line, "import "), ";");
+        return Srl.substringFirstFront(Srl.ltrim(Srl.substringFirstRear(line, "import "), "static "), ";");
     }
 
     protected boolean existsNinjaReference(Class<?> clazz, String myPackage, String myRelativePackage, String rearImported) {
