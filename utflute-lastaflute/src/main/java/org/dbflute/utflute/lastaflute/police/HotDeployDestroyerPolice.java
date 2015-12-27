@@ -76,10 +76,10 @@ public class HotDeployDestroyerPolice implements PoliceStoryJavaClassHandler {
         br.addElement("    'app' package => 'bizfw' package");
         br.addElement("    'app' package => 'dbflute' package");
         br.addElement("    'app' package => 'mylasta' package");
-        br.addItem("Source Type");
+        br.addItem("Destroyer");
         br.addElement(clazz.getName());
         br.addElement(srcFile);
-        br.addItem("Destroyer");
+        br.addItem("Destroyed");
         br.addElement(destroyer);
         final String msg = br.buildExceptionMessage();
         throw new IllegalStateException(msg);
