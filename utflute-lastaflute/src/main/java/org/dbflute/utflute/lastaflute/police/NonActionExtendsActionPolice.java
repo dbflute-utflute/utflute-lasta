@@ -47,11 +47,11 @@ public class NonActionExtendsActionPolice implements PoliceStoryJavaClassHandler
 
     protected void check(File srcFile, Class<?> clazz, String logicSuffix) {
         if (clazz.getName().endsWith(logicSuffix) && LastaAction.class.isAssignableFrom(clazz)) {
-            throwLogicExtendsBaseActionException(srcFile, clazz, logicSuffix);
+            throwLogicExtendsBaseActionException(clazz, logicSuffix);
         }
     }
 
-    protected void throwLogicExtendsBaseActionException(File srcFile, Class<?> clazz, String suffix) {
+    protected void throwLogicExtendsBaseActionException(Class<?> clazz, String suffix) {
         final ExceptionMessageBuilder br = new ExceptionMessageBuilder();
         br.addNotice("No way, the " + Srl.initUncap(suffix) + " extends action.");
         br.addItem("Advice");
@@ -64,7 +64,6 @@ public class NonActionExtendsActionPolice implements PoliceStoryJavaClassHandler
         br.addElement("    public class Sea" + suffix + " { // Good");
         br.addItem(suffix);
         br.addElement(clazz.getName());
-        br.addElement(srcFile);
         final String msg = br.buildExceptionMessage();
         throw new IllegalStateException(msg);
     }

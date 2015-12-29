@@ -41,19 +41,24 @@ public class WebPackageNinjaReferencePolice implements PoliceStoryJavaClassHandl
     }
 
     protected void check(File srcFile, Class<?> clazz, String webPackageKeyword) {
-        final String myPackage = deriveMyPackage(clazz, webPackageKeyword); // e.g. sea (if sea.land.SeaLandAction)
-        final String myRelativePackage = deriveMyRelativePackage(clazz, webPackageKeyword); // e.g. sea.land (if sea.land.SeaLandAction)
+        final String myRearName = deriveMyRearName(clazz, webPackageKeyword); // sea.land.SeaLandAction, RootAction
+        final String myPackage = Srl.substringFirstFront(myRearName, "."); // e.g. sea (if sea.land.SeaLandAction), RootAction
+        final String myRelativePackage = Srl.substringLastFront(myRearName, "."); // e.g. sea.land (if sea.land.SeaLandAction)
         new FilesystemPlayer().readLine(srcFile, "UTF-8", line -> {
             if (line.startsWith("import ") && !line.startsWith("import static ")) { /* static has difficult pattern */
                 final String imported = extractImported(line);
                 if (imported.contains(webPackageKeyword)) { // importing app.web class
                     final String rearImported = Srl.substringFirstRear(imported, webPackageKeyword);
-                    if (existsNinjaReference(clazz, myPackage, myRelativePackage, rearImported)) {
+                    if (existsNinjaReference(clazz, myRearName, myPackage, myRelativePackage, rearImported)) {
                         throwWebPackageNinjaReferenceException(clazz, imported);
                     }
                 }
             }
         });
+    }
+
+    protected String deriveMyRearName(Class<?> clazz, String webPackageKeyword) {
+        return Srl.substringFirstRear(clazz.getName(), webPackageKeyword);
     }
 
     protected String deriveMyPackage(Class<?> clazz, String webPackageKeyword) {
@@ -68,7 +73,8 @@ public class WebPackageNinjaReferencePolice implements PoliceStoryJavaClassHandl
         return Srl.substringFirstFront(Srl.ltrim(Srl.substringFirstRear(line, "import "), "static "), ";");
     }
 
-    protected boolean existsNinjaReference(Class<?> clazz, String myPackage, String myRelativePackage, String rearImported) {
+    protected boolean existsNinjaReference(Class<?> clazz, String myRearName, String myPackage, String myRelativePackage,
+            String rearImported) {
         // e.g. rearImported:
         //  o *
         //  o RootAction
@@ -86,15 +92,19 @@ public class WebPackageNinjaReferencePolice implements PoliceStoryJavaClassHandl
             if (purePackage.equals("base")) { // allowed (base is common package)
                 return false;
             }
-            String relativePackage = Srl.substringLastFront(rearImported, "."); // e.g. sea, sea.land, sea.SeaBean
-            if (relativePackage.contains(".")) { // e.g. sea.land, sea.SeaBean
-                if (Srl.isInitUpperCase(Srl.substringLastRear(relativePackage, "."))) { // e.g. sea.SeaBean
-                    relativePackage = Srl.substringLastFront(relativePackage, "."); // for inner class reference
+            if (myRearName.contains(".")) { // e.g. sea.land.SeaLandAction
+                String relativePackage = Srl.substringLastFront(rearImported, "."); // e.g. sea, sea.land, sea.SeaBean
+                if (relativePackage.contains(".")) { // e.g. sea.land, sea.SeaBean
+                    if (Srl.isInitUpperCase(Srl.substringLastRear(relativePackage, "."))) { // e.g. sea.SeaBean
+                        relativePackage = Srl.substringLastFront(relativePackage, "."); // for inner class reference
+                    }
                 }
-            }
-            if (relativePackage.startsWith(myRelativePackage) || myRelativePackage.startsWith(relativePackage)) {
-                // allowed (same or sub or parent package) e.g. a.b => a.b.c, a.b.c => a.b
-                return false;
+                if (relativePackage.startsWith(myRelativePackage) || myRelativePackage.startsWith(relativePackage)) {
+                    // allowed (same or sub or parent package) e.g. a.b => a.b.c, a.b.c => a.b
+                    return false;
+                }
+            } else { // myRearName is e.g. RootAction
+                return false; // allowed (root classes can sub package classes)
             }
             return true;
         } else { // e.g. RootAction, *

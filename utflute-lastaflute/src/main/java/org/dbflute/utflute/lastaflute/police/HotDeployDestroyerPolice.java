@@ -50,7 +50,7 @@ public class HotDeployDestroyerPolice implements PoliceStoryJavaClassHandler {
             if (line.startsWith("import ")) {
                 final String imported = extractImported(line);
                 if (rootPrefixList.stream().anyMatch(prefix -> imported.startsWith(prefix))) {
-                    throwHotDeployDestroyerException(srcFile, clazz, imported);
+                    throwHotDeployDestroyerException(clazz, imported);
                 }
             }
         });
@@ -60,7 +60,7 @@ public class HotDeployDestroyerPolice implements PoliceStoryJavaClassHandler {
         return Srl.substringFirstFront(Srl.ltrim(Srl.substringFirstRear(line, "import "), "static "), ";");
     }
 
-    protected void throwHotDeployDestroyerException(File srcFile, Class<?> clazz, Object destroyer) {
+    protected void throwHotDeployDestroyerException(Class<?> clazz, Object destroyer) {
         final ExceptionMessageBuilder br = new ExceptionMessageBuilder();
         br.addNotice("HotDeploy destroyer is here.");
         br.addItem("Advice");
@@ -78,7 +78,6 @@ public class HotDeployDestroyerPolice implements PoliceStoryJavaClassHandler {
         br.addElement("    'app' package => 'mylasta' package");
         br.addItem("Destroyer");
         br.addElement(clazz.getName());
-        br.addElement(srcFile);
         br.addItem("Destroyed");
         br.addElement(destroyer);
         final String msg = br.buildExceptionMessage();
