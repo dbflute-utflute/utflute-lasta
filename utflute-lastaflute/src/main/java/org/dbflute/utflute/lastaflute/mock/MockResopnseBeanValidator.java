@@ -35,26 +35,34 @@ public class MockResopnseBeanValidator {
         this.requestManager = requestManager;
     }
 
-    public Map<String, Object> validateHtmlData(HtmlResponse response) {
+    public TestingHtmlData validateHtmlData(HtmlResponse response) {
         final RenderData data = new RenderData();
         response.getRegistrationList().forEach(reg -> reg.register(data));
         final Map<String, Object> dataMap = data.getDataMap();
         final ResponseHtmlBeanValidator validator = createResponseHtmlBeanValidator(response);
         dataMap.forEach((key, value) -> validator.validate(key, value));
-        return dataMap;
+        return createTestingHtmlData(dataMap);
     }
 
     protected ResponseHtmlBeanValidator createResponseHtmlBeanValidator(HtmlResponse response) {
         return new ResponseHtmlBeanValidator(requestManager, this, false, response);
     }
 
-    public <BEAN> BEAN validateJsonBean(JsonResponse<BEAN> response) {
+    protected TestingHtmlData createTestingHtmlData(Map<String, Object> dataMap) {
+        return new TestingHtmlData(dataMap);
+    }
+
+    public <BEAN> TestingJsonData<BEAN> validateJsonBean(JsonResponse<BEAN> response) {
         final BEAN jsonBean = response.getJsonBean();
         createResponseJsonBeanValidator(response).validate(jsonBean);
-        return jsonBean;
+        return createTestingJsonBean(jsonBean);
     }
 
     protected <BEAN> ResponseJsonBeanValidator createResponseJsonBeanValidator(JsonResponse<BEAN> response) {
         return new ResponseJsonBeanValidator(requestManager, this, false, response);
+    }
+
+    protected <BEAN> TestingJsonData<BEAN> createTestingJsonBean(BEAN jsonBean) {
+        return new TestingJsonData<BEAN>(jsonBean);
     }
 }

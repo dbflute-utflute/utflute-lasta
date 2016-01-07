@@ -17,7 +17,6 @@ package org.dbflute.utflute.lastaflute;
 
 import java.util.Date;
 import java.util.Enumeration;
-import java.util.Map;
 
 import javax.annotation.Resource;
 import javax.servlet.FilterConfig;
@@ -31,6 +30,8 @@ import org.dbflute.utflute.lastadi.ContainerTestCase;
 import org.dbflute.utflute.lastaflute.document.DocumentGenerator;
 import org.dbflute.utflute.lastaflute.mock.MockResopnseBeanValidator;
 import org.dbflute.utflute.lastaflute.mock.MockRuntimeFactory;
+import org.dbflute.utflute.lastaflute.mock.TestingHtmlData;
+import org.dbflute.utflute.lastaflute.mock.TestingJsonData;
 import org.dbflute.utflute.mocklet.MockletHttpServletRequest;
 import org.dbflute.utflute.mocklet.MockletHttpServletRequestImpl;
 import org.dbflute.utflute.mocklet.MockletHttpServletResponse;
@@ -399,11 +400,11 @@ public abstract class WebContainerTestCase extends ContainerTestCase {
     // ===================================================================================
     //                                                                 Web Result Handling
     //                                                                 ===================
-    protected Map<String, Object> validateHtmlData(HtmlResponse response) {
+    protected TestingHtmlData validateHtmlData(HtmlResponse response) {
         return new MockResopnseBeanValidator(requestManager).validateHtmlData(response);
     }
 
-    protected <BEAN> BEAN validateJsonBean(JsonResponse<BEAN> response) {
+    protected <BEAN> TestingJsonData<BEAN> validateJsonData(JsonResponse<BEAN> response) {
         return new MockResopnseBeanValidator(requestManager).validateJsonBean(response);
     }
 
