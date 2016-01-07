@@ -17,6 +17,7 @@ package org.dbflute.utflute.lastaflute;
 
 import java.util.Date;
 import java.util.Enumeration;
+import java.util.Map;
 
 import javax.annotation.Resource;
 import javax.servlet.FilterConfig;
@@ -27,6 +28,7 @@ import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpServletRequest;
 
 import org.dbflute.utflute.lastadi.ContainerTestCase;
+import org.dbflute.utflute.lastaflute.mock.MockResopnseBeanValidator;
 import org.dbflute.utflute.lastaflute.mock.MockRuntimeFactory;
 import org.dbflute.utflute.mocklet.MockletHttpServletRequest;
 import org.dbflute.utflute.mocklet.MockletHttpServletRequestImpl;
@@ -47,7 +49,10 @@ import org.lastaflute.di.core.ExternalContext;
 import org.lastaflute.di.core.LaContainer;
 import org.lastaflute.di.core.factory.SingletonLaContainerFactory;
 import org.lastaflute.web.LastaFilter;
+import org.lastaflute.web.response.HtmlResponse;
+import org.lastaflute.web.response.JsonResponse;
 import org.lastaflute.web.ruts.process.ActionRuntime;
+import org.lastaflute.web.servlet.request.RequestManager;
 
 /**
  * @author jflute
@@ -77,6 +82,8 @@ public abstract class WebContainerTestCase extends ContainerTestCase {
     private FwAssistantDirector assistantDirector;
     @Resource
     private TimeManager timeManager;
+    @Resource
+    private RequestManager requestManager;
 
     // ===================================================================================
     //                                                                            Settings
@@ -155,8 +162,8 @@ public abstract class WebContainerTestCase extends ContainerTestCase {
     }
 
     // ===================================================================================
-    //                                                                     Seasar Handling
-    //                                                                     ===============
+    //                                                                   Lasts Di Handling
+    //                                                                   =================
     // -----------------------------------------------------
     //                                            Initialize
     //                                            ----------
@@ -361,9 +368,9 @@ public abstract class WebContainerTestCase extends ContainerTestCase {
         }
     }
 
-    // ===================================================================================
-    //                                                                            Accessor
-    //                                                                            ========
+    // -----------------------------------------------------
+    //                                     Internal Resource
+    //                                     -----------------
     protected static MockletServletConfig xgetCachedServletConfig() {
         return _xcachedServletConfig;
     }
@@ -386,5 +393,16 @@ public abstract class WebContainerTestCase extends ContainerTestCase {
 
     protected void xsetMockResponse(MockletHttpServletResponse xmockResponse) {
         _xmockResponse = xmockResponse;
+    }
+
+    // ===================================================================================
+    //                                                                 Web Result Handling
+    //                                                                 ===================
+    protected Map<String, Object> validateHtmlData(HtmlResponse response) {
+        return new MockResopnseBeanValidator(requestManager).validateHtmlData(response);
+    }
+
+    protected <BEAN> BEAN validateJsonBean(JsonResponse<BEAN> response) {
+        return new MockResopnseBeanValidator(requestManager).validateJsonBean(response);
     }
 }

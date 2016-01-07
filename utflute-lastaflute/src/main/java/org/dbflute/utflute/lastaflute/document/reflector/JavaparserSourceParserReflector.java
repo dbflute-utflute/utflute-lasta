@@ -13,7 +13,7 @@
  * either express or implied. See the License for the specific language
  * governing permissions and limitations under the License.
  */
-package org.dbflute.utflute.core.document.reflector;
+package org.dbflute.utflute.lastaflute.document.reflector;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -30,8 +30,8 @@ import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 import org.dbflute.optional.OptionalThing;
-import org.dbflute.utflute.core.document.meta.ActionDocMeta;
-import org.dbflute.utflute.core.document.meta.TypeDocMeta;
+import org.dbflute.utflute.lastaflute.document.meta.ActionDocMeta;
+import org.dbflute.utflute.lastaflute.document.meta.TypeDocMeta;
 import org.dbflute.util.DfCollectionUtil;
 import org.dbflute.util.DfStringUtil;
 
