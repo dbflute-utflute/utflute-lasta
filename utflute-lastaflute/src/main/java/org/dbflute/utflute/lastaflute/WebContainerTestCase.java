@@ -28,6 +28,7 @@ import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpServletRequest;
 
 import org.dbflute.utflute.lastadi.ContainerTestCase;
+import org.dbflute.utflute.lastaflute.document.DocumentGenerator;
 import org.dbflute.utflute.lastaflute.mock.MockResopnseBeanValidator;
 import org.dbflute.utflute.lastaflute.mock.MockRuntimeFactory;
 import org.dbflute.utflute.mocklet.MockletHttpServletRequest;
@@ -404,5 +405,16 @@ public abstract class WebContainerTestCase extends ContainerTestCase {
 
     protected <BEAN> BEAN validateJsonBean(JsonResponse<BEAN> response) {
         return new MockResopnseBeanValidator(requestManager).validateJsonBean(response);
+    }
+
+    // ===================================================================================
+    //                                                                           Lasta Doc
+    //                                                                           =========
+    protected void saveLastaDocMeta() {
+        createDocumentGenerator().saveLastaDocMeta();
+    }
+
+    protected DocumentGenerator createDocumentGenerator() {
+        return new DocumentGenerator();
     }
 }
