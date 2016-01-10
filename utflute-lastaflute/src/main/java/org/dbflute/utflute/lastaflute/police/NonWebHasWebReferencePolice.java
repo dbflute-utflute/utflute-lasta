@@ -38,10 +38,15 @@ public class NonWebHasWebReferencePolice implements PoliceStoryJavaClassHandler 
 
     public void handle(File srcFile, Class<?> clazz) {
         check(srcFile, clazz, getLogicKeyword());
+        check(srcFile, clazz, getJobKeyword());
     }
 
     protected String getLogicKeyword() {
         return ".app.logic.";
+    }
+
+    protected String getJobKeyword() {
+        return ".app.job.";
     }
 
     protected void check(File srcFile, Class<?> clazz, String packageKeyword) {
@@ -99,7 +104,7 @@ public class NonWebHasWebReferencePolice implements PoliceStoryJavaClassHandler 
         br.addElement("            ...");
         br.addElement("        }");
         br.addElement("    }");
-        br.addItem("Logic");
+        br.addItem("Non-Web Object");
         br.addElement(componentType);
         br.addItem("Web Reference");
         br.addElement(target);

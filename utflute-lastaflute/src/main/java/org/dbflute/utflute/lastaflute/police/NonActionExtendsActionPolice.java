@@ -31,6 +31,7 @@ public class NonActionExtendsActionPolice implements PoliceStoryJavaClassHandler
         check(srcFile, clazz, getAssistSuffix());
         check(srcFile, clazz, getLogicSuffix());
         check(srcFile, clazz, getServiceSuffix());
+        check(srcFile, clazz, getJobSuffix());
     }
 
     protected String getAssistSuffix() {
@@ -45,9 +46,13 @@ public class NonActionExtendsActionPolice implements PoliceStoryJavaClassHandler
         return "Service";
     }
 
-    protected void check(File srcFile, Class<?> clazz, String logicSuffix) {
-        if (clazz.getName().endsWith(logicSuffix) && LastaAction.class.isAssignableFrom(clazz)) {
-            throwLogicExtendsBaseActionException(clazz, logicSuffix);
+    protected String getJobSuffix() {
+        return "Job";
+    }
+
+    protected void check(File srcFile, Class<?> clazz, String suffix) {
+        if (clazz.getName().endsWith(suffix) && LastaAction.class.isAssignableFrom(clazz)) {
+            throwLogicExtendsBaseActionException(clazz, suffix);
         }
     }
 
