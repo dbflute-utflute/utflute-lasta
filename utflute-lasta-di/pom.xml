@@ -5,7 +5,7 @@
 	<parent>
 		<groupId>org.dbflute.utflute</groupId>
 		<artifactId>utflute-base</artifactId>
-		<version>0.6.0E</version>
+		<version>0.6.0F-A-SNAPSHOT</version>
 	</parent>
 	<artifactId>utflute-lasta-di</artifactId>
 	<packaging>jar</packaging>
