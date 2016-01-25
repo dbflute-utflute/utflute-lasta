@@ -89,7 +89,7 @@ public class WebPackageNinjaReferencePolice implements PoliceStoryJavaClassHandl
                 return false;
             }
             final String purePackage = Srl.substringFirstFront(rearImported, "."); // e.g. base, sea
-            if (purePackage.equals("base")) { // allowed (base is common package)
+            if (isCommonPackage(purePackage)) {
                 return false;
             }
             if (myRearName.contains(".")) { // e.g. sea.land.SeaLandAction
@@ -112,6 +112,10 @@ public class WebPackageNinjaReferencePolice implements PoliceStoryJavaClassHandl
         }
     }
 
+    protected boolean isCommonPackage(String purePackage) {
+        return purePackage.equals("common") || purePackage.equals("base"); // allowed (base is common package)
+    }
+
     protected void throwWebPackageNinjaReferenceException(Class<?> targetType, Object reference) {
         final ExceptionMessageBuilder br = new ExceptionMessageBuilder();
         br.addNotice("Ninja reference in web package.");
@@ -123,6 +127,7 @@ public class WebPackageNinjaReferencePolice implements PoliceStoryJavaClassHandl
         br.addElement("  (o):");
         br.addElement("    app.web.land.LandAction refers app.web.land.LandForm");
         br.addElement("    app.web.land.LandAction refers app.web.base.sea.SeaForm");
+        br.addElement("    app.web.land.LandAction refers app.web.common.sea.SeaForm");
         br.addItem("Source Type");
         br.addElement(targetType.getName());
         br.addItem("Ninja Reference");
