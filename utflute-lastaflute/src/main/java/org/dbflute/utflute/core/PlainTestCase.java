@@ -23,6 +23,7 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Date;
 import java.util.HashMap;
@@ -212,7 +213,7 @@ public abstract class PlainTestCase extends TestCase {
      * assertContains(str, "Foo"); <span style="color: #3F7E5E">// false</span>
      * </pre>
      * @param str The string to assert. (NotNull)
-     * @param keyword The keyword string. (NotNull) 
+     * @param keyword The keyword string. (NotNull)
      */
     protected void assertContains(String str, String keyword) {
         if (!Srl.contains(str, keyword)) {
@@ -232,7 +233,7 @@ public abstract class PlainTestCase extends TestCase {
      * assertContains(str, "ux"); <span style="color: #3F7E5E">// false</span>
      * </pre>
      * @param str The string to assert. (NotNull)
-     * @param keyword The keyword string. (NotNull) 
+     * @param keyword The keyword string. (NotNull)
      */
     protected void assertContainsIgnoreCase(String str, String keyword) {
         if (!Srl.containsIgnoreCase(str, keyword)) {
@@ -251,7 +252,7 @@ public abstract class PlainTestCase extends TestCase {
      * assertContains(str, "fx", "oo"); <span style="color: #3F7E5E">// false</span>
      * </pre>
      * @param str The string to assert. (NotNull)
-     * @param keywords The array of keyword string. (NotNull) 
+     * @param keywords The array of keyword string. (NotNull)
      */
     protected void assertContainsAll(String str, String... keywords) {
         if (!Srl.containsAll(str, keywords)) {
@@ -270,7 +271,7 @@ public abstract class PlainTestCase extends TestCase {
      * assertContains(str, "fx", "oo"); <span style="color: #3F7E5E">// false</span>
      * </pre>
      * @param str The string to assert. (NotNull)
-     * @param keywords The array of keyword string. (NotNull) 
+     * @param keywords The array of keyword string. (NotNull)
      */
     protected void assertContainsAllIgnoreCase(String str, String... keywords) {
         if (!Srl.containsAllIgnoreCase(str, keywords)) {
@@ -290,7 +291,7 @@ public abstract class PlainTestCase extends TestCase {
      * assertContains(str, "fx", "ux"); <span style="color: #3F7E5E">// false</span>
      * </pre>
      * @param str The string to assert. (NotNull)
-     * @param keywords The array of keyword string. (NotNull) 
+     * @param keywords The array of keyword string. (NotNull)
      */
     protected void assertContainsAny(String str, String... keywords) {
         if (!Srl.containsAny(str, keywords)) {
@@ -310,7 +311,7 @@ public abstract class PlainTestCase extends TestCase {
      * assertContains(str, "fx", "ux"); <span style="color: #3F7E5E">// false</span>
      * </pre>
      * @param str The string to assert. (NotNull)
-     * @param keywords The array of keyword string. (NotNull) 
+     * @param keywords The array of keyword string. (NotNull)
      */
     protected void assertContainsAnyIgnoreCase(String str, String... keywords) {
         if (!Srl.containsAnyIgnoreCase(str, keywords)) {
@@ -330,7 +331,7 @@ public abstract class PlainTestCase extends TestCase {
      * assertNotContains(str, "foo"); <span style="color: #3F7E5E">// false</span>
      * </pre>
      * @param str The string to assert. (NotNull)
-     * @param keyword The keyword string. (NotNull) 
+     * @param keyword The keyword string. (NotNull)
      */
     protected void assertNotContains(String str, String keyword) {
         if (Srl.contains(str, keyword)) {
@@ -350,7 +351,7 @@ public abstract class PlainTestCase extends TestCase {
      * assertContains(str, "foo"); <span style="color: #3F7E5E">// false</span>
      * </pre>
      * @param str The string to assert. (NotNull)
-     * @param keyword The keyword string. (NotNull) 
+     * @param keyword The keyword string. (NotNull)
      */
     protected void assertNotContainsIgnoreCase(String str, String keyword) {
         if (Srl.containsIgnoreCase(str, keyword)) {
@@ -373,7 +374,7 @@ public abstract class PlainTestCase extends TestCase {
      * assertContainsKeyword(strList, "ux"); <span style="color: #3F7E5E">// false</span>
      * </pre>
      * @param strList The list of string. (NotNull)
-     * @param keyword The keyword string. (NotNull) 
+     * @param keyword The keyword string. (NotNull)
      */
     protected void assertContainsKeyword(Collection<String> strList, String keyword) {
         if (!Srl.containsKeyword(strList, keyword)) {
@@ -390,7 +391,7 @@ public abstract class PlainTestCase extends TestCase {
      * assertContainsKeyword(strList, "fo", "ux", "foo"); <span style="color: #3F7E5E">// false</span>
      * </pre>
      * @param strList The list of string. (NotNull)
-     * @param keywords The array of keyword string. (NotNull) 
+     * @param keywords The array of keyword string. (NotNull)
      */
     protected void assertContainsKeywordAll(Collection<String> strList, String... keywords) {
         if (!Srl.containsKeywordAll(strList, keywords)) {
@@ -407,7 +408,7 @@ public abstract class PlainTestCase extends TestCase {
      * assertContainsKeyword(strList, "fo", "ux", "foo"); <span style="color: #3F7E5E">// false</span>
      * </pre>
      * @param strList The list of string. (NotNull)
-     * @param keywords The array of keyword string. (NotNull) 
+     * @param keywords The array of keyword string. (NotNull)
      */
     protected void assertContainsKeywordAllIgnoreCase(Collection<String> strList, String... keywords) {
         if (!Srl.containsKeywordAllIgnoreCase(strList, keywords)) {
@@ -424,7 +425,7 @@ public abstract class PlainTestCase extends TestCase {
      * assertContainsKeyword(strList, "Fo", "ux", "qux"); <span style="color: #3F7E5E">// false</span>
      * </pre>
      * @param strList The list of string. (NotNull)
-     * @param keywords The array of keyword string. (NotNull) 
+     * @param keywords The array of keyword string. (NotNull)
      */
     protected void assertContainsKeywordAny(Collection<String> strList, String... keywords) {
         if (!Srl.containsKeywordAny(strList, keywords)) {
@@ -442,7 +443,7 @@ public abstract class PlainTestCase extends TestCase {
      * assertContainsKeyword(strList, "po", "ux", "qux"); <span style="color: #3F7E5E">// false</span>
      * </pre>
      * @param strList The list of string. (NotNull)
-     * @param keywords The array of keyword string. (NotNull) 
+     * @param keywords The array of keyword string. (NotNull)
      */
     protected void assertContainsKeywordAnyIgnoreCase(Collection<String> strList, String... keywords) {
         if (!Srl.containsKeywordAnyIgnoreCase(strList, keywords)) {
@@ -495,7 +496,7 @@ public abstract class PlainTestCase extends TestCase {
      * String str = null;
      * assertException(NullPointerException.class, () <span style="color: #90226C; font-weight: bold"><span style="font-size: 120%">-</span>&gt;</span> str.toString());
      * </pre>
-     * @param exceptionType The expected exception type. (NotNull) 
+     * @param exceptionType The expected exception type. (NotNull)
      * @param noArgInLambda The callback for calling methods that should throw the exception. (NotNull)
      */
     protected void assertException(Class<?> exceptionType, ExceptionExaminer noArgInLambda) {
@@ -590,7 +591,7 @@ public abstract class PlainTestCase extends TestCase {
      * Member member = ...;
      * <span style="color: #FD4747">log</span>(member.getMemberName(), member.getBirthdate());
      * <span style="color: #3F7E5E">// -&gt; Stojkovic, 1965/03/03</span>
-     * 
+     *
      * Exception e = ...;
      * <span style="color: #FD4747">log</span>(member.getMemberName(), member.getBirthdate(), e);
      * <span style="color: #3F7E5E">// -&gt; Stojkovic, 1965/03/03</span>
@@ -868,7 +869,7 @@ public abstract class PlainTestCase extends TestCase {
 
     /**
      * Perform the process in new transaction (even if the transaction has already been begun). <br>
-     * You can select commit or roll-back by returned value of the callback method. 
+     * You can select commit or roll-back by returned value of the callback method.
      * <pre>
      * performNewTransaction(new TransactionPerformer() {
      *     public boolean perform() { <span style="color: #3F7E5E">// transaction scope</span>
@@ -1155,11 +1156,25 @@ public abstract class PlainTestCase extends TestCase {
     }
 
     /**
-     * Get the directory object of the (application or Eclipse) project. (default: target/test-classes/../../)
+     * Get the directory object of the (application or Eclipse) project.
      * @return The file object of the directory. (NotNull)
      */
     protected File getProjectDir() { // customize point #extPoint
-        return getTestCaseBuildDir().getParentFile().getParentFile(); // target/test-classes/../../
+        for (File dir = getTestCaseBuildDir(); dir != null; dir = dir.getParentFile()) {
+            if (dir.isDirectory() && Arrays.stream(dir.listFiles()).anyMatch(
+                    file -> getProjectDirMarkFileNameList().contains(file.getName()))) {
+                return dir;
+            }
+        }
+        return getTestCaseBuildDir().getParentFile();
+    }
+
+    /**
+     * Get the mark file name list of the (application or Eclipse) project.
+     * @return the mark file name list of the project. (NotNull)
+     */
+    protected List<String> getProjectDirMarkFileNameList() {
+        return Arrays.asList("build.xml", "pom.xml", "build.gradle", ".project", ".idea");
     }
 
     /**
