@@ -54,7 +54,29 @@ public class NonWebHasWebReferencePolice implements PoliceStoryJavaClassHandler 
             return;
         }
         // checked when also creator process so only small check here
-        final String webPackageKeyword = getWebPackageKeyword();
+        doCheck(srcFile, clazz, getAppWebPackageKeyword());
+        doCheck(srcFile, clazz, getBizfwWebPackageKeyword());
+        doCheck(srcFile, clazz, getMylastaWebPackageKeyword());
+        doCheck(srcFile, clazz, getWebClsPackageKeyword());
+    }
+
+    protected String getAppWebPackageKeyword() {
+        return ".app.web.";
+    }
+
+    protected String getBizfwWebPackageKeyword() {
+        return ".bizfw.web.";
+    }
+
+    protected String getMylastaWebPackageKeyword() {
+        return ".mylasta.web.";
+    }
+
+    protected String getWebClsPackageKeyword() {
+        return ".mylasta.webcls.";
+    }
+
+    protected void doCheck(File srcFile, Class<?> clazz, final String webPackageKeyword) {
         new FilesystemPlayer().readLine(srcFile, "UTF-8", line -> {
             if (line.startsWith("import ")) {
                 final String imported = extractImported(line);
@@ -66,10 +88,6 @@ public class NonWebHasWebReferencePolice implements PoliceStoryJavaClassHandler 
                 }
             }
         });
-    }
-
-    protected String getWebPackageKeyword() {
-        return ".app.web.";
     }
 
     protected String extractImported(String line) {

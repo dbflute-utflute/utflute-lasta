@@ -5,7 +5,7 @@
 	<parent>
 		<groupId>org.dbflute.utflute</groupId>
 		<artifactId>utflute-base</artifactId>
-		<version>0.6.0F</version>
+		<version>0.6.1A-RC1</version>
 	</parent>
 	<artifactId>utflute-lastaflute</artifactId>
 	<packaging>jar</packaging>
@@ -21,7 +21,7 @@
 		<dependency>
 			<groupId>org.lastaflute</groupId>
 			<artifactId>lastaflute</artifactId>
-			<version>0.8.1</version>
+			<version>0.8.3</version>
 		</dependency>
 		<dependency>
 		    <groupId>com.github.javaparser</groupId>

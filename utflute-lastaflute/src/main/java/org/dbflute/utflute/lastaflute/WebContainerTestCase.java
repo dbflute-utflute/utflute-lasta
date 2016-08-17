@@ -43,6 +43,7 @@ import org.dbflute.utflute.mocklet.MockletServletContext;
 import org.dbflute.utflute.mocklet.MockletServletContextImpl;
 import org.lastaflute.core.direction.FwAssistantDirector;
 import org.lastaflute.core.direction.FwCoreDirection;
+import org.lastaflute.core.json.JsonManager;
 import org.lastaflute.core.magic.ThreadCacheContext;
 import org.lastaflute.core.magic.TransactionTimeContext;
 import org.lastaflute.core.time.TimeManager;
@@ -84,6 +85,8 @@ public abstract class WebContainerTestCase extends ContainerTestCase {
     private FwAssistantDirector assistantDirector;
     @Resource
     private TimeManager timeManager;
+    @Resource
+    private JsonManager jsonManager;
     @Resource
     private RequestManager requestManager;
 
@@ -400,6 +403,12 @@ public abstract class WebContainerTestCase extends ContainerTestCase {
     // ===================================================================================
     //                                                                 Web Result Handling
     //                                                                 ===================
+    protected void showJson(JsonResponse<?> response) {
+        Object jsonBean = response.getJsonBean();
+        String json = jsonManager.toJson(jsonBean);
+        log("JsonResponse:" + ln() + json);
+    }
+
     protected TestingHtmlData validateHtmlData(HtmlResponse response) {
         return new MockResopnseBeanValidator(requestManager).validateHtmlData(response);
     }

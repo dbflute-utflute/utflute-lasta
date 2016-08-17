@@ -229,8 +229,14 @@ public abstract class InjectionTestCase extends PlainTestCase {
     protected ComponentBinder createTestCaseComponentBinder() { // customize point #extPoint
         final ComponentBinder binder = xcreateBasicComponentBinder();
         binder.stopBindingAtSuper(InjectionTestCase.class);
-        binder.looseBinding();
+        if (isAllowTestCaseLooseBinding()) {
+            binder.looseBinding();
+        }
         return binder;
+    }
+
+    protected boolean isAllowTestCaseLooseBinding() {
+        return false;
     }
 
     /**

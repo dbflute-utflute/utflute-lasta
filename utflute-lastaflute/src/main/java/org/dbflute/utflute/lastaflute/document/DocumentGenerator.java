@@ -105,7 +105,8 @@ public class DocumentGenerator {
     //                                                                         ===========
     public DocumentGenerator() {
         this.srcDirList = DfCollectionUtil.newArrayList();
-        String commonDir = "../" + new File(".").getAbsoluteFile().getParentFile().getName().replaceAll("-.*", "-common") + "/" + SRC_DIR;
+        final String commonDir =
+                "../" + new File(".").getAbsoluteFile().getParentFile().getName().replaceAll("-.*", "-common") + "/" + SRC_DIR;
         if (new File(commonDir).exists()) {
             this.srcDirList.add(commonDir);
         }
@@ -171,13 +172,13 @@ public class DocumentGenerator {
     //                                    Generate Meta List
     //                                    ------------------
     public List<ActionDocMeta> generateActionDocMetaList() {
-        List<String> actionComponentNameList = findActionComponentNameList();
-        List<ActionDocMeta> list = DfCollectionUtil.newArrayList();
-        ModuleConfig moduleConfig = LaModuleConfigUtil.getModuleConfig();
+        final List<String> actionComponentNameList = findActionComponentNameList();
+        final List<ActionDocMeta> metaList = DfCollectionUtil.newArrayList();
+        final ModuleConfig moduleConfig = LaModuleConfigUtil.getModuleConfig();
         actionComponentNameList.forEach(componentName -> {
             moduleConfig.findActionMapping(componentName).alwaysPresent(actionMapping -> {
-                Class<?> actionClass = actionMapping.getActionDef().getComponentClass();
-                List<Method> methodList = DfCollectionUtil.newArrayList();
+                final Class<?> actionClass = actionMapping.getActionDef().getComponentClass();
+                final List<Method> methodList = DfCollectionUtil.newArrayList();
                 sourceParserReflector.ifPresent(sourceParserReflector -> {
                     methodList.addAll(sourceParserReflector.getMethodListOrderByDefinition(actionClass));
                 });
@@ -192,14 +193,13 @@ public class DocumentGenerator {
                     if (method.getAnnotation(Execute.class) != null) {
                         ActionExecute actionExecute = actionMapping.getActionExecute(method);
                         if (actionExecute != null && !suppressActionExecute(actionExecute)) {
-                            list.add(createActionDocMeta(actionMapping.getActionExecute(method)));
+                            metaList.add(createActionDocMeta(actionMapping.getActionExecute(method)));
                         }
                     }
                 });
             });
         });
-
-        return list;
+        return metaList;
     }
 
     protected boolean suppressActionExecute(ActionExecute actionExecute) {
@@ -210,8 +210,8 @@ public class DocumentGenerator {
     //                                 Find Action Component
     //                                 ---------------------
     protected List<String> findActionComponentNameList() {
-        List<String> componentNameList = DfCollectionUtil.newArrayList();
-        LaContainer container = SingletonLaContainerFactory.getContainer().getRoot();
+        final List<String> componentNameList = DfCollectionUtil.newArrayList();
+        final LaContainer container = SingletonLaContainerFactory.getContainer().getRoot();
 
         srcDirList.forEach(srcDir -> {
             if (Paths.get(srcDir).toFile().exists()) {
@@ -225,26 +225,25 @@ public class DocumentGenerator {
                             className = className.substring(1);
                         }
                         className = DfStringUtil.substringLastFront(className, ".java").replace(File.separatorChar, '.');
-                        Class<?> clazz = DfReflectionUtil.forName(className);
-
+                        final Class<?> clazz = DfReflectionUtil.forName(className);
                         if (clazz.isInterface() || Modifier.isAbstract(clazz.getModifiers())) {
                             return;
                         }
 
-                        String componentName = container.getComponentDef(clazz).getComponentName();
+                        final String componentName = container.getComponentDef(clazz).getComponentName();
                         if (componentName != null && !componentNameList.contains(componentName)) {
                             componentNameList.add(componentName);
                         }
                     });
                 } catch (IOException e) {
-                    throw new RuntimeException(e);
+                    throw new IllegalStateException("Failed to find the components: " + srcDir, e);
                 }
             }
         });
 
         IntStream.range(0, container.getComponentDefSize()).forEach(index -> {
-            ComponentDef componentDef = container.getComponentDef(index);
-            String componentName = componentDef.getComponentName();
+            final ComponentDef componentDef = container.getComponentDef(index);
+            final String componentName = componentDef.getComponentName();
             if (componentName.endsWith("Action") && !componentNameList.contains(componentName)) {
                 componentNameList.add(componentDef.getComponentName());
             }
@@ -256,28 +255,28 @@ public class DocumentGenerator {
     //                                      Create ActionDoc
     //                                      ----------------
     protected ActionDocMeta createActionDocMeta(ActionExecute execute) {
-        Class<?> componentClass = execute.getActionMapping().getActionDef().getComponentClass();
-        ActionDocMeta actionDocMeta = new ActionDocMeta();
-        UrlChain urlChain = new UrlChain(componentClass);
-        String urlPattern = execute.getPreparedUrlPattern().getUrlPattern();
+        final Class<?> componentClass = execute.getActionMapping().getActionDef().getComponentClass();
+        final ActionDocMeta actionDocMeta = new ActionDocMeta();
+        final UrlChain urlChain = new UrlChain(componentClass);
+        final String urlPattern = execute.getPreparedUrlPattern().getResolvedUrlPattern();
         if (!"index".equals(urlPattern)) {
             urlChain.moreUrl(urlPattern);
         }
 
         actionDocMeta.setUrl(getActionPathResolver().toActionUrl(componentClass, urlChain));
-        Method method = execute.getExecuteMethod();
+        final Method method = execute.getExecuteMethod();
         actionDocMeta.setTypeName(adjustTypeName(method.getDeclaringClass()));
         actionDocMeta.setSimpleTypeName(adjustSimpleTypeName(method.getDeclaringClass()));
         actionDocMeta.setMethodName(method.getName());
 
-        List<Annotation> annotationList = DfCollectionUtil.newArrayList();
+        final List<Annotation> annotationList = DfCollectionUtil.newArrayList();
         annotationList.addAll(Arrays.asList(method.getDeclaringClass().getAnnotations()));
         annotationList.addAll(Arrays.asList(method.getAnnotations()));
         actionDocMeta.setAnnotationList(analyzeAnnotationList(annotationList));
 
         for (int i = 0; i < method.getParameters().length; i++) {
-            Parameter parameter = method.getParameters()[i];
-            StringBuilder builder = new StringBuilder();
+            final Parameter parameter = method.getParameters()[i];
+            final StringBuilder builder = new StringBuilder();
             builder.append("{").append(parameter.getName()).append(":");
             builder.append(adjustSimpleTypeName(parameter.getParameterizedType())).append("}");
             actionDocMeta.setUrl(actionDocMeta.getUrl().replaceFirst("\\{\\}", builder.toString()));
@@ -308,12 +307,12 @@ public class DocumentGenerator {
     //                                    ------------------
     protected List<String> analyzeAnnotationList(List<Annotation> annotationList) {
         return annotationList.stream().map(annotation -> {
-            Class<? extends Annotation> annotationType = annotation.annotationType();
-            String typeName = adjustSimpleTypeName(annotationType);
+            final Class<? extends Annotation> annotationType = annotation.annotationType();
+            final String typeName = adjustSimpleTypeName(annotationType);
 
-            Map<String, Object> methodMap = Arrays.stream(annotationType.getDeclaredMethods()).filter(method -> {
-                Object value = DfReflectionUtil.invoke(method, annotation, (Object[]) null);
-                Object defaultValue = method.getDefaultValue();
+            final Map<String, Object> methodMap = Arrays.stream(annotationType.getDeclaredMethods()).filter(method -> {
+                final Object value = DfReflectionUtil.invoke(method, annotation, (Object[]) null);
+                final Object defaultValue = method.getDefaultValue();
                 if (Objects.equals(value, defaultValue)) {
                     return false;
                 }
@@ -326,11 +325,11 @@ public class DocumentGenerator {
             }, value -> {
                 Object data = DfReflectionUtil.invoke(value, annotation, (Object[]) null);
                 if (data != null && data.getClass().isArray()) {
-                    List<?> list = Arrays.asList((Object[]) data);
-                    if (list.isEmpty()) {
+                    final List<?> dataList = Arrays.asList((Object[]) data);
+                    if (dataList.isEmpty()) {
                         return "";
                     }
-                    data = list.stream().map(o -> {
+                    data = dataList.stream().map(o -> {
                         return o instanceof Class<?> ? adjustSimpleTypeName(((Class<?>) o)) : o;
                     }).collect(Collectors.toList());
                 }
@@ -348,7 +347,7 @@ public class DocumentGenerator {
     //                                          Analyze Form
     //                                          ------------
     protected TypeDocMeta analyzeFormClass(ActionFormMeta actionFormMeta) {
-        TypeDocMeta typeDocMeta = new TypeDocMeta();
+        final TypeDocMeta typeDocMeta = new TypeDocMeta();
         actionFormMeta.getListFormParameterParameterizedType().ifPresent(type -> {
             typeDocMeta.setTypeName(adjustTypeName(type));
             typeDocMeta.setSimpleTypeName(adjustSimpleTypeName(type));
@@ -356,7 +355,7 @@ public class DocumentGenerator {
             typeDocMeta.setTypeName(adjustTypeName(actionFormMeta.getFormType()));
             typeDocMeta.setSimpleTypeName(adjustSimpleTypeName(actionFormMeta.getFormType()));
         });
-        Class<?> formType = actionFormMeta.getListFormParameterGenericType().orElse(actionFormMeta.getFormType());
+        final Class<?> formType = actionFormMeta.getListFormParameterGenericType().orElse(actionFormMeta.getFormType());
         typeDocMeta.setNestTypeDocMetaList(prepareTypeDocMetaList(formType, DfCollectionUtil.newLinkedHashMap(), depth));
         sourceParserReflector.ifPresent(sourceParserReflector -> {
             sourceParserReflector.reflect(typeDocMeta, formType);
@@ -368,18 +367,18 @@ public class DocumentGenerator {
     //                                        Analyze Return
     //                                        --------------
     protected TypeDocMeta analyzeReturnClass(Method method) {
-        TypeDocMeta returnTypeDocMeta = new TypeDocMeta();
+        final TypeDocMeta returnTypeDocMeta = new TypeDocMeta();
         returnTypeDocMeta.setTypeName(adjustTypeName(method.getGenericReturnType()));
         returnTypeDocMeta.setSimpleTypeName(adjustSimpleTypeName(method.getGenericReturnType()));
         Class<?> returnClass = DfReflectionUtil.getGenericFirstClass(method.getGenericReturnType());
 
         if (returnClass != null) {
             // TODO p1us2er0 optimisation (2015/09/30)
-            Map<String, Type> genericParameterTypesMap = DfCollectionUtil.newLinkedHashMap();
-            Type[] parameterTypes = DfReflectionUtil.getGenericParameterTypes(method.getGenericReturnType());
-            TypeVariable<?>[] typeVariables = returnClass.getTypeParameters();
+            final Map<String, Type> genericParameterTypesMap = DfCollectionUtil.newLinkedHashMap();
+            final Type[] parameterTypes = DfReflectionUtil.getGenericParameterTypes(method.getGenericReturnType());
+            final TypeVariable<?>[] typeVariables = returnClass.getTypeParameters();
             IntStream.range(0, parameterTypes.length).forEach(parameterTypesIndex -> {
-                Type[] genericParameterTypes = DfReflectionUtil.getGenericParameterTypes(parameterTypes[parameterTypesIndex]);
+                final Type[] genericParameterTypes = DfReflectionUtil.getGenericParameterTypes(parameterTypes[parameterTypesIndex]);
                 IntStream.range(0, typeVariables.length).forEach(typeVariablesIndex -> {
                     Type type = genericParameterTypes[typeVariablesIndex];
                     genericParameterTypesMap.put(typeVariables[typeVariablesIndex].getTypeName(), type);
@@ -393,7 +392,7 @@ public class DocumentGenerator {
                     returnClass = DfReflectionUtil.forName(matcher.group(1));
                 }
             }
-            List<Class<? extends Object>> nativeClassList = getNativeClassList();
+            final List<Class<? extends Object>> nativeClassList = getNativeClassList();
             if (returnClass != null && !nativeClassList.contains(returnClass)) {
                 List<TypeDocMeta> typeDocMeta = prepareTypeDocMetaList(returnClass, genericParameterTypesMap, depth);
                 returnTypeDocMeta.setNestTypeDocMetaList(typeDocMeta);
@@ -419,7 +418,7 @@ public class DocumentGenerator {
             return DfCollectionUtil.newArrayList();
         }
 
-        Set<Field> fieldSet = DfCollectionUtil.newLinkedHashSet();
+        final Set<Field> fieldSet = DfCollectionUtil.newLinkedHashSet();
         for (Class<?> targetClazz = clazz; targetClazz != Object.class; targetClazz = targetClazz.getSuperclass()) {
             if (targetClazz == null) { // e.g. interface: MultipartFormFile
                 break;
@@ -439,18 +438,18 @@ public class DocumentGenerator {
 
     protected TypeDocMeta createTypeDocMeta(Class<?> clazz, Map<String, Type> genericParameterTypesMap, int depth, Field field) {
         Type genericClass = genericParameterTypesMap.get(field.getGenericType().getTypeName());
-        Type type = genericClass != null ? genericClass : field.getType();
-        TypeDocMeta meta = new TypeDocMeta();
+        final Type type = genericClass != null ? genericClass : field.getType();
+        final TypeDocMeta meta = new TypeDocMeta();
         meta.setName(field.getName());
         meta.setTypeName(adjustTypeName(type));
         meta.setSimpleTypeName(adjustSimpleTypeName(type));
         meta.setAnnotationList(analyzeAnnotationList(Arrays.asList(field.getAnnotations())));
-        Class<?> typeClass = type instanceof Class ? (Class<?>) type : (Class<?>) DfReflectionUtil.getGenericParameterTypes(type)[0];
+        final Class<?> typeClass = type instanceof Class ? (Class<?>) type : (Class<?>) DfReflectionUtil.getGenericParameterTypes(type)[0];
         if (typeClass.isEnum()) {
             meta.setValue(buildEnumValuesExp(typeClass));
         }
 
-        List<String> targetTypeSuffixNameList = getTargetTypeSuffixNameList();
+        final List<String> targetTypeSuffixNameList = getTargetTypeSuffixNameList();
         if (targetTypeSuffixNameList.stream().anyMatch(suffix -> typeClass.getName().contains(suffix))) {
             meta.setNestTypeDocMetaList(prepareTypeDocMetaList(typeClass, genericParameterTypesMap, depth - 1));
         } else if (targetTypeSuffixNameList.stream().anyMatch(suffix -> field.getGenericType().getTypeName().contains(suffix))) {
@@ -480,7 +479,7 @@ public class DocumentGenerator {
 
     protected String buildEnumValuesExp(Class<?> typeClass) {
         // cannot resolve type by maven compiler, explicitly cast it
-        String valuesExp;
+        final String valuesExp;
         if (Classification.class.isAssignableFrom(typeClass)) {
             @SuppressWarnings("unchecked")
             final Class<Classification> clsType = ((Class<Classification>) typeClass);
@@ -504,7 +503,7 @@ public class DocumentGenerator {
     //                                                                     Action Property
     //                                                                     ===============
     public Map<String, Map<String, String>> generateActionPropertyNameMap(List<ActionDocMeta> actionDocMetaList) {
-        Map<String, Map<String, String>> propertyNameMap = actionDocMetaList.stream().collect(Collectors.toMap(key -> {
+        final Map<String, Map<String, String>> propertyNameMap = actionDocMetaList.stream().collect(Collectors.toMap(key -> {
             return key.getUrl().replaceAll("\\{.*", "").replaceAll("/$", "").replaceAll("/", "_");
         }, value -> {
             return convertPropertyNameMap("", value.getFormTypeDocMeta());
@@ -517,9 +516,9 @@ public class DocumentGenerator {
             return DfCollectionUtil.newLinkedHashMap();
         }
 
-        Map<String, String> propertyNameMap = DfCollectionUtil.newLinkedHashMap();
+        final Map<String, String> propertyNameMap = DfCollectionUtil.newLinkedHashMap();
 
-        String name = calculateName(parentName, typeDocMeta.getName(), typeDocMeta.getTypeName());
+        final String name = calculateName(parentName, typeDocMeta.getName(), typeDocMeta.getTypeName());
         if (DfStringUtil.is_NotNull_and_NotEmpty(name)) {
             propertyNameMap.put(name, "");
         }
@@ -538,7 +537,7 @@ public class DocumentGenerator {
             return null;
         }
 
-        StringBuilder builder = new StringBuilder();
+        final StringBuilder builder = new StringBuilder();
         if (DfStringUtil.is_NotNull_and_NotEmpty(parentName)) {
             builder.append(parentName + ".");
         }
