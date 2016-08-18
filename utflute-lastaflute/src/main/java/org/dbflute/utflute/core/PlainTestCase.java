@@ -31,6 +31,7 @@ import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.TimeZone;
 
 import javax.sql.DataSource;
@@ -1160,21 +1161,23 @@ public abstract class PlainTestCase extends TestCase {
      * @return The file object of the directory. (NotNull)
      */
     protected File getProjectDir() { // customize point #extPoint
+        final Set<String> markSet = defineProjectDirMarkSet();
         for (File dir = getTestCaseBuildDir(); dir != null; dir = dir.getParentFile()) {
-            if (dir.isDirectory() && Arrays.stream(dir.listFiles()).anyMatch(
-                    file -> getProjectDirMarkFileNameList().contains(file.getName()))) {
-                return dir;
+            if (dir.isDirectory()) {
+                if (Arrays.stream(dir.listFiles()).anyMatch(file -> markSet.contains(file.getName()))) {
+                    return dir;
+                }
             }
         }
-        return getTestCaseBuildDir().getParentFile();
+        throw new IllegalStateException("Not found the project dir marks: " + markSet);
     }
 
     /**
-     * Get the mark file name list of the (application or Eclipse) project.
-     * @return the mark file name list of the project. (NotNull)
+     * Define the marks of the (application or Eclipse) project.
+     * @return the set of mark file name for the project. (NotNull)
      */
-    protected List<String> getProjectDirMarkFileNameList() {
-        return Arrays.asList("build.xml", "pom.xml", "build.gradle", ".project", ".idea");
+    protected Set<String> defineProjectDirMarkSet() {
+        return DfCollectionUtil.newHashSet("build.xml", "pom.xml", "build.gradle", ".project", ".idea");
     }
 
     /**
