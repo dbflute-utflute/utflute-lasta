@@ -500,7 +500,7 @@ public abstract class PlainTestCase extends TestCase {
      * @param exceptionType The expected exception type. (NotNull)
      * @param noArgInLambda The callback for calling methods that should throw the exception. (NotNull)
      */
-    protected void assertException(Class<?> exceptionType, ExceptionExaminer noArgInLambda) {
+    protected void assertException(Class<? extends Throwable> exceptionType, ExceptionExaminer noArgInLambda) {
         assertNotNull(exceptionType);
         boolean noThrow = false;
         try {
