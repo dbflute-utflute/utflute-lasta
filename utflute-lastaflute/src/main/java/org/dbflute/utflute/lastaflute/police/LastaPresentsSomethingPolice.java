@@ -23,7 +23,7 @@ import org.dbflute.utflute.core.policestory.javaclass.PoliceStoryJavaClassHandle
  * @author jflute
  * @since 0.6.1A (2016/08/17 Wednesday)
  */
-public class LastaPresentsPolice implements PoliceStoryJavaClassHandler {
+public class LastaPresentsSomethingPolice implements PoliceStoryJavaClassHandler {
 
     // ===================================================================================
     //                                                                              Handle
