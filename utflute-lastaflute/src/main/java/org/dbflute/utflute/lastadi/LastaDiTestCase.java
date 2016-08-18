@@ -32,8 +32,6 @@ import org.dbflute.utflute.core.transaction.TransactionResource;
 import org.dbflute.util.Srl;
 import org.lastaflute.di.core.SingletonLaContainer;
 import org.lastaflute.di.core.exception.ComponentNotFoundException;
-import org.lastaflute.di.core.exception.ComponentNotFoundRuntimeException;
-import org.lastaflute.di.core.exception.TooManyRegistrationRuntimeException;
 import org.lastaflute.di.core.factory.SingletonLaContainerFactory;
 import org.lastaflute.di.core.smart.SmartDeployMode;
 import org.lastaflute.di.naming.NamingConvention;
@@ -304,9 +302,7 @@ public abstract class LastaDiTestCase extends InjectionTestCase {
         try {
             SingletonLaContainer.getComponent(type);
             return true;
-        } catch (ComponentNotFoundException | ComponentNotFoundRuntimeException e) {
-            return false;
-        } catch (TooManyRegistrationRuntimeException e) {
+        } catch (ComponentNotFoundException e) {
             return false;
         }
     }
@@ -316,7 +312,7 @@ public abstract class LastaDiTestCase extends InjectionTestCase {
         try {
             SingletonLaContainer.getComponent(name);
             return true;
-        } catch (ComponentNotFoundException | ComponentNotFoundRuntimeException ignored) {
+        } catch (ComponentNotFoundException ignored) {
             return false;
         }
     }

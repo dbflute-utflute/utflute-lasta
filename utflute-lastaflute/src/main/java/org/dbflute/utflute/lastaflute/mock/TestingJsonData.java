@@ -13,11 +13,21 @@
  * either express or implied. See the License for the specific language
  * governing permissions and limitations under the License.
  */
-package org.dbflute.utflute.core.document;
+package org.dbflute.utflute.lastaflute.mock;
 
 /**
+ * @param <BEAN> The type of JSON bean.
  * @author jflute
- * @deprecated use org.dbflute.utflute.lastaflute.document.DocumentGenerator
  */
-public class DocumentGenerator extends org.dbflute.utflute.lastaflute.document.DocumentGenerator {
+public class TestingJsonData<BEAN> {
+
+    protected final BEAN jsonBean; // not null
+
+    public TestingJsonData(BEAN jsonBean) {
+        this.jsonBean = jsonBean;
+    }
+
+    public BEAN getJsonBean() {
+        return jsonBean;
+    }
 }

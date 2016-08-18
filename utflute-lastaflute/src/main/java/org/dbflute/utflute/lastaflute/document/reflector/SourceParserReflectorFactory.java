@@ -13,7 +13,7 @@
  * either express or implied. See the License for the specific language
  * governing permissions and limitations under the License.
  */
-package org.dbflute.utflute.core.document;
+package org.dbflute.utflute.lastaflute.document.reflector;
 
 import java.util.List;
 
@@ -25,6 +25,7 @@ import org.slf4j.LoggerFactory;
 
 /**
  * @author p1us2er0
+ * @author jflute
  * @since 0.5.0-sp9 (2015/09/18 Friday)
  */
 public class SourceParserReflectorFactory {
@@ -32,24 +33,28 @@ public class SourceParserReflectorFactory {
     // ===================================================================================
     //                                                                          Definition
     //                                                                          ==========
-    private static final String JAVA_PARSER_CLASS_NAME = "com.github.javaparser.JavaParser";
     private static final Logger _log = LoggerFactory.getLogger(SourceParserReflectorFactory.class);
+    private static final String JAVA_PARSER_CLASS_NAME = "com.github.javaparser.JavaParser";
 
     // ===================================================================================
     //                                                                           Reflector
     //                                                                           =========
     public OptionalThing<SourceParserReflector> reflector(List<String> srcDirList) { // empty allowed if not found
         final String className = JAVA_PARSER_CLASS_NAME;
-        SourceParserReflector sourceParserReflector = null;
+        SourceParserReflector reflector = null;
         try {
             DfReflectionUtil.forName(className);
             _log.debug("...Loading java parser for document: {}", className);
-            sourceParserReflector = new JavaparserSourceParserReflector(srcDirList);
+            reflector = createJavaparserSourceParserReflector(srcDirList);
         } catch (ReflectionFailureException ignored) {
-            sourceParserReflector = null;
+            reflector = null;
         }
-        return OptionalThing.ofNullable(sourceParserReflector, () -> {
+        return OptionalThing.ofNullable(reflector, () -> {
             throw new IllegalStateException("Not found the java parser: " + className);
         });
+    }
+
+    protected JavaparserSourceParserReflector createJavaparserSourceParserReflector(List<String> srcDirList) {
+        return new JavaparserSourceParserReflector(srcDirList);
     }
 }

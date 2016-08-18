@@ -13,11 +13,22 @@
  * either express or implied. See the License for the specific language
  * governing permissions and limitations under the License.
  */
-package org.dbflute.utflute.core.document;
+package org.dbflute.utflute.lastaflute.mock;
+
+import org.dbflute.optional.OptionalThing;
+import org.lastaflute.core.magic.ThreadCacheContext;
+import org.lastaflute.core.mail.PostedMailCounter;
+import org.lastaflute.core.mail.RequestedMailCount;
 
 /**
  * @author jflute
- * @deprecated use org.dbflute.utflute.lastaflute.document.DocumentGenerator
  */
-public class DocumentGenerator extends org.dbflute.utflute.lastaflute.document.DocumentGenerator {
+public class MockRequestedMailHandler {
+
+    public OptionalThing<RequestedMailCount> findMailCount() {
+        final PostedMailCounter counter = ThreadCacheContext.findMailCounter();
+        return OptionalThing.ofNullable(counter != null ? new RequestedMailCount(counter) : null, () -> {
+            throw new IllegalStateException("Not found the mail counter on the thread.");
+        });
+    }
 }

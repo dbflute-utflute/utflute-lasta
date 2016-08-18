@@ -13,23 +13,22 @@
  * either express or implied. See the License for the specific language
  * governing permissions and limitations under the License.
  */
-package org.dbflute.utflute.core.document;
+package org.dbflute.utflute.lastaflute.police;
 
-import java.lang.reflect.Method;
-import java.util.List;
+import java.io.File;
+
+import org.dbflute.utflute.core.policestory.javaclass.PoliceStoryJavaClassHandler;
 
 /**
- * @author p1us2er0
- * @since 0.5.0-sp9 (2015/09/18 Friday)
+ * @author jflute
+ * @since 0.6.1A (2016/08/17 Wednesday)
  */
-public interface SourceParserReflector {
+public class LastaPresentsSomethingPolice implements PoliceStoryJavaClassHandler {
 
     // ===================================================================================
-    //                                                                             Reflect
-    //                                                                             =======
-    List<Method> getMethodListOrderByDefinition(Class<?> clazz);
-
-    void reflect(ActionDocMeta bean, Method method);
-
-    void reflect(TypeDocMeta bean, Class<?> clazz);
+    //                                                                              Handle
+    //                                                                              ======
+    public void handle(File srcFile, Class<?> clazz) {
+        // nothing for now (for future)
+    }
 }

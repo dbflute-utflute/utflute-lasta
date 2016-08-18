@@ -13,11 +13,19 @@
  * either express or implied. See the License for the specific language
  * governing permissions and limitations under the License.
  */
-package org.dbflute.utflute.core.document;
+package org.dbflute.utflute.lastaflute.mock;
+
+import org.lastaflute.di.core.ComponentDef;
+import org.lastaflute.web.aspect.RomanticActionCustomizer;
+import org.lastaflute.web.ruts.config.ActionMapping;
 
 /**
  * @author jflute
- * @deprecated use org.dbflute.utflute.lastaflute.document.DocumentGenerator
  */
-public class DocumentGenerator extends org.dbflute.utflute.lastaflute.document.DocumentGenerator {
+public class MockRomanticActionCustomizer extends RomanticActionCustomizer {
+
+    @Override
+    public ActionMapping createActionMapping(ComponentDef actionDef) { // to be public
+        return super.createActionMapping(actionDef);
+    }
 }

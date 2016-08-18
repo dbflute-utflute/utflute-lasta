@@ -27,6 +27,11 @@ import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpServletRequest;
 
 import org.dbflute.utflute.lastadi.ContainerTestCase;
+import org.dbflute.utflute.lastaflute.document.DocumentGenerator;
+import org.dbflute.utflute.lastaflute.mock.MockResopnseBeanValidator;
+import org.dbflute.utflute.lastaflute.mock.MockRuntimeFactory;
+import org.dbflute.utflute.lastaflute.mock.TestingHtmlData;
+import org.dbflute.utflute.lastaflute.mock.TestingJsonData;
 import org.dbflute.utflute.mocklet.MockletHttpServletRequest;
 import org.dbflute.utflute.mocklet.MockletHttpServletRequestImpl;
 import org.dbflute.utflute.mocklet.MockletHttpServletResponse;
@@ -38,6 +43,7 @@ import org.dbflute.utflute.mocklet.MockletServletContext;
 import org.dbflute.utflute.mocklet.MockletServletContextImpl;
 import org.lastaflute.core.direction.FwAssistantDirector;
 import org.lastaflute.core.direction.FwCoreDirection;
+import org.lastaflute.core.json.JsonManager;
 import org.lastaflute.core.magic.ThreadCacheContext;
 import org.lastaflute.core.magic.TransactionTimeContext;
 import org.lastaflute.core.time.TimeManager;
@@ -46,6 +52,10 @@ import org.lastaflute.di.core.ExternalContext;
 import org.lastaflute.di.core.LaContainer;
 import org.lastaflute.di.core.factory.SingletonLaContainerFactory;
 import org.lastaflute.web.LastaFilter;
+import org.lastaflute.web.response.HtmlResponse;
+import org.lastaflute.web.response.JsonResponse;
+import org.lastaflute.web.ruts.process.ActionRuntime;
+import org.lastaflute.web.servlet.request.RequestManager;
 
 /**
  * @author jflute
@@ -75,6 +85,10 @@ public abstract class WebContainerTestCase extends ContainerTestCase {
     private FwAssistantDirector assistantDirector;
     @Resource
     private TimeManager timeManager;
+    @Resource
+    private JsonManager jsonManager;
+    @Resource
+    private RequestManager requestManager;
 
     // ===================================================================================
     //                                                                            Settings
@@ -153,8 +167,8 @@ public abstract class WebContainerTestCase extends ContainerTestCase {
     }
 
     // ===================================================================================
-    //                                                                     Seasar Handling
-    //                                                                     ===============
+    //                                                                   Lasts Di Handling
+    //                                                                   =================
     // -----------------------------------------------------
     //                                            Initialize
     //                                            ----------
@@ -257,6 +271,17 @@ public abstract class WebContainerTestCase extends ContainerTestCase {
     //                                                                   Web Mock Handling
     //                                                                   =================
     // -----------------------------------------------------
+    //                                            LastaFlute
+    //                                            ----------
+    protected ActionRuntime getMockHtmlRuntime() { // MockAction@sea()
+        return new MockRuntimeFactory().createHtmlRuntime();
+    }
+
+    protected ActionRuntime getMockJsonRuntime() { // MockAction@land()
+        return new MockRuntimeFactory().createJsonRuntime();
+    }
+
+    // -----------------------------------------------------
     //                                               Request
     //                                               -------
     protected MockletHttpServletRequest getMockRequest() {
@@ -348,9 +373,9 @@ public abstract class WebContainerTestCase extends ContainerTestCase {
         }
     }
 
-    // ===================================================================================
-    //                                                                            Accessor
-    //                                                                            ========
+    // -----------------------------------------------------
+    //                                     Internal Resource
+    //                                     -----------------
     protected static MockletServletConfig xgetCachedServletConfig() {
         return _xcachedServletConfig;
     }
@@ -373,5 +398,33 @@ public abstract class WebContainerTestCase extends ContainerTestCase {
 
     protected void xsetMockResponse(MockletHttpServletResponse xmockResponse) {
         _xmockResponse = xmockResponse;
+    }
+
+    // ===================================================================================
+    //                                                                 Web Result Handling
+    //                                                                 ===================
+    protected void showJson(JsonResponse<?> response) {
+        Object jsonBean = response.getJsonBean();
+        String json = jsonManager.toJson(jsonBean);
+        log("JsonResponse:" + ln() + json);
+    }
+
+    protected TestingHtmlData validateHtmlData(HtmlResponse response) {
+        return new MockResopnseBeanValidator(requestManager).validateHtmlData(response);
+    }
+
+    protected <BEAN> TestingJsonData<BEAN> validateJsonData(JsonResponse<BEAN> response) {
+        return new MockResopnseBeanValidator(requestManager).validateJsonBean(response);
+    }
+
+    // ===================================================================================
+    //                                                                           Lasta Doc
+    //                                                                           =========
+    protected void saveLastaDocMeta() {
+        createDocumentGenerator().saveLastaDocMeta();
+    }
+
+    protected DocumentGenerator createDocumentGenerator() {
+        return new DocumentGenerator();
     }
 }
