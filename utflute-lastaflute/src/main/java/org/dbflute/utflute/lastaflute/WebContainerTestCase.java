@@ -46,6 +46,7 @@ import org.lastaflute.core.direction.FwCoreDirection;
 import org.lastaflute.core.json.JsonManager;
 import org.lastaflute.core.magic.ThreadCacheContext;
 import org.lastaflute.core.magic.TransactionTimeContext;
+import org.lastaflute.core.magic.destructive.BowgunDestructiveAdjuster;
 import org.lastaflute.core.time.TimeManager;
 import org.lastaflute.db.dbflute.accesscontext.PreparedAccessContext;
 import org.lastaflute.di.core.ExternalContext;
@@ -93,6 +94,15 @@ public abstract class WebContainerTestCase extends ContainerTestCase {
     // ===================================================================================
     //                                                                            Settings
     //                                                                            ========
+    @Override
+    public void tearDown() throws Exception {
+        if (BowgunDestructiveAdjuster.hasAnyBowgun()) {
+            BowgunDestructiveAdjuster.unlock();
+            BowgunDestructiveAdjuster.restoreBowgunAll();
+        }
+        super.tearDown();
+    }
+
     // -----------------------------------------------------
     //                                     Prepare Container
     //                                     -----------------
@@ -418,8 +428,21 @@ public abstract class WebContainerTestCase extends ContainerTestCase {
     }
 
     // ===================================================================================
-    //                                                                           Lasta Doc
-    //                                                                           =========
+    //                                                                         Destructive
+    //                                                                         ===========
+    protected void changeAsyncToNormalSync() {
+        BowgunDestructiveAdjuster.unlock();
+        BowgunDestructiveAdjuster.shootBowgunAsyncToNormalSync();
+    }
+
+    protected void changeRequiresNewToRequired() {
+        BowgunDestructiveAdjuster.unlock();
+        BowgunDestructiveAdjuster.shootBowgunRequiresNewToRequired();
+    }
+
+    // ===================================================================================
+    //                                                                            LastaDoc
+    //                                                                            ========
     protected void saveLastaDocMeta() {
         createDocumentGenerator().saveLastaDocMeta();
     }
