@@ -16,18 +16,23 @@
 package org.dbflute.utflute.lastaflute.mock;
 
 /**
- * @param <BEAN> The type of JSON bean.
+ * @param <RESULT> The type of JSON result.
  * @author jflute
  */
-public class TestingJsonData<BEAN> {
+public class TestingJsonData<RESULT> {
 
-    protected final BEAN jsonBean; // not null
+    protected final RESULT jsonResult; // not null
 
-    public TestingJsonData(BEAN jsonBean) {
-        this.jsonBean = jsonBean;
+    public TestingJsonData(RESULT jsonResult) {
+        this.jsonResult = jsonResult;
     }
 
-    public BEAN getJsonBean() {
-        return jsonBean;
+    @Deprecated
+    public RESULT getJsonBean() { // for compatible
+        return jsonResult;
+    }
+
+    public RESULT getJsonResult() {
+        return jsonResult;
     }
 }
