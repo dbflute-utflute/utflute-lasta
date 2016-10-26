@@ -413,10 +413,18 @@ public abstract class WebContainerTestCase extends ContainerTestCase {
     // ===================================================================================
     //                                                                 Web Result Handling
     //                                                                 ===================
-    protected void showJson(JsonResponse<?> response) {
-        Object jsonBean = response.getJsonBean();
-        String json = jsonManager.toJson(jsonBean);
-        log("JsonResponse:" + ln() + json);
+    protected void showJson(Object jsonBean) {
+        log(jsonBean.getClass().getSimpleName() + ":" + ln() + toJson(jsonBean));
+    }
+
+    protected String toJson(Object jsonBean) {
+        final Object realBean;
+        if (jsonBean instanceof JsonResponse<?>) {
+            realBean = ((JsonResponse<?>) jsonBean).getJsonBean();
+        } else {
+            realBean = jsonBean;
+        }
+        return jsonManager.toJson(realBean);
     }
 
     protected TestingHtmlData validateHtmlData(HtmlResponse response) {
