@@ -23,6 +23,7 @@ import org.dbflute.hook.SqlResultInfo;
 
 /**
  * @author jflute
+ * @since 0.6.1C (2016/10/27 Thursday)
  */
 public class GatheredExecutedSqlHolder {
 
