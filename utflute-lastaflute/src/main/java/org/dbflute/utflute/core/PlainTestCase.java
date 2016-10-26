@@ -40,11 +40,15 @@ import junit.framework.TestCase;
 
 import org.dbflute.cbean.result.PagingResultBean;
 import org.dbflute.hook.AccessContext;
+import org.dbflute.hook.CallbackContext;
+import org.dbflute.hook.SqlResultHandler;
+import org.dbflute.hook.SqlResultInfo;
 import org.dbflute.system.DBFluteSystem;
 import org.dbflute.utflute.core.cannonball.CannonballDirector;
 import org.dbflute.utflute.core.cannonball.CannonballOption;
 import org.dbflute.utflute.core.cannonball.CannonballRun;
 import org.dbflute.utflute.core.cannonball.CannonballStaff;
+import org.dbflute.utflute.core.dbflute.GatheredExecutedSqlHolder;
 import org.dbflute.utflute.core.filesystem.FileLineHandler;
 import org.dbflute.utflute.core.filesystem.FilesystemPlayer;
 import org.dbflute.utflute.core.markhere.MarkHereManager;
@@ -90,6 +94,9 @@ public abstract class PlainTestCase extends TestCase {
     /** The reserved title for logging test case beginning. (NullAllowed: before preparation or already showed) */
     private String _xreservedTitle;
 
+    /** Does it use gatheredExecutedSql in this test case? */
+    private boolean _xuseGatheredExecutedSql;
+
     // ===================================================================================
     //                                                                            Settings
     //                                                                            ========
@@ -109,39 +116,8 @@ public abstract class PlainTestCase extends TestCase {
     protected void tearDown() throws Exception {
         super.tearDown();
         xclearAccessContext();
+        xclearGatheredExecutedSql();
         xclearMark();
-    }
-
-    protected void xprepareAccessContext() {
-        final AccessContext context = new AccessContext();
-        context.setAccessLocalDate(currentLocalDate());
-        context.setAccessLocalDateTime(currentLocalDateTime());
-        context.setAccessTimestamp(currentTimestamp());
-        context.setAccessDate(currentDate());
-        context.setAccessUser(Thread.currentThread().getName());
-        context.setAccessProcess(getClass().getSimpleName());
-        context.setAccessModule(getClass().getSimpleName());
-        AccessContext.setAccessContextOnThread(context);
-    }
-
-    /**
-     * Get the access context for common column auto setup of DBFlute.
-     * @return The instance of access context on the thread. (basically NotNull)
-     */
-    protected AccessContext getAccessContext() { // user method
-        return AccessContext.getAccessContextOnThread();
-    }
-
-    protected void xclearAccessContext() {
-        AccessContext.clearAccessContextOnThread();
-    }
-
-    protected void xclearMark() {
-        if (xhasMarkHereManager()) {
-            xgetMarkHereManager().checkNonAssertedMark();
-            xgetMarkHereManager().clearMarkMap();
-            xdestroyMarkHereManager();
-        }
     }
 
     // ===================================================================================
@@ -582,6 +558,14 @@ public abstract class PlainTestCase extends TestCase {
         _xmarkHereManager = null;
     }
 
+    protected void xclearMark() {
+        if (xhasMarkHereManager()) {
+            xgetMarkHereManager().checkNonAssertedMark();
+            xgetMarkHereManager().clearMarkMap();
+            xdestroyMarkHereManager();
+        }
+    }
+
     // ===================================================================================
     //                                                                      Logging Helper
     //                                                                      ==============
@@ -732,18 +716,26 @@ public abstract class PlainTestCase extends TestCase {
     //                                                                         Date Helper
     //                                                                         ===========
     protected LocalDate currentLocalDate() {
-        return toLocalDate(currentDate());
+        return toLocalDate(currentUtilDate());
     }
 
     protected LocalDateTime currentLocalDateTime() {
-        return toLocalDateTime(currentDate());
+        return toLocalDateTime(currentUtilDate());
     }
 
     protected LocalTime currentLocalTime() {
-        return toLocalTime(currentDate());
+        return toLocalTime(currentUtilDate());
     }
 
+    /**
+     * @return The current utility date. (NotNull)
+     * @deprecated use currentUtilDate()
+     */
     protected Date currentDate() {
+        return currentUtilDate();
+    }
+
+    protected Date currentUtilDate() {
         return DBFluteSystem.currentDate();
     }
 
@@ -763,7 +755,16 @@ public abstract class PlainTestCase extends TestCase {
         return DfTypeUtil.toLocalTime(obj, getUnitTimeZone());
     }
 
+    /**
+     * @param obj The source of date. (NullAllowed)
+     * @return The utility date. (NotNull)
+     * @deprecated use currentUtilDate()
+     */
     protected Date toDate(Object obj) {
+        return toUtilDate(obj);
+    }
+
+    protected Date toUtilDate(Object obj) {
         return DfTypeUtil.toDate(obj);
     }
 
@@ -1201,6 +1202,53 @@ public abstract class PlainTestCase extends TestCase {
 
     protected String xgetCaseDisp() {
         return getClass().getSimpleName() + "." + getName() + "()";
+    }
+
+    // ===================================================================================
+    //                                                                       AccessContext
+    //                                                                       =============
+    protected void xprepareAccessContext() {
+        final AccessContext context = new AccessContext();
+        context.setAccessLocalDate(currentLocalDate());
+        context.setAccessLocalDateTime(currentLocalDateTime());
+        context.setAccessTimestamp(currentTimestamp());
+        context.setAccessDate(currentUtilDate());
+        context.setAccessUser(Thread.currentThread().getName());
+        context.setAccessProcess(getClass().getSimpleName());
+        context.setAccessModule(getClass().getSimpleName());
+        AccessContext.setAccessContextOnThread(context);
+    }
+
+    /**
+     * Get the access context for common column auto setup of DBFlute.
+     * @return The instance of access context on the thread. (basically NotNull)
+     */
+    protected AccessContext getAccessContext() { // user method
+        return AccessContext.getAccessContextOnThread();
+    }
+
+    protected void xclearAccessContext() {
+        AccessContext.clearAccessContextOnThread();
+    }
+
+    // ===================================================================================
+    //                                                                     CallbackContext
+    //                                                                     ===============
+    protected GatheredExecutedSqlHolder gatherExecutedSql() {
+        _xuseGatheredExecutedSql = true;
+        final GatheredExecutedSqlHolder holder = new GatheredExecutedSqlHolder();
+        CallbackContext.setSqlResultHandlerOnThread(new SqlResultHandler() {
+            public void handle(SqlResultInfo info) {
+                holder.addSqlResultInfo(info);
+            }
+        });
+        return holder;
+    }
+
+    protected void xclearGatheredExecutedSql() {
+        if (_xuseGatheredExecutedSql) {
+            CallbackContext.clearSqlResultHandlerOnThread();
+        }
     }
 
     // ===================================================================================
