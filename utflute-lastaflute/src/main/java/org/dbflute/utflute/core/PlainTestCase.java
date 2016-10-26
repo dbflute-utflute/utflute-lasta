@@ -117,6 +117,10 @@ public abstract class PlainTestCase extends TestCase {
         _xreservedTitle = "<<< " + xgetCaseDisp() + " >>>";
     }
 
+    protected String xgetCaseDisp() {
+        return getClass().getSimpleName() + "." + getName() + "()";
+    }
+
     @Override
     protected void tearDown() throws Exception {
         super.tearDown();
@@ -846,6 +850,17 @@ public abstract class PlainTestCase extends TestCase {
     }
 
     // ===================================================================================
+    //                                                                       System Helper
+    //                                                                       =============
+    /**
+     * Get the line separator. (LF fixedly)
+     * @return The string of the line separator. (NotNull)
+     */
+    protected String ln() {
+        return "\n";
+    }
+
+    // ===================================================================================
     //                                                                         Transaction
     //                                                                         ===========
     // reserved interfaces
@@ -1193,21 +1208,6 @@ public abstract class PlainTestCase extends TestCase {
      */
     protected File getTestCaseBuildDir() {
         return DfResourceUtil.getBuildDir(getClass()); // target/test-classes
-    }
-
-    // ===================================================================================
-    //                                                                       System Helper
-    //                                                                       =============
-    /**
-     * Get the line separator. (LF fixedly)
-     * @return The string of the line separator. (NotNull)
-     */
-    protected String ln() {
-        return "\n";
-    }
-
-    protected String xgetCaseDisp() {
-        return getClass().getSimpleName() + "." + getName() + "()";
     }
 
     // ===================================================================================
