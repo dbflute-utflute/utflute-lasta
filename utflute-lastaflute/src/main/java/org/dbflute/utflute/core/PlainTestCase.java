@@ -33,6 +33,7 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.TimeZone;
+import java.util.function.Supplier;
 
 import javax.sql.DataSource;
 
@@ -44,6 +45,7 @@ import org.dbflute.hook.CallbackContext;
 import org.dbflute.hook.SqlResultHandler;
 import org.dbflute.hook.SqlResultInfo;
 import org.dbflute.system.DBFluteSystem;
+import org.dbflute.system.provider.DfCurrentDateProvider;
 import org.dbflute.utflute.core.cannonball.CannonballDirector;
 import org.dbflute.utflute.core.cannonball.CannonballOption;
 import org.dbflute.utflute.core.cannonball.CannonballRun;
@@ -97,6 +99,9 @@ public abstract class PlainTestCase extends TestCase {
     /** Does it use gatheredExecutedSql in this test case? */
     private boolean _xuseGatheredExecutedSql;
 
+    /** Does it use switchedCurrentDate in this test case? */
+    private boolean _xuseSwitchedCurrentDate;
+
     // ===================================================================================
     //                                                                            Settings
     //                                                                            ========
@@ -117,6 +122,7 @@ public abstract class PlainTestCase extends TestCase {
         super.tearDown();
         xclearAccessContext();
         xclearGatheredExecutedSql();
+        xclearSwitchedCurrentDate();
         xclearMark();
     }
 
@@ -1205,8 +1211,11 @@ public abstract class PlainTestCase extends TestCase {
     }
 
     // ===================================================================================
-    //                                                                       AccessContext
-    //                                                                       =============
+    //                                                                             DBFlute
+    //                                                                             =======
+    // -----------------------------------------------------
+    //                                         AccessContext
+    //                                         -------------
     protected void xprepareAccessContext() {
         final AccessContext context = new AccessContext();
         context.setAccessLocalDate(currentLocalDate());
@@ -1231,9 +1240,9 @@ public abstract class PlainTestCase extends TestCase {
         AccessContext.clearAccessContextOnThread();
     }
 
-    // ===================================================================================
-    //                                                                     CallbackContext
-    //                                                                     ===============
+    // -----------------------------------------------------
+    //                                       CallbackContext
+    //                                       ---------------
     protected GatheredExecutedSqlHolder gatherExecutedSql() {
         _xuseGatheredExecutedSql = true;
         final GatheredExecutedSqlHolder holder = new GatheredExecutedSqlHolder();
@@ -1248,6 +1257,33 @@ public abstract class PlainTestCase extends TestCase {
     protected void xclearGatheredExecutedSql() {
         if (_xuseGatheredExecutedSql) {
             CallbackContext.clearSqlResultHandlerOnThread();
+        }
+    }
+
+    // -----------------------------------------------------
+    //                                         DBFluteSystem
+    //                                         -------------
+    protected void switchCurrentDate(Supplier<LocalDateTime> dateTimeSupplier) {
+        assertNotNull(dateTimeSupplier);
+        if (DBFluteSystem.hasCurrentDateProvider()) {
+            String msg = "The current date provider already exists, cannot use new provider: " + dateTimeSupplier;
+            throw new IllegalStateException(msg);
+        }
+        _xuseSwitchedCurrentDate = true;
+        DBFluteSystem.unlock();
+        DBFluteSystem.setCurrentDateProvider(new DfCurrentDateProvider() {
+            public long currentTimeMillis() {
+                final LocalDateTime currentDateTime = dateTimeSupplier.get();
+                assertNotNull(currentDateTime);
+                return DfTypeUtil.toDate(currentDateTime).getTime();
+            }
+        });
+    }
+
+    protected void xclearSwitchedCurrentDate() {
+        if (_xuseSwitchedCurrentDate) {
+            DBFluteSystem.unlock();
+            DBFluteSystem.setCurrentDateProvider(null);
         }
     }
 
