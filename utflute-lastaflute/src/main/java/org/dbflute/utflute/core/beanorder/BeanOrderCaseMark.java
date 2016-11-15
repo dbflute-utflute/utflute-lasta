@@ -18,21 +18,21 @@ package org.dbflute.utflute.core.beanorder;
 /**
  * @author jflute
  */
-public class BeanOrderDiffMark {
+public class BeanOrderCaseMark {
 
     protected final int specNo;
-    protected boolean diff;
+    protected boolean caseFound;
 
-    public BeanOrderDiffMark(int specNo) {
+    public BeanOrderCaseMark(int specNo) {
         this.specNo = specNo;
     }
 
-    public BeanOrderDiffMark markDiff() {
-        diff = true;
+    public BeanOrderCaseMark markCase() {
+        caseFound = true;
         return this;
     }
 
-    public boolean isDiff() {
-        return diff;
+    public boolean isCaseFound() {
+        return caseFound;
     }
 }

@@ -29,38 +29,47 @@ import java.util.function.Function;
 public class BeanOrderValidator<BEAN> {
 
     protected final Consumer<ExpectedBeanOrderBy<BEAN>> orderBySpecCall;
+    protected boolean orderShortCaseIgnored;
 
     public BeanOrderValidator(Consumer<ExpectedBeanOrderBy<BEAN>> orderBySpecCall) {
         this.orderBySpecCall = orderBySpecCall;
+    }
+
+    public BeanOrderValidator<BEAN> ignoreOrderShortCase() {
+        orderShortCaseIgnored = true;
+        return this;
     }
 
     public void validateOrder(List<BEAN> beanList, Consumer<BeanOrderByViolation<BEAN>> violationCall) {
         final ExpectedBeanOrderBy<BEAN> orderBy = new ExpectedBeanOrderBy<BEAN>();
         orderBySpecCall.accept(orderBy);
         final List<BeanOrderBySpec<BEAN>> orderBySpecList = orderBy.getOrderBySpecList();
-        final Map<Integer, BeanOrderDiffMark> diffMarkMap = new LinkedHashMap<>();
+        final Map<Integer, BeanOrderCaseMark> caseMarkMap = new LinkedHashMap<>();
         BEAN previousBean = null;
         for (BEAN nextBean : beanList) {
             if (previousBean != null) {
-                doAssertOrder(previousBean, nextBean, orderBySpecList.iterator(), violationCall, 1, diffMarkMap);
+                doAssertOrder(previousBean, nextBean, orderBySpecList.iterator(), violationCall, 1, caseMarkMap);
             }
             previousBean = nextBean;
         }
-        verifyDiff(orderBySpecList, diffMarkMap);
+        verifyShortCase(orderBySpecList, caseMarkMap);
     }
 
-    protected void verifyDiff(List<BeanOrderBySpec<BEAN>> orderBySpecList, Map<Integer, BeanOrderDiffMark> diffMarkMap) {
+    protected void verifyShortCase(List<BeanOrderBySpec<BEAN>> orderBySpecList, Map<Integer, BeanOrderCaseMark> caseMarkMap) {
+        if (orderShortCaseIgnored) {
+            return;
+        }
         for (BeanOrderBySpec<BEAN> spec : orderBySpecList) {
             final int specNo = spec.getSpecNo();
-            final BeanOrderDiffMark diffMark = diffMarkMap.get(specNo);
-            if (diffMark == null || !diffMark.isDiff()) {
-                throw new IllegalStateException("Not found the difference for the spec number: " + specNo);
+            final BeanOrderCaseMark caseMark = caseMarkMap.get(specNo);
+            if (caseMark == null || !caseMark.isCaseFound()) {
+                throw new IllegalStateException("Not found the order case for the spec number: " + specNo);
             }
         }
     }
 
     protected void doAssertOrder(BEAN previousBean, BEAN nextBean, Iterator<BeanOrderBySpec<BEAN>> specIterator,
-            Consumer<BeanOrderByViolation<BEAN>> violationCall, int specNo, Map<Integer, BeanOrderDiffMark> diffMarkMap) {
+            Consumer<BeanOrderByViolation<BEAN>> violationCall, int specNo, Map<Integer, BeanOrderCaseMark> caseMarkMap) {
         if (!specIterator.hasNext()) {
             return;
         }
@@ -74,11 +83,11 @@ public class BeanOrderValidator<BEAN> {
         if (spec.isAsc() ? compareTo > 0 : compareTo < 0) {
             violationCall.accept(createOrderByViolation(specNo, previousBean, nextBean, previousValue, nextValue));
         } else if (compareTo == 0) {
-            doAssertOrder(previousBean, nextBean, specIterator, violationCall, specNo + 1, diffMarkMap);
+            doAssertOrder(previousBean, nextBean, specIterator, violationCall, specNo + 1, caseMarkMap);
         }
         if (compareTo != 0) {
-            if (!diffMarkMap.containsKey(specNo)) {
-                diffMarkMap.put(specNo, new BeanOrderDiffMark(specNo).markDiff());
+            if (!caseMarkMap.containsKey(specNo)) {
+                caseMarkMap.put(specNo, new BeanOrderCaseMark(specNo).markCase());
             }
         }
     }
