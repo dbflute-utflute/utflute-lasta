@@ -20,8 +20,8 @@ import java.util.Map;
 import org.lastaflute.web.response.HtmlResponse;
 import org.lastaflute.web.response.JsonResponse;
 import org.lastaflute.web.response.render.RenderData;
-import org.lastaflute.web.ruts.process.ResponseHtmlBeanValidator;
-import org.lastaflute.web.ruts.process.ResponseJsonBeanValidator;
+import org.lastaflute.web.ruts.process.validatebean.ResponseHtmlBeanValidator;
+import org.lastaflute.web.ruts.process.validatebean.ResponseJsonBeanValidator;
 import org.lastaflute.web.servlet.request.RequestManager;
 
 /**

@@ -21,7 +21,7 @@ import org.lastaflute.di.core.meta.impl.ComponentDefImpl;
 import org.lastaflute.web.ruts.config.ActionExecute;
 import org.lastaflute.web.ruts.config.ActionMapping;
 import org.lastaflute.web.ruts.process.ActionRuntime;
-import org.lastaflute.web.ruts.process.RequestUrlParam;
+import org.lastaflute.web.ruts.process.urlparam.RequestUrlParam;
 
 /**
  * @author jflute

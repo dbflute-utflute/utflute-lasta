@@ -52,7 +52,7 @@ import org.dbflute.utflute.lastaflute.document.reflector.SourceParserReflectorFa
 import org.dbflute.util.DfCollectionUtil;
 import org.dbflute.util.DfReflectionUtil;
 import org.dbflute.util.DfStringUtil;
-import org.lastaflute.core.json.GsonJsonParser;
+import org.lastaflute.core.json.engine.GsonJsonEngine;
 import org.lastaflute.di.core.ComponentDef;
 import org.lastaflute.di.core.LaContainer;
 import org.lastaflute.di.core.factory.SingletonLaContainerFactory;
@@ -155,8 +155,8 @@ public class DocumentGenerator {
         }
     }
 
-    protected GsonJsonParser createJsonParser() {
-        return new GsonJsonParser(builder -> builder.serializeNulls().setPrettyPrinting(), op -> {});
+    protected GsonJsonEngine createJsonParser() {
+        return new GsonJsonEngine(builder -> builder.serializeNulls().setPrettyPrinting(), op -> {});
         // not to depend on application settings
         //return SingletonLaContainerFactory.getContainer().getComponent(JsonManager.class);
     }
