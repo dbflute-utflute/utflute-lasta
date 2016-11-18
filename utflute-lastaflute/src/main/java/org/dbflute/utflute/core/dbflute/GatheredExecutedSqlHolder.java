@@ -13,17 +13,27 @@
  * either express or implied. See the License for the specific language
  * governing permissions and limitations under the License.
  */
-package org.dbflute.utflute.core.smallhelper;
+package org.dbflute.utflute.core.dbflute;
+
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+
+import org.dbflute.hook.SqlResultInfo;
 
 /**
  * @author jflute
- * @since 1.1.0 (2014/10/22 Wednesday)
+ * @since 0.6.1C (2016/10/27 Thursday)
  */
-@FunctionalInterface
-public interface ExceptionExaminer {
+public class GatheredExecutedSqlHolder {
 
-    /**
-     * Examine the process, should throw the specified exception.
-     */
-    void examine();
+    protected final List<SqlResultInfo> _sqlResultInfoList = new ArrayList<SqlResultInfo>();
+
+    public List<SqlResultInfo> getSqlResultInfoList() {
+        return Collections.unmodifiableList(new ArrayList<SqlResultInfo>(_sqlResultInfoList));
+    }
+
+    public void addSqlResultInfo(SqlResultInfo info) {
+        _sqlResultInfoList.add(info);
+    }
 }

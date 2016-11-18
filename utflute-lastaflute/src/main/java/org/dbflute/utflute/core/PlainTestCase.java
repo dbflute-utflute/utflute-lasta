@@ -33,18 +33,26 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.TimeZone;
+import java.util.function.Consumer;
+import java.util.function.Supplier;
 
 import javax.sql.DataSource;
 
-import junit.framework.TestCase;
-
 import org.dbflute.cbean.result.PagingResultBean;
 import org.dbflute.hook.AccessContext;
+import org.dbflute.hook.CallbackContext;
+import org.dbflute.hook.SqlResultHandler;
+import org.dbflute.hook.SqlResultInfo;
 import org.dbflute.system.DBFluteSystem;
+import org.dbflute.system.provider.DfCurrentDateProvider;
+import org.dbflute.utflute.core.beanorder.BeanOrderValidator;
+import org.dbflute.utflute.core.beanorder.ExpectedBeanOrderBy;
 import org.dbflute.utflute.core.cannonball.CannonballDirector;
 import org.dbflute.utflute.core.cannonball.CannonballOption;
 import org.dbflute.utflute.core.cannonball.CannonballRun;
 import org.dbflute.utflute.core.cannonball.CannonballStaff;
+import org.dbflute.utflute.core.dbflute.GatheredExecutedSqlHolder;
+import org.dbflute.utflute.core.exception.ExceptionExaminer;
 import org.dbflute.utflute.core.filesystem.FileLineHandler;
 import org.dbflute.utflute.core.filesystem.FilesystemPlayer;
 import org.dbflute.utflute.core.markhere.MarkHereManager;
@@ -54,7 +62,6 @@ import org.dbflute.utflute.core.policestory.jspfile.PoliceStoryJspFileHandler;
 import org.dbflute.utflute.core.policestory.miscfile.PoliceStoryMiscFileHandler;
 import org.dbflute.utflute.core.policestory.pjresource.PoliceStoryProjectResourceHandler;
 import org.dbflute.utflute.core.policestory.webresource.PoliceStoryWebResourceHandler;
-import org.dbflute.utflute.core.smallhelper.ExceptionExaminer;
 import org.dbflute.utflute.core.transaction.TransactionPerformFailureException;
 import org.dbflute.utflute.core.transaction.TransactionPerformer;
 import org.dbflute.utflute.core.transaction.TransactionResource;
@@ -64,6 +71,8 @@ import org.dbflute.util.DfTypeUtil;
 import org.dbflute.util.Srl;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import junit.framework.TestCase;
 
 /**
  * @author jflute
@@ -90,6 +99,12 @@ public abstract class PlainTestCase extends TestCase {
     /** The reserved title for logging test case beginning. (NullAllowed: before preparation or already showed) */
     private String _xreservedTitle;
 
+    /** Does it use gatheredExecutedSql in this test case? */
+    private boolean _xuseGatheredExecutedSql;
+
+    /** Does it use switchedCurrentDate in this test case? */
+    private boolean _xuseSwitchedCurrentDate;
+
     // ===================================================================================
     //                                                                            Settings
     //                                                                            ========
@@ -105,43 +120,17 @@ public abstract class PlainTestCase extends TestCase {
         _xreservedTitle = "<<< " + xgetCaseDisp() + " >>>";
     }
 
+    protected String xgetCaseDisp() {
+        return getClass().getSimpleName() + "." + getName() + "()";
+    }
+
     @Override
     protected void tearDown() throws Exception {
         super.tearDown();
         xclearAccessContext();
+        xclearGatheredExecutedSql();
+        xclearSwitchedCurrentDate();
         xclearMark();
-    }
-
-    protected void xprepareAccessContext() {
-        final AccessContext context = new AccessContext();
-        context.setAccessLocalDate(currentLocalDate());
-        context.setAccessLocalDateTime(currentLocalDateTime());
-        context.setAccessTimestamp(currentTimestamp());
-        context.setAccessDate(currentDate());
-        context.setAccessUser(Thread.currentThread().getName());
-        context.setAccessProcess(getClass().getSimpleName());
-        context.setAccessModule(getClass().getSimpleName());
-        AccessContext.setAccessContextOnThread(context);
-    }
-
-    /**
-     * Get the access context for common column auto setup of DBFlute.
-     * @return The instance of access context on the thread. (basically NotNull)
-     */
-    protected AccessContext getAccessContext() { // user method
-        return AccessContext.getAccessContextOnThread();
-    }
-
-    protected void xclearAccessContext() {
-        AccessContext.clearAccessContextOnThread();
-    }
-
-    protected void xclearMark() {
-        if (xhasMarkHereManager()) {
-            xgetMarkHereManager().checkNonAssertedMark();
-            xgetMarkHereManager().clearMarkMap();
-            xdestroyMarkHereManager();
-        }
     }
 
     // ===================================================================================
@@ -521,6 +510,28 @@ public abstract class PlainTestCase extends TestCase {
     }
 
     // -----------------------------------------------------
+    //                                                 Order
+    //                                                 -----
+    /**
+     * Assert that the bean list is ordered as expected specification.
+     * <pre>
+     * assertOrder(memberList, orderBy -&gt; {
+     *     orderBy.desc(mb -&gt; mb.getBirthdate()).asc(mb -&gt; mb.getMemberId());
+     * });
+     * </pre>
+     * @param beanList The list of bean. (NotNull)
+     * @param oneArgLambda The callback for order specification. (NotNull)
+     */
+    protected <BEAN> void assertOrder(List<BEAN> beanList, Consumer<ExpectedBeanOrderBy<BEAN>> oneArgLambda) {
+        assertNotNull(beanList);
+        assertNotNull(oneArgLambda);
+        assertHasAnyElement(beanList);
+        new BeanOrderValidator<BEAN>(oneArgLambda).validateOrder(beanList, vio -> {
+            fail("[Order Failure] " + vio); // for now
+        });
+    }
+
+    // -----------------------------------------------------
     //                                             Mark Here
     //                                             ---------
     /**
@@ -580,6 +591,14 @@ public abstract class PlainTestCase extends TestCase {
 
     protected void xdestroyMarkHereManager() {
         _xmarkHereManager = null;
+    }
+
+    protected void xclearMark() {
+        if (xhasMarkHereManager()) {
+            xgetMarkHereManager().checkNonAssertedMark();
+            xgetMarkHereManager().clearMarkMap();
+            xdestroyMarkHereManager();
+        }
     }
 
     // ===================================================================================
@@ -732,18 +751,26 @@ public abstract class PlainTestCase extends TestCase {
     //                                                                         Date Helper
     //                                                                         ===========
     protected LocalDate currentLocalDate() {
-        return toLocalDate(currentDate());
+        return toLocalDate(currentUtilDate());
     }
 
     protected LocalDateTime currentLocalDateTime() {
-        return toLocalDateTime(currentDate());
+        return toLocalDateTime(currentUtilDate());
     }
 
     protected LocalTime currentLocalTime() {
-        return toLocalTime(currentDate());
+        return toLocalTime(currentUtilDate());
     }
 
+    /**
+     * @return The current utility date. (NotNull)
+     * @deprecated use currentUtilDate()
+     */
     protected Date currentDate() {
+        return currentUtilDate();
+    }
+
+    protected Date currentUtilDate() {
         return DBFluteSystem.currentDate();
     }
 
@@ -763,7 +790,16 @@ public abstract class PlainTestCase extends TestCase {
         return DfTypeUtil.toLocalTime(obj, getUnitTimeZone());
     }
 
+    /**
+     * @param obj The source of date. (NullAllowed)
+     * @return The utility date. (NotNull)
+     * @deprecated use currentUtilDate()
+     */
     protected Date toDate(Object obj) {
+        return toUtilDate(obj);
+    }
+
+    protected Date toUtilDate(Object obj) {
         return DfTypeUtil.toDate(obj);
     }
 
@@ -836,6 +872,17 @@ public abstract class PlainTestCase extends TestCase {
 
     protected <KEY, VALUE> LinkedHashMap<KEY, VALUE> newLinkedHashMap(KEY key1, VALUE value1, KEY key2, VALUE value2) {
         return DfCollectionUtil.newLinkedHashMap(key1, value1, key2, value2);
+    }
+
+    // ===================================================================================
+    //                                                                       System Helper
+    //                                                                       =============
+    /**
+     * Get the line separator. (LF fixedly)
+     * @return The string of the line separator. (NotNull)
+     */
+    protected String ln() {
+        return "\n";
     }
 
     // ===================================================================================
@@ -1189,18 +1236,80 @@ public abstract class PlainTestCase extends TestCase {
     }
 
     // ===================================================================================
-    //                                                                       System Helper
-    //                                                                       =============
-    /**
-     * Get the line separator. (LF fixedly)
-     * @return The string of the line separator. (NotNull)
-     */
-    protected String ln() {
-        return "\n";
+    //                                                                             DBFlute
+    //                                                                             =======
+    // -----------------------------------------------------
+    //                                         AccessContext
+    //                                         -------------
+    protected void xprepareAccessContext() {
+        final AccessContext context = new AccessContext();
+        context.setAccessLocalDate(currentLocalDate());
+        context.setAccessLocalDateTime(currentLocalDateTime());
+        context.setAccessTimestamp(currentTimestamp());
+        context.setAccessDate(currentUtilDate());
+        context.setAccessUser(Thread.currentThread().getName());
+        context.setAccessProcess(getClass().getSimpleName());
+        context.setAccessModule(getClass().getSimpleName());
+        AccessContext.setAccessContextOnThread(context);
     }
 
-    protected String xgetCaseDisp() {
-        return getClass().getSimpleName() + "." + getName() + "()";
+    /**
+     * Get the access context for common column auto setup of DBFlute.
+     * @return The instance of access context on the thread. (basically NotNull)
+     */
+    protected AccessContext getAccessContext() { // user method
+        return AccessContext.getAccessContextOnThread();
+    }
+
+    protected void xclearAccessContext() {
+        AccessContext.clearAccessContextOnThread();
+    }
+
+    // -----------------------------------------------------
+    //                                       CallbackContext
+    //                                       ---------------
+    protected GatheredExecutedSqlHolder gatherExecutedSql() {
+        _xuseGatheredExecutedSql = true;
+        final GatheredExecutedSqlHolder holder = new GatheredExecutedSqlHolder();
+        CallbackContext.setSqlResultHandlerOnThread(new SqlResultHandler() {
+            public void handle(SqlResultInfo info) {
+                holder.addSqlResultInfo(info);
+            }
+        });
+        return holder;
+    }
+
+    protected void xclearGatheredExecutedSql() {
+        if (_xuseGatheredExecutedSql) {
+            CallbackContext.clearSqlResultHandlerOnThread();
+        }
+    }
+
+    // -----------------------------------------------------
+    //                                         DBFluteSystem
+    //                                         -------------
+    protected void switchCurrentDate(Supplier<LocalDateTime> dateTimeSupplier) {
+        assertNotNull(dateTimeSupplier);
+        if (DBFluteSystem.hasCurrentDateProvider()) {
+            String msg = "The current date provider already exists, cannot use new provider: " + dateTimeSupplier;
+            throw new IllegalStateException(msg);
+        }
+        _xuseSwitchedCurrentDate = true;
+        DBFluteSystem.unlock();
+        DBFluteSystem.setCurrentDateProvider(new DfCurrentDateProvider() {
+            public long currentTimeMillis() {
+                final LocalDateTime currentDateTime = dateTimeSupplier.get();
+                assertNotNull(currentDateTime);
+                return DfTypeUtil.toDate(currentDateTime).getTime();
+            }
+        });
+    }
+
+    protected void xclearSwitchedCurrentDate() {
+        if (_xuseSwitchedCurrentDate) {
+            DBFluteSystem.unlock();
+            DBFluteSystem.setCurrentDateProvider(null);
+        }
     }
 
     // ===================================================================================

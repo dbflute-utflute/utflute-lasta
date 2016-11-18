@@ -13,26 +13,26 @@
  * either express or implied. See the License for the specific language
  * governing permissions and limitations under the License.
  */
-package org.dbflute.utflute.lastaflute.mock;
+package org.dbflute.utflute.core.beanorder;
 
 /**
- * @param <RESULT> The type of JSON result.
  * @author jflute
  */
-public class TestingJsonData<RESULT> {
+public class BeanOrderCaseMark {
 
-    protected final RESULT jsonResult; // not null
+    protected final int specNo;
+    protected boolean caseFound;
 
-    public TestingJsonData(RESULT jsonResult) {
-        this.jsonResult = jsonResult;
+    public BeanOrderCaseMark(int specNo) {
+        this.specNo = specNo;
     }
 
-    @Deprecated
-    public RESULT getJsonBean() { // for compatible
-        return jsonResult;
+    public BeanOrderCaseMark markCase() {
+        caseFound = true;
+        return this;
     }
 
-    public RESULT getJsonResult() {
-        return jsonResult;
+    public boolean isCaseFound() {
+        return caseFound;
     }
 }

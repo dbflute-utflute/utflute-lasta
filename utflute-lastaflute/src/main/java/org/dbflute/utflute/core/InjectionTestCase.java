@@ -257,6 +257,21 @@ public abstract class InjectionTestCase extends PlainTestCase {
     }
 
     /**
+     * Register the mock instance for injection, injecting components of the mock.
+     * <pre>
+     * FooAction action = new FooAction();
+     * <span style="color: #FD4747">registerMockInstanceInjecting</span>(new FooBhv());
+     * inject(action); <span style="color: #3F7E5E">// the new-created behavior is injected</span>
+     * </pre>
+     * @param mock The mock instance injected to component. (NotNull)
+     */
+    public void registerMockInstanceInjecting(Object mock) { // user method
+        assertNotNull(mock);
+        inject(mock);
+        registerMockInstance(mock);
+    }
+
+    /**
      * Suppress the binding of the type for injection.
      * <pre>
      * FooAction action = new FooAction();

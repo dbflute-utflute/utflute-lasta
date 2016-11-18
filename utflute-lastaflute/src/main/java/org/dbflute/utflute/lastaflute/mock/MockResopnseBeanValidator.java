@@ -20,8 +20,8 @@ import java.util.Map;
 import org.lastaflute.web.response.HtmlResponse;
 import org.lastaflute.web.response.JsonResponse;
 import org.lastaflute.web.response.render.RenderData;
-import org.lastaflute.web.ruts.process.ResponseHtmlBeanValidator;
-import org.lastaflute.web.ruts.process.ResponseJsonBeanValidator;
+import org.lastaflute.web.ruts.process.validatebean.ResponseHtmlBeanValidator;
+import org.lastaflute.web.ruts.process.validatebean.ResponseJsonBeanValidator;
 import org.lastaflute.web.servlet.request.RequestManager;
 
 /**
@@ -52,17 +52,17 @@ public class MockResopnseBeanValidator {
         return new TestingHtmlData(dataMap);
     }
 
-    public <BEAN> TestingJsonData<BEAN> validateJsonBean(JsonResponse<BEAN> response) {
-        final BEAN jsonBean = response.getJsonBean();
-        createResponseJsonBeanValidator(response).validate(jsonBean);
-        return createTestingJsonBean(jsonBean);
+    public <RESULT> TestingJsonData<RESULT> validateJsonBean(JsonResponse<RESULT> response) {
+        final RESULT jsonResult = response.getJsonBean(); // #future change to getJsonResult()
+        createResponseJsonBeanValidator(response).validate(jsonResult);
+        return createTestingJsonResult(jsonResult);
     }
 
     protected <BEAN> ResponseJsonBeanValidator createResponseJsonBeanValidator(JsonResponse<BEAN> response) {
         return new ResponseJsonBeanValidator(requestManager, this, false, response);
     }
 
-    protected <BEAN> TestingJsonData<BEAN> createTestingJsonBean(BEAN jsonBean) {
-        return new TestingJsonData<BEAN>(jsonBean);
+    protected <RESULT> TestingJsonData<RESULT> createTestingJsonResult(RESULT jsonResult) {
+        return new TestingJsonData<RESULT>(jsonResult);
     }
 }

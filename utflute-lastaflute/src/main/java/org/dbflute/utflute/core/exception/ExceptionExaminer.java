@@ -13,26 +13,17 @@
  * either express or implied. See the License for the specific language
  * governing permissions and limitations under the License.
  */
-package org.dbflute.utflute.lastaflute.mock;
+package org.dbflute.utflute.core.exception;
 
 /**
- * @param <RESULT> The type of JSON result.
  * @author jflute
+ * @since 1.1.0 (2014/10/22 Wednesday)
  */
-public class TestingJsonData<RESULT> {
+@FunctionalInterface
+public interface ExceptionExaminer {
 
-    protected final RESULT jsonResult; // not null
-
-    public TestingJsonData(RESULT jsonResult) {
-        this.jsonResult = jsonResult;
-    }
-
-    @Deprecated
-    public RESULT getJsonBean() { // for compatible
-        return jsonResult;
-    }
-
-    public RESULT getJsonResult() {
-        return jsonResult;
-    }
+    /**
+     * Examine the process, should throw the specified exception.
+     */
+    void examine();
 }
