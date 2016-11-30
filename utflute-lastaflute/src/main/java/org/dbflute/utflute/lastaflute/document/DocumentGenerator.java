@@ -95,7 +95,7 @@ public class DocumentGenerator {
     protected final List<String> srcDirList;
 
     /** depth. */
-    protected final int depth;
+    protected int depth;
 
     /** sourceParserReflector. */
     protected final OptionalThing<SourceParserReflector> sourceParserReflector;
@@ -116,17 +116,24 @@ public class DocumentGenerator {
     }
 
     public DocumentGenerator(List<String> srcDirList) {
-        this(srcDirList, DEPTH);
-    }
-
-    public DocumentGenerator(List<String> srcDirList, int depth) {
         this.srcDirList = srcDirList;
-        this.depth = depth;
+        this.depth = DEPTH;
         this.sourceParserReflector = createSourceParserReflectorFactory().reflector(srcDirList);
     }
 
     protected SourceParserReflectorFactory createSourceParserReflectorFactory() {
         return new SourceParserReflectorFactory();
+    }
+
+    // ===================================================================================
+    //                                                                              Option
+    //                                                                              ======
+    public void addSrcDir(String srcDir) {
+        srcDirList.add(srcDir);
+    }
+
+    public void setDepth(int depth) {
+        this.depth = depth;
     }
 
     // ===================================================================================
@@ -496,7 +503,7 @@ public class DocumentGenerator {
     }
 
     protected List<String> getTargetTypeSuffixNameList() {
-        return DfCollectionUtil.newArrayList("Form", "Body", "Bean");
+        return DfCollectionUtil.newArrayList("Form", "Body", "Bean", "Result");
     }
 
     // ===================================================================================
