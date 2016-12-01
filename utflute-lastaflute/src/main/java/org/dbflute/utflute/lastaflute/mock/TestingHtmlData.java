@@ -18,6 +18,12 @@ package org.dbflute.utflute.lastaflute.mock;
 import java.util.List;
 import java.util.Map;
 
+import org.dbflute.optional.OptionalThing;
+import org.lastaflute.web.response.next.ForwardNext;
+import org.lastaflute.web.response.next.HtmlNext;
+import org.lastaflute.web.response.next.RedirectNext;
+import org.lastaflute.web.response.next.RoutingNext;
+
 import junit.framework.Assert;
 
 /**
@@ -28,18 +34,51 @@ public class TestingHtmlData {
     // ===================================================================================
     //                                                                           Attribute
     //                                                                           =========
+    protected final RoutingNext nextRouting; // not null
     protected final Map<String, Object> dataMap; // not null
+    protected final OptionalThing<Object> pushedForm; // not null, empty allowed
 
     // ===================================================================================
     //                                                                         Constructor
     //                                                                         ===========
-    public TestingHtmlData(Map<String, Object> dataMap) {
+    public TestingHtmlData(RoutingNext nextRouting, Map<String, Object> dataMap, OptionalThing<Object> pushedForm) {
+        this.nextRouting = nextRouting;
         this.dataMap = dataMap;
+        this.pushedForm = pushedForm;
     }
 
     // ===================================================================================
     //                                                                        Testing Tool
     //                                                                        ============
+    // -----------------------------------------------------
+    //                                          Next Routing
+    //                                          ------------
+    // #thinking needed? (and how do I resolve redirect problem?)
+    //public void assertRoutingToHtmlForward(HtmlNext htmlNext) {
+    //    assertTrue(isRoutingAsHtmlForward());
+    //    assertEquals(htmlNext.getRoutingPath(), nextRouting.getRoutingPath());
+    //    assertEquals(htmlNext.isAsIs(), nextRouting.isAsIs());
+    //}
+    // needs ActionPathResolver or RedirectNext should have action type
+    //public void assertRoutingToRedirect(Class<?> actionType) {
+    //    assertTrue(nextRouting instanceof RedirectNext);
+    //}
+
+    public boolean isRoutingAsForward() {
+        return nextRouting instanceof ForwardNext;
+    }
+
+    public boolean isRoutingAsHtmlForward() {
+        return nextRouting instanceof HtmlNext;
+    }
+
+    public boolean isRoutingAsRedirect() {
+        return nextRouting instanceof RedirectNext;
+    }
+
+    // -----------------------------------------------------
+    //                                              Data Map
+    //                                              --------
     public <VALUE> VALUE required(String key, Class<VALUE> valueType) {
         final Object value = dataMap.get(key);
         assertTrue(value != null);
@@ -58,6 +97,19 @@ public class TestingHtmlData {
         return list;
     }
 
+    // -----------------------------------------------------
+    //                                           Pushed Form
+    //                                           -----------
+    public <FORM> FORM requiredPushedForm(Class<FORM> formType) {
+        assertTrue(pushedForm.isPresent());
+        @SuppressWarnings("unchecked")
+        final FORM form = (FORM) pushedForm.get();
+        return form;
+    }
+
+    // -----------------------------------------------------
+    //                                         Assert Helper
+    //                                         -------------
     protected void assertTrue(boolean condition) {
         Assert.assertTrue(condition);
     }
@@ -65,7 +117,15 @@ public class TestingHtmlData {
     // ===================================================================================
     //                                                                            Accessor
     //                                                                            ========
+    public RoutingNext getNextRouting() {
+        return nextRouting;
+    }
+
     public Map<String, Object> getDataMap() {
         return dataMap;
+    }
+
+    public OptionalThing<Object> getPushedForm() {
+        return pushedForm;
     }
 }

@@ -432,7 +432,7 @@ public abstract class WebContainerTestCase extends ContainerTestCase {
     }
 
     protected <BEAN> TestingJsonData<BEAN> validateJsonData(JsonResponse<BEAN> response) {
-        return new MockResopnseBeanValidator(requestManager).validateJsonBean(response);
+        return new MockResopnseBeanValidator(requestManager).validateJsonData(response);
     }
 
     // ===================================================================================
