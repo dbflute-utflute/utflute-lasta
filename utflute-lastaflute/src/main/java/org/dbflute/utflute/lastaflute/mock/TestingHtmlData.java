@@ -19,6 +19,8 @@ import java.util.List;
 import java.util.Map;
 
 import org.dbflute.optional.OptionalThing;
+import org.lastaflute.core.util.ContainerUtil;
+import org.lastaflute.web.path.ActionPathResolver;
 import org.lastaflute.web.response.next.ForwardNext;
 import org.lastaflute.web.response.next.HtmlNext;
 import org.lastaflute.web.response.next.RedirectNext;
@@ -53,19 +55,32 @@ public class TestingHtmlData {
     // -----------------------------------------------------
     //                                          Next Routing
     //                                          ------------
-    // #thinking needed? (and how do I resolve redirect problem?)
-    //public void assertRoutingToHtmlForward(HtmlNext htmlNext) {
-    //    assertTrue(isRoutingAsHtmlForward());
-    //    assertEquals(htmlNext.getRoutingPath(), nextRouting.getRoutingPath());
-    //    assertEquals(htmlNext.isAsIs(), nextRouting.isAsIs());
-    //}
-    // needs ActionPathResolver or RedirectNext should have action type
-    //public void assertRoutingToRedirect(Class<?> actionType) {
-    //    assertTrue(nextRouting instanceof RedirectNext);
-    //}
+    public void assertHtmlForward(HtmlNext htmlNext) {
+        assertTrue("Not HTML forward response: " + nextRouting, isRoutingAsHtmlForward());
+        assertEquals(htmlNext.getRoutingPath(), nextRouting.getRoutingPath());
+    }
 
-    public boolean isRoutingAsForward() {
-        return nextRouting instanceof ForwardNext;
+    public void assertRedirect(Class<?> actionType) {
+        // #hope make overload method using UrlChain
+        assertTrue("Not redirect response: " + nextRouting, isRoutingAsRedirect());
+        doAssertRedirectOrForward("redirect", actionType);
+    }
+
+    public void assertSimpleForward(Class<?> actionType) {
+        assertTrue("Not (simple) forward response: " + nextRouting, isRoutingAsSimpleForward());
+        doAssertRedirectOrForward("forward", actionType);
+    }
+
+    protected void doAssertRedirectOrForward(String type, Class<?> actionType) {
+        final String actionUrl = toActionUrl(actionType);
+        final String routingPath = nextRouting.getRoutingPath();
+        final boolean result = routingPath.startsWith(actionUrl);
+        assertTrue("Wrong action " + type + ": expected=" + actionUrl + ", actual" + routingPath, result);
+    }
+
+    protected String toActionUrl(Class<?> actionType) {
+        // #hope get it from requestManager or response saves action type
+        return getActionPathResolver().toActionUrl(actionType);
     }
 
     public boolean isRoutingAsHtmlForward() {
@@ -76,13 +91,18 @@ public class TestingHtmlData {
         return nextRouting instanceof RedirectNext;
     }
 
+    public boolean isRoutingAsSimpleForward() {
+        return nextRouting instanceof ForwardNext;
+    }
+
     // -----------------------------------------------------
     //                                              Data Map
     //                                              --------
     public <VALUE> VALUE required(String key, Class<VALUE> valueType) {
         final Object value = dataMap.get(key);
-        assertTrue(value != null);
-        assertTrue(valueType.isAssignableFrom(value.getClass()));
+        assertTrue("Not found the value: key=" + key + ", dataMap=" + dataMap.keySet(), value != null);
+        final Class<? extends Object> actualType = value.getClass();
+        assertTrue("Cannot cast the value: expected=" + valueType + ", actual=" + actualType, valueType.isAssignableFrom(actualType));
         @SuppressWarnings("unchecked")
         final VALUE cast = (VALUE) value;
         return cast;
@@ -91,17 +111,31 @@ public class TestingHtmlData {
     public <ELEMENT> List<ELEMENT> requiredList(String key, Class<ELEMENT> elementType) {
         @SuppressWarnings("unchecked")
         final List<ELEMENT> list = (List<ELEMENT>) dataMap.get(key);
-        assertTrue(list != null);
-        assertTrue(!list.isEmpty());
-        assertTrue(elementType.isAssignableFrom(list.get(0).getClass()));
+        assertListNotNull(key, list);
+        assertListHasAnyElement(key, list);
+        assertListHasSpecifiedElementType(elementType, list);
         return list;
+    }
+
+    protected <ELEMENT> void assertListNotNull(String key, List<ELEMENT> list) {
+        assertTrue("Not found the list: key=" + key + ", dataMap=" + dataMap.keySet(), list != null);
+    }
+
+    protected <ELEMENT> void assertListHasAnyElement(String key, List<ELEMENT> list) {
+        assertTrue("Found the empty list: key=" + key, !list.isEmpty());
+    }
+
+    protected <ELEMENT> void assertListHasSpecifiedElementType(Class<ELEMENT> elementType, List<ELEMENT> list) {
+        final Class<? extends Object> firstType = list.get(0).getClass();
+        final boolean result = elementType.isAssignableFrom(firstType);
+        assertTrue("Cannot cast the list element: expected=" + elementType + ", actual=" + firstType, result);
     }
 
     // -----------------------------------------------------
     //                                           Pushed Form
     //                                           -----------
     public <FORM> FORM requiredPushedForm(Class<FORM> formType) {
-        assertTrue(pushedForm.isPresent());
+        assertTrue("Not found the pushed form: formType=" + formType, pushedForm.isPresent());
         @SuppressWarnings("unchecked")
         final FORM form = (FORM) pushedForm.get();
         return form;
@@ -110,8 +144,19 @@ public class TestingHtmlData {
     // -----------------------------------------------------
     //                                         Assert Helper
     //                                         -------------
-    protected void assertTrue(boolean condition) {
-        Assert.assertTrue(condition);
+    protected void assertEquals(Object expected, Object actual) {
+        Assert.assertEquals(expected, actual);
+    }
+
+    protected void assertTrue(String msg, boolean condition) {
+        Assert.assertTrue(msg, condition);
+    }
+
+    // ===================================================================================
+    //                                                                          Components
+    //                                                                          ==========
+    protected ActionPathResolver getActionPathResolver() {
+        return ContainerUtil.getComponent(ActionPathResolver.class);
     }
 
     // ===================================================================================
