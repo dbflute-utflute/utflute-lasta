@@ -17,6 +17,7 @@ package org.dbflute.utflute.lastaflute;
 
 import java.util.Date;
 import java.util.Enumeration;
+import java.util.function.Consumer;
 
 import javax.annotation.Resource;
 import javax.servlet.FilterConfig;
@@ -32,6 +33,8 @@ import org.dbflute.utflute.lastaflute.mock.MockResopnseBeanValidator;
 import org.dbflute.utflute.lastaflute.mock.MockRuntimeFactory;
 import org.dbflute.utflute.lastaflute.mock.TestingHtmlData;
 import org.dbflute.utflute.lastaflute.mock.TestingJsonData;
+import org.dbflute.utflute.lastaflute.mock.mail.MockMailMessageValidator;
+import org.dbflute.utflute.lastaflute.mock.mail.TestingMailData;
 import org.dbflute.utflute.mocklet.MockletHttpServletRequest;
 import org.dbflute.utflute.mocklet.MockletHttpServletRequestImpl;
 import org.dbflute.utflute.mocklet.MockletHttpServletResponse;
@@ -80,20 +83,31 @@ public abstract class WebContainerTestCase extends ContainerTestCase {
     private MockletHttpServletResponse _xmockResponse;
 
     // -----------------------------------------------------
+    //                                       Mail Validation
+    //                                       ---------------
+    private MockMailMessageValidator _xmailMessageValidator;
+
+    // -----------------------------------------------------
     //                                  LastaFlute Component
     //                                  --------------------
     @Resource
-    private FwAssistantDirector assistantDirector;
+    private FwAssistantDirector _assistantDirector;
     @Resource
-    private TimeManager timeManager;
+    private TimeManager _timeManager;
     @Resource
-    private JsonManager jsonManager;
+    private JsonManager _jsonManager;
     @Resource
-    private RequestManager requestManager;
+    private RequestManager _requestManager;
 
     // ===================================================================================
     //                                                                            Settings
     //                                                                            ========
+    @Override
+    protected void postTest() {
+        super.postTest();
+        xprocessMailValidation();
+    }
+
     @Override
     public void tearDown() throws Exception {
         if (BowgunDestructiveAdjuster.hasAnyBowgun()) {
@@ -141,7 +155,7 @@ public abstract class WebContainerTestCase extends ContainerTestCase {
 
     protected void initializeTransactionTime() {
         // because of non-UserTransaction transaction in UTFlute
-        final Date transactionTime = timeManager.flashDate();
+        final Date transactionTime = _timeManager.flashDate();
         TransactionTimeContext.setTransactionTime(transactionTime);
     }
 
@@ -151,8 +165,8 @@ public abstract class WebContainerTestCase extends ContainerTestCase {
     }
 
     protected void initializeAssistantDirector() {
-        final FwCoreDirection direction = assistantDirector.assistCoreDirection();
-        direction.assistCurtainBeforeHook().hook(assistantDirector);
+        final FwCoreDirection direction = _assistantDirector.assistCoreDirection();
+        direction.assistCurtainBeforeHook().hook(_assistantDirector);
     }
 
     // -----------------------------------------------------
@@ -295,7 +309,7 @@ public abstract class WebContainerTestCase extends ContainerTestCase {
     //                                               Request
     //                                               -------
     protected MockletHttpServletRequest getMockRequest() {
-        return (MockletHttpServletRequest) _xmockRequest;
+        return _xmockRequest;
     }
 
     protected void addMockRequestHeader(String name, String value) {
@@ -335,7 +349,7 @@ public abstract class WebContainerTestCase extends ContainerTestCase {
     //                                              Response
     //                                              --------
     protected MockletHttpServletResponse getMockResponse() {
-        return (MockletHttpServletResponse) _xmockResponse;
+        return _xmockResponse;
     }
 
     protected Cookie[] getMockResponseCookies() {
@@ -383,35 +397,8 @@ public abstract class WebContainerTestCase extends ContainerTestCase {
         }
     }
 
-    // -----------------------------------------------------
-    //                                     Internal Resource
-    //                                     -----------------
-    protected static MockletServletConfig xgetCachedServletConfig() {
-        return _xcachedServletConfig;
-    }
-
-    protected static void xsetCachedServletConfig(MockletServletConfig xcachedServletConfig) {
-        _xcachedServletConfig = xcachedServletConfig;
-    }
-
-    protected MockletHttpServletRequest xgetMockRequest() {
-        return _xmockRequest;
-    }
-
-    protected void xsetMockRequest(MockletHttpServletRequest xmockRequest) {
-        _xmockRequest = xmockRequest;
-    }
-
-    protected MockletHttpServletResponse xgetMockResponse() {
-        return _xmockResponse;
-    }
-
-    protected void xsetMockResponse(MockletHttpServletResponse xmockResponse) {
-        _xmockResponse = xmockResponse;
-    }
-
     // ===================================================================================
-    //                                                                 Web Result Handling
+    //                                                                 Response Validation
     //                                                                 ===================
     protected void showJson(Object jsonBean) {
         log(jsonBean.getClass().getSimpleName() + ":" + ln() + toJson(jsonBean));
@@ -424,15 +411,29 @@ public abstract class WebContainerTestCase extends ContainerTestCase {
         } else {
             realBean = jsonBean;
         }
-        return jsonManager.toJson(realBean);
+        return _jsonManager.toJson(realBean);
     }
 
     protected TestingHtmlData validateHtmlData(HtmlResponse response) {
-        return new MockResopnseBeanValidator(requestManager).validateHtmlData(response);
+        return new MockResopnseBeanValidator(_requestManager).validateHtmlData(response);
     }
 
     protected <BEAN> TestingJsonData<BEAN> validateJsonData(JsonResponse<BEAN> response) {
-        return new MockResopnseBeanValidator(requestManager).validateJsonData(response);
+        return new MockResopnseBeanValidator(_requestManager).validateJsonData(response);
+    }
+
+    // ===================================================================================
+    //                                                                     Mail Validation
+    //                                                                     ===============
+    protected void reserveMailValidation(Consumer<TestingMailData> oneArgLambda) {
+        _xmailMessageValidator = new MockMailMessageValidator(oneArgLambda);
+    }
+
+    protected void xprocessMailValidation() {
+        if (_xmailMessageValidator != null) {
+            _xmailMessageValidator.validateMailData();
+            _xmailMessageValidator = null;
+        }
     }
 
     // ===================================================================================
@@ -457,5 +458,40 @@ public abstract class WebContainerTestCase extends ContainerTestCase {
 
     protected DocumentGenerator createDocumentGenerator() {
         return new DocumentGenerator();
+    }
+
+    // ===================================================================================
+    //                                                                            Accessor
+    //                                                                            ========
+    protected static MockletServletConfig xgetCachedServletConfig() {
+        return _xcachedServletConfig;
+    }
+
+    protected static void xsetCachedServletConfig(MockletServletConfig xcachedServletConfig) {
+        _xcachedServletConfig = xcachedServletConfig;
+    }
+
+    protected MockletHttpServletRequest xgetMockRequest() {
+        return _xmockRequest;
+    }
+
+    protected void xsetMockRequest(MockletHttpServletRequest xmockRequest) {
+        _xmockRequest = xmockRequest;
+    }
+
+    protected MockletHttpServletResponse xgetMockResponse() {
+        return _xmockResponse;
+    }
+
+    protected void xsetMockResponse(MockletHttpServletResponse xmockResponse) {
+        _xmockResponse = xmockResponse;
+    }
+
+    protected MockMailMessageValidator xgetMailMessageValidator() {
+        return _xmailMessageValidator;
+    }
+
+    protected void xsetMailMessageValidator(MockMailMessageValidator xmailMessageValidator) {
+        _xmailMessageValidator = xmailMessageValidator;
     }
 }

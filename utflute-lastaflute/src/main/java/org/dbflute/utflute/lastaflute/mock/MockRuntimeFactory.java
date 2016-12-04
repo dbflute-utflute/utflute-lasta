@@ -31,14 +31,14 @@ public class MockRuntimeFactory {
     // ===================================================================================
     //                                                                           Attribute
     //                                                                           =========
-    protected final ActionMapping mapping;
+    protected final ActionMapping _mapping;
 
     // ===================================================================================
     //                                                                         Constructor
     //                                                                         ===========
     public MockRuntimeFactory() {
         final MockRomanticActionCustomizer customizer = createMockRomanticActionCustomizer();
-        mapping = customizer.createActionMapping(createComponentDefImpl(MockAction.class, "mockAction"));
+        _mapping = customizer.createActionMapping(createComponentDefImpl(MockAction.class, "mockAction"));
     }
 
     protected MockRomanticActionCustomizer createMockRomanticActionCustomizer() {
@@ -53,12 +53,12 @@ public class MockRuntimeFactory {
     //                                                                             Creator
     //                                                                             =======
     public ActionRuntime createHtmlRuntime() {
-        final ActionExecute execute = mapping.getExecuteMap().get("sea");
+        final ActionExecute execute = _mapping.getExecuteMap().get("sea");
         return new ActionRuntime("/mock/sea/", execute, createRequestUrlParam());
     }
 
     public ActionRuntime createJsonRuntime() {
-        final ActionExecute execute = mapping.getExecuteMap().get("land");
+        final ActionExecute execute = _mapping.getExecuteMap().get("land");
         return new ActionRuntime("/mock/land/", execute, createRequestUrlParam());
     }
 
@@ -70,6 +70,6 @@ public class MockRuntimeFactory {
     //                                                                            Accessor
     //                                                                            ========
     public ActionMapping getMapping() {
-        return mapping;
+        return _mapping;
     }
 }

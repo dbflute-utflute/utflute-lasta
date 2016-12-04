@@ -36,13 +36,13 @@ public class MockResopnseBeanValidator {
     // ===================================================================================
     //                                                                           Attribute
     //                                                                           =========
-    protected final RequestManager requestManager;
+    protected final RequestManager _requestManager;
 
     // ===================================================================================
     //                                                                         Constructor
     //                                                                         ===========
     public MockResopnseBeanValidator(RequestManager requestManager) {
-        this.requestManager = requestManager;
+        _requestManager = requestManager;
     }
 
     // ===================================================================================
@@ -80,7 +80,7 @@ public class MockResopnseBeanValidator {
     }
 
     protected ResponseHtmlBeanValidator createResponseHtmlBeanValidator(HtmlResponse response) {
-        return new ResponseHtmlBeanValidator(requestManager, this, false, response);
+        return new ResponseHtmlBeanValidator(_requestManager, this, false, response);
     }
 
     protected TestingHtmlData createTestingHtmlData(RoutingNext nextRouting, Map<String, Object> dataMap,
@@ -98,7 +98,7 @@ public class MockResopnseBeanValidator {
     }
 
     protected <BEAN> ResponseJsonBeanValidator createResponseJsonBeanValidator(JsonResponse<BEAN> response) {
-        return new ResponseJsonBeanValidator(requestManager, this, false, response);
+        return new ResponseJsonBeanValidator(_requestManager, this, false, response);
     }
 
     protected <RESULT> TestingJsonData<RESULT> createTestingJsonResult(RESULT jsonResult) {

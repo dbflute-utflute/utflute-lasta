@@ -21,18 +21,18 @@ package org.dbflute.utflute.lastaflute.mock;
  */
 public class TestingJsonData<RESULT> {
 
-    protected final RESULT jsonResult; // not null
+    protected final RESULT _jsonResult; // not null
 
     public TestingJsonData(RESULT jsonResult) {
-        this.jsonResult = jsonResult;
+        _jsonResult = jsonResult;
     }
 
     @Deprecated
     public RESULT getJsonBean() { // for compatible
-        return jsonResult;
+        return _jsonResult;
     }
 
     public RESULT getJsonResult() {
-        return jsonResult;
+        return _jsonResult;
     }
 }

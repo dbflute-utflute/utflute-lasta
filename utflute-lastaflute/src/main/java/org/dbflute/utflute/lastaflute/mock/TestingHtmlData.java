@@ -36,17 +36,17 @@ public class TestingHtmlData {
     // ===================================================================================
     //                                                                           Attribute
     //                                                                           =========
-    protected final RoutingNext nextRouting; // not null
-    protected final Map<String, Object> dataMap; // not null
-    protected final OptionalThing<Object> pushedForm; // not null, empty allowed
+    protected final RoutingNext _nextRouting; // not null
+    protected final Map<String, Object> _dataMap; // not null
+    protected final OptionalThing<Object> _pushedForm; // not null, empty allowed
 
     // ===================================================================================
     //                                                                         Constructor
     //                                                                         ===========
     public TestingHtmlData(RoutingNext nextRouting, Map<String, Object> dataMap, OptionalThing<Object> pushedForm) {
-        this.nextRouting = nextRouting;
-        this.dataMap = dataMap;
-        this.pushedForm = pushedForm;
+        _nextRouting = nextRouting;
+        _dataMap = dataMap;
+        _pushedForm = pushedForm;
     }
 
     // ===================================================================================
@@ -56,24 +56,24 @@ public class TestingHtmlData {
     //                                          Next Routing
     //                                          ------------
     public void assertHtmlForward(HtmlNext htmlNext) {
-        assertTrue("Not HTML forward response: " + nextRouting, isRoutingAsHtmlForward());
-        assertEquals(htmlNext.getRoutingPath(), nextRouting.getRoutingPath());
+        assertTrue("Not HTML forward response: " + _nextRouting, isRoutingAsHtmlForward());
+        assertEquals(htmlNext.getRoutingPath(), _nextRouting.getRoutingPath());
     }
 
     public void assertRedirect(Class<?> actionType) {
         // #hope make overload method using UrlChain
-        assertTrue("Not redirect response: " + nextRouting, isRoutingAsRedirect());
+        assertTrue("Not redirect response: " + _nextRouting, isRoutingAsRedirect());
         doAssertRedirectOrForward("redirect", actionType);
     }
 
     public void assertSimpleForward(Class<?> actionType) {
-        assertTrue("Not (simple) forward response: " + nextRouting, isRoutingAsSimpleForward());
+        assertTrue("Not (simple) forward response: " + _nextRouting, isRoutingAsSimpleForward());
         doAssertRedirectOrForward("forward", actionType);
     }
 
     protected void doAssertRedirectOrForward(String type, Class<?> actionType) {
         final String actionUrl = toActionUrl(actionType);
-        final String routingPath = nextRouting.getRoutingPath();
+        final String routingPath = _nextRouting.getRoutingPath();
         final boolean result = routingPath.startsWith(actionUrl);
         assertTrue("Wrong action " + type + ": expected=" + actionUrl + ", actual" + routingPath, result);
     }
@@ -84,23 +84,23 @@ public class TestingHtmlData {
     }
 
     public boolean isRoutingAsHtmlForward() {
-        return nextRouting instanceof HtmlNext;
+        return _nextRouting instanceof HtmlNext;
     }
 
     public boolean isRoutingAsRedirect() {
-        return nextRouting instanceof RedirectNext;
+        return _nextRouting instanceof RedirectNext;
     }
 
     public boolean isRoutingAsSimpleForward() {
-        return nextRouting instanceof ForwardNext;
+        return _nextRouting instanceof ForwardNext;
     }
 
     // -----------------------------------------------------
     //                                              Data Map
     //                                              --------
     public <VALUE> VALUE required(String key, Class<VALUE> valueType) {
-        final Object value = dataMap.get(key);
-        assertTrue("Not found the value: key=" + key + ", dataMap=" + dataMap.keySet(), value != null);
+        final Object value = _dataMap.get(key);
+        assertTrue("Not found the value: key=" + key + ", dataMap=" + _dataMap.keySet(), value != null);
         final Class<? extends Object> actualType = value.getClass();
         assertTrue("Cannot cast the value: expected=" + valueType + ", actual=" + actualType, valueType.isAssignableFrom(actualType));
         @SuppressWarnings("unchecked")
@@ -110,7 +110,7 @@ public class TestingHtmlData {
 
     public <ELEMENT> List<ELEMENT> requiredList(String key, Class<ELEMENT> elementType) {
         @SuppressWarnings("unchecked")
-        final List<ELEMENT> list = (List<ELEMENT>) dataMap.get(key);
+        final List<ELEMENT> list = (List<ELEMENT>) _dataMap.get(key);
         assertListNotNull(key, list);
         assertListHasAnyElement(key, list);
         assertListHasSpecifiedElementType(elementType, list);
@@ -118,7 +118,7 @@ public class TestingHtmlData {
     }
 
     protected <ELEMENT> void assertListNotNull(String key, List<ELEMENT> list) {
-        assertTrue("Not found the list: key=" + key + ", dataMap=" + dataMap.keySet(), list != null);
+        assertTrue("Not found the list: key=" + key + ", dataMap=" + _dataMap.keySet(), list != null);
     }
 
     protected <ELEMENT> void assertListHasAnyElement(String key, List<ELEMENT> list) {
@@ -135,9 +135,9 @@ public class TestingHtmlData {
     //                                           Pushed Form
     //                                           -----------
     public <FORM> FORM requiredPushedForm(Class<FORM> formType) {
-        assertTrue("Not found the pushed form: formType=" + formType, pushedForm.isPresent());
+        assertTrue("Not found the pushed form: formType=" + formType, _pushedForm.isPresent());
         @SuppressWarnings("unchecked")
-        final FORM form = (FORM) pushedForm.get();
+        final FORM form = (FORM) _pushedForm.get();
         return form;
     }
 
@@ -163,14 +163,14 @@ public class TestingHtmlData {
     //                                                                            Accessor
     //                                                                            ========
     public RoutingNext getNextRouting() {
-        return nextRouting;
+        return _nextRouting;
     }
 
     public Map<String, Object> getDataMap() {
-        return dataMap;
+        return _dataMap;
     }
 
     public OptionalThing<Object> getPushedForm() {
-        return pushedForm;
+        return _pushedForm;
     }
 }
