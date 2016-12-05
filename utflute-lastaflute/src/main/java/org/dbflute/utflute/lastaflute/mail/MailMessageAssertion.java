@@ -139,11 +139,11 @@ public class MailMessageAssertion {
         br.addElement("For example:");
         br.addElement("  (x):");
         br.addElement("    HtmlResponse response = action.index(...); // mail here");
-        br.addElement("    reserveMailValidation(mailData -> { // *Bad");
+        br.addElement("    reserveMailAssertion(mailData -> { // *Bad");
         br.addElement("        ...");
         br.addElement("    });");
         br.addElement("  (o):");
-        br.addElement("    reserveMailValidation(mailData -> { // Good");
+        br.addElement("    reserveMailAssertion(mailData -> { // Good");
         br.addElement("        ...");
         br.addElement("    });");
         br.addElement("    HtmlResponse response = action.index(...); // mail here");
