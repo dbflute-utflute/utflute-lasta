@@ -85,6 +85,7 @@ public class MailMessageAssertion {
     }
 
     protected void assertNotContainsMistakeComment(CardView cardView, SMailPostingDiscloser discloser, String title, String text) {
+        // basically failed before this process but just in case
         final String lowerText = text.toLowerCase();
         assertNoMistakePlaceholder(cardView, discloser, title, lowerText, "/*pmb.");
         assertNoMistakePlaceholder(cardView, discloser, title, lowerText, "/* pmb.");
