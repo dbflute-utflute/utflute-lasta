@@ -56,10 +56,13 @@ import org.lastaflute.di.core.ExternalContext;
 import org.lastaflute.di.core.LaContainer;
 import org.lastaflute.di.core.factory.SingletonLaContainerFactory;
 import org.lastaflute.web.LastaFilter;
+import org.lastaflute.web.LastaWebKey;
 import org.lastaflute.web.response.HtmlResponse;
 import org.lastaflute.web.response.JsonResponse;
 import org.lastaflute.web.ruts.process.ActionRuntime;
 import org.lastaflute.web.servlet.request.RequestManager;
+import org.lastaflute.web.token.DoubleSubmitManager;
+import org.lastaflute.web.token.DoubleSubmitTokenMap;
 
 /**
  * @author jflute
@@ -98,6 +101,8 @@ public abstract class WebContainerTestCase extends ContainerTestCase {
     private JsonManager _jsonManager;
     @Resource
     private RequestManager _requestManager;
+    @Resource
+    private DoubleSubmitManager _doubleSubmitManager;
 
     // ===================================================================================
     //                                                                            Settings
@@ -434,6 +439,33 @@ public abstract class WebContainerTestCase extends ContainerTestCase {
             _xmailMessageAssertion.assertMailData();
             _xmailMessageAssertion = null;
         }
+    }
+
+    // ===================================================================================
+    //                                                                     Token Assertion
+    //                                                                     ===============
+    protected void assertTokenSaved(Class<?> groupType) { // for action that calls saveToken()
+        final DoubleSubmitTokenMap tokenMap = _doubleSubmitManager.getSessionTokenMap().get();
+        final boolean condition = tokenMap.get(groupType).isPresent();
+        assertTrue("Not found the transaction token saved in session, so call saveToken(): tokenMap=" + tokenMap, condition);
+    }
+
+    protected void mockTokenRequested(Class<?> groupType) { // for action that calls verityToken()
+        final String savedToken = _doubleSubmitManager.saveToken(groupType);
+        getMockRequest().setParameter(LastaWebKey.TRANSACTION_TOKEN_KEY, savedToken);
+    }
+
+    protected void mockTokenRequestedAsDoubleSubmit(Class<?> groupType) { // for action that calls verityToken()
+        final String savedToken = _doubleSubmitManager.saveToken(groupType);
+        getMockRequest().setParameter(LastaWebKey.TRANSACTION_TOKEN_KEY, savedToken);
+        _doubleSubmitManager.verifyToken(groupType, () -> { // means first request done
+            throw new IllegalStateException("no way");
+        });
+    }
+
+    protected void assertTokenVerified() { // for action that calls verityToken()
+        final boolean condition = _doubleSubmitManager.isFirstSubmittedRequest();
+        assertTrue("Not found the transaction token verification, so call verifyToken().", condition);
     }
 
     // ===================================================================================
