@@ -13,12 +13,15 @@
  * either express or implied. See the License for the specific language
  * governing permissions and limitations under the License.
  */
-package org.dbflute.utflute.lastaflute.mock.mail;
+package org.dbflute.utflute.lastaflute.mail;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+
+import org.dbflute.helper.message.ExceptionMessageBuilder;
+import org.junit.Assert;
 
 /**
  * @author jflute
@@ -31,12 +34,18 @@ public class TestingMailData {
     public List<TestingPreparedMessage> required(Class<?> postcardType) {
         final List<TestingPreparedMessage> messageList = _messageMap.get(postcardType);
         if (messageList == null) {
-            String msg = "Not found the postcard in the prepared messages: " + postcardType;
-            throw new IllegalStateException(msg);
+            final ExceptionMessageBuilder br = new ExceptionMessageBuilder();
+            br.addNotice("Not found the postcard in the prepared messages.");
+            br.addItem("NotFound Postcard");
+            br.addElement(postcardType);
+            br.addItem("Existing Postcards");
+            br.addElement(_messageMap.keySet());
+            final String msg = br.buildExceptionMessage();
+            Assert.fail(msg);
         }
         if (messageList.isEmpty()) { // no way
             String msg = "Found the empty message list in the prepared messages: " + postcardType;
-            throw new IllegalStateException(msg);
+            Assert.fail(msg);
         }
         return messageList;
     }

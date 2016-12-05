@@ -139,7 +139,7 @@ public abstract class PlainTestCase extends TestCase {
         xclearAccessContext();
         xclearGatheredExecutedSql();
         xclearSwitchedCurrentDate();
-        xclearMark();
+        xclearMark(); // last process to be able to be used in tearDown()
     }
 
     // ===================================================================================

@@ -29,12 +29,12 @@ import javax.servlet.http.HttpServletRequest;
 
 import org.dbflute.utflute.lastadi.ContainerTestCase;
 import org.dbflute.utflute.lastaflute.document.DocumentGenerator;
+import org.dbflute.utflute.lastaflute.mail.MailMessageAssertion;
+import org.dbflute.utflute.lastaflute.mail.TestingMailData;
 import org.dbflute.utflute.lastaflute.mock.MockResopnseBeanValidator;
 import org.dbflute.utflute.lastaflute.mock.MockRuntimeFactory;
 import org.dbflute.utflute.lastaflute.mock.TestingHtmlData;
 import org.dbflute.utflute.lastaflute.mock.TestingJsonData;
-import org.dbflute.utflute.lastaflute.mock.mail.MockMailMessageValidator;
-import org.dbflute.utflute.lastaflute.mock.mail.TestingMailData;
 import org.dbflute.utflute.mocklet.MockletHttpServletRequest;
 import org.dbflute.utflute.mocklet.MockletHttpServletRequestImpl;
 import org.dbflute.utflute.mocklet.MockletHttpServletResponse;
@@ -85,7 +85,7 @@ public abstract class WebContainerTestCase extends ContainerTestCase {
     // -----------------------------------------------------
     //                                       Mail Validation
     //                                       ---------------
-    private MockMailMessageValidator _xmailMessageValidator;
+    private MailMessageAssertion _xmailMessageAssertion;
 
     // -----------------------------------------------------
     //                                  LastaFlute Component
@@ -105,7 +105,7 @@ public abstract class WebContainerTestCase extends ContainerTestCase {
     @Override
     protected void postTest() {
         super.postTest();
-        xprocessMailValidation();
+        xprocessMailAssertion();
     }
 
     @Override
@@ -423,16 +423,16 @@ public abstract class WebContainerTestCase extends ContainerTestCase {
     }
 
     // ===================================================================================
-    //                                                                     Mail Validation
-    //                                                                     ===============
-    protected void reserveMailValidation(Consumer<TestingMailData> oneArgLambda) {
-        _xmailMessageValidator = new MockMailMessageValidator(oneArgLambda);
+    //                                                                      Mail Assertion
+    //                                                                      ==============
+    protected void reserveMailAssertion(Consumer<TestingMailData> oneArgLambda) {
+        _xmailMessageAssertion = new MailMessageAssertion(oneArgLambda);
     }
 
-    protected void xprocessMailValidation() {
-        if (_xmailMessageValidator != null) {
-            _xmailMessageValidator.validateMailData();
-            _xmailMessageValidator = null;
+    protected void xprocessMailAssertion() {
+        if (_xmailMessageAssertion != null) {
+            _xmailMessageAssertion.assertMailData();
+            _xmailMessageAssertion = null;
         }
     }
 
@@ -487,11 +487,11 @@ public abstract class WebContainerTestCase extends ContainerTestCase {
         _xmockResponse = xmockResponse;
     }
 
-    protected MockMailMessageValidator xgetMailMessageValidator() {
-        return _xmailMessageValidator;
+    protected MailMessageAssertion xgetMailMessageValidator() {
+        return _xmailMessageAssertion;
     }
 
-    protected void xsetMailMessageValidator(MockMailMessageValidator xmailMessageValidator) {
-        _xmailMessageValidator = xmailMessageValidator;
+    protected void xsetMailMessageValidator(MailMessageAssertion xmailMessageValidator) {
+        _xmailMessageAssertion = xmailMessageValidator;
     }
 }
