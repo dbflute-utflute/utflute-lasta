@@ -16,6 +16,7 @@
 package org.dbflute.utflute.lastaflute.mail;
 
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 import javax.mail.Address;
@@ -23,6 +24,7 @@ import javax.mail.internet.InternetAddress;
 
 import org.dbflute.helper.message.ExceptionMessageBuilder;
 import org.dbflute.mail.CardView;
+import org.dbflute.mail.PostOffice;
 import org.dbflute.mail.send.supplement.SMailPostingDiscloser;
 import org.dbflute.mail.send.supplement.attachment.SMailReadAttachedData;
 import org.junit.Assert;
@@ -56,25 +58,25 @@ public class TestingPreparedMessage {
 
     public List<InternetAddress> requiredToList() { // as internet address
         final List<Address> addrList = _discloser.getSavedToList();
-        assertTrue("Found the empty to-address list: " + toPostcardDisp(), !addrList.isEmpty());
+        assertTrue("Not found the to-address: postcard=" + toPostcardDisp(), !addrList.isEmpty());
         return addrList.stream().map(addr -> (InternetAddress) addr).collect(Collectors.toList());
     }
 
     public List<InternetAddress> requiredCcList() { // as internet address
         final List<Address> addrList = _discloser.getSavedCcList();
-        assertTrue("Found the empty cc-address list: " + toPostcardDisp(), !addrList.isEmpty());
+        assertTrue("Not found the cc-address: postcard=" + toPostcardDisp(), !addrList.isEmpty());
         return addrList.stream().map(addr -> (InternetAddress) addr).collect(Collectors.toList());
     }
 
     public List<InternetAddress> requiredBccList() { // as internet address
         final List<Address> addrList = _discloser.getSavedBccList();
-        assertTrue("Found the empty bcc-address list: " + toPostcardDisp(), !addrList.isEmpty());
+        assertTrue("Not found the bcc-address: postcard=" + toPostcardDisp(), !addrList.isEmpty());
         return addrList.stream().map(addr -> (InternetAddress) addr).collect(Collectors.toList());
     }
 
     public List<InternetAddress> requiredReplyToList() { // as internet address
         final List<Address> addrList = _discloser.getSavedReplyToList();
-        assertTrue("Found the empty reply-to-address list: " + toPostcardDisp(), !addrList.isEmpty());
+        assertTrue("Not found the reply-to-address: postcard=" + toPostcardDisp(), !addrList.isEmpty());
         return addrList.stream().map(addr -> (InternetAddress) addr).collect(Collectors.toList());
     }
 
@@ -148,7 +150,9 @@ public class TestingPreparedMessage {
     }
 
     protected Object toPostcardDisp() {
-        return _discloser.getOfficeManagedLoggingMap();
+        final Map<String, Map<String, Object>> loggingMap = _discloser.getOfficeManagedLoggingMap(); // contains various info
+        final Map<String, Object> sysinfoMap = loggingMap.get(PostOffice.LOGGING_TITLE_SYSINFO);
+        return sysinfoMap != null ? sysinfoMap : loggingMap;
     }
 
     // ===================================================================================

@@ -15,10 +15,12 @@
  */
 package org.dbflute.utflute.lastaflute.mail;
 
+import java.util.Map;
 import java.util.function.Consumer;
 
 import org.dbflute.helper.message.ExceptionMessageBuilder;
 import org.dbflute.mail.CardView;
+import org.dbflute.mail.PostOffice;
 import org.dbflute.mail.send.hook.SMailCallbackContext;
 import org.dbflute.mail.send.hook.SMailPreparedMessageHook;
 import org.dbflute.mail.send.supplement.SMailPostingDiscloser;
@@ -97,7 +99,7 @@ public class MailMessageAssertion {
         final boolean result = lowerText.contains(keyword);
         if (result) {
             final ExceptionMessageBuilder br = new ExceptionMessageBuilder();
-            br.addNotice("Found the Mistake placeholder in the mail message.");
+            br.addNotice("Detected the mistake placeholder in the mail message.");
             br.addItem("Advice");
             br.addElement("Fix your mistake placeholder like this:");
             br.addElement("For example:");
@@ -112,7 +114,7 @@ public class MailMessageAssertion {
             br.addItem("Checked Text Part");
             br.addElement(title);
             br.addItem("Your Postcard");
-            br.addElement(discloser.getOfficeManagedLoggingMap()); // contains various info
+            br.addElement(toPostcardDisp(discloser));
             final String msg = br.buildExceptionMessage();
             fail(msg);
         }
@@ -156,5 +158,11 @@ public class MailMessageAssertion {
     //                                                                       =============
     protected void fail(String msg) {
         Assert.fail(msg);
+    }
+
+    protected Object toPostcardDisp(SMailPostingDiscloser discloser) {
+        final Map<String, Map<String, Object>> loggingMap = discloser.getOfficeManagedLoggingMap(); // contains various info
+        final Map<String, Object> sysinfoMap = loggingMap.get(PostOffice.LOGGING_TITLE_SYSINFO);
+        return sysinfoMap != null ? sysinfoMap : loggingMap;
     }
 }
