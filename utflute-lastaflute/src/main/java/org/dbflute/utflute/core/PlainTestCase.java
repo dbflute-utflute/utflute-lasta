@@ -125,12 +125,21 @@ public abstract class PlainTestCase extends TestCase {
     }
 
     @Override
+    protected void runTest() throws Throwable {
+        super.runTest();
+        postTest();
+    }
+
+    protected void postTest() {
+    }
+
+    @Override
     protected void tearDown() throws Exception {
         super.tearDown();
         xclearAccessContext();
         xclearGatheredExecutedSql();
         xclearSwitchedCurrentDate();
-        xclearMark();
+        xclearMark(); // last process to be able to be used in tearDown()
     }
 
     // ===================================================================================

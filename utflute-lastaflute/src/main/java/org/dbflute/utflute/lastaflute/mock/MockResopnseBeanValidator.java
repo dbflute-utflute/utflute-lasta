@@ -16,9 +16,13 @@
 package org.dbflute.utflute.lastaflute.mock;
 
 import java.util.Map;
+import java.util.function.Consumer;
 
+import org.dbflute.optional.OptionalThing;
+import org.dbflute.util.DfReflectionUtil;
 import org.lastaflute.web.response.HtmlResponse;
 import org.lastaflute.web.response.JsonResponse;
+import org.lastaflute.web.response.next.RoutingNext;
 import org.lastaflute.web.response.render.RenderData;
 import org.lastaflute.web.ruts.process.validatebean.ResponseHtmlBeanValidator;
 import org.lastaflute.web.ruts.process.validatebean.ResponseJsonBeanValidator;
@@ -29,37 +33,72 @@ import org.lastaflute.web.servlet.request.RequestManager;
  */
 public class MockResopnseBeanValidator {
 
-    protected final RequestManager requestManager;
+    // ===================================================================================
+    //                                                                           Attribute
+    //                                                                           =========
+    protected final RequestManager _requestManager;
 
+    // ===================================================================================
+    //                                                                         Constructor
+    //                                                                         ===========
     public MockResopnseBeanValidator(RequestManager requestManager) {
-        this.requestManager = requestManager;
+        _requestManager = requestManager;
     }
 
+    // ===================================================================================
+    //                                                                           HTML Data
+    //                                                                           =========
     public TestingHtmlData validateHtmlData(HtmlResponse response) {
+        final RoutingNext nextRouting = response.getNextRouting();
+        final Map<String, Object> dataMap = evaluateDataMap(response);
+        final OptionalThing<Object> pushedForm = evaluatePushedForm(response);
+        return createTestingHtmlData(nextRouting, dataMap, pushedForm);
+    }
+
+    protected Map<String, Object> evaluateDataMap(HtmlResponse response) {
         final RenderData data = new RenderData();
         response.getRegistrationList().forEach(reg -> reg.register(data));
         final Map<String, Object> dataMap = data.getDataMap();
         final ResponseHtmlBeanValidator validator = createResponseHtmlBeanValidator(response);
         dataMap.forEach((key, value) -> validator.validate(key, value));
-        return createTestingHtmlData(dataMap);
+        return dataMap;
+    }
+
+    @SuppressWarnings("unchecked") // method level because of eclipse confusion
+    protected OptionalThing<Object> evaluatePushedForm(HtmlResponse response) {
+        final OptionalThing<Object> formOpt = response.getPushedFormInfo().flatMap(formInfo -> {
+            return formInfo.getFormOption().map(formOption -> {
+                final Object form = DfReflectionUtil.newInstance(formInfo.getFormType());
+                final Consumer<Object> formSetupper = (Consumer<Object>) formOption.getFormSetupper();
+                if (formSetupper != null) {
+                    formSetupper.accept(form);
+                }
+                return form;
+            });
+        });
+        return formOpt;
     }
 
     protected ResponseHtmlBeanValidator createResponseHtmlBeanValidator(HtmlResponse response) {
-        return new ResponseHtmlBeanValidator(requestManager, this, false, response);
+        return new ResponseHtmlBeanValidator(_requestManager, this, false, response);
     }
 
-    protected TestingHtmlData createTestingHtmlData(Map<String, Object> dataMap) {
-        return new TestingHtmlData(dataMap);
+    protected TestingHtmlData createTestingHtmlData(RoutingNext nextRouting, Map<String, Object> dataMap,
+            OptionalThing<Object> pushedForm) {
+        return new TestingHtmlData(nextRouting, dataMap, pushedForm);
     }
 
-    public <RESULT> TestingJsonData<RESULT> validateJsonBean(JsonResponse<RESULT> response) {
+    // ===================================================================================
+    //                                                                           JSON Data
+    //                                                                           =========
+    public <RESULT> TestingJsonData<RESULT> validateJsonData(JsonResponse<RESULT> response) {
         final RESULT jsonResult = response.getJsonBean(); // #future change to getJsonResult()
         createResponseJsonBeanValidator(response).validate(jsonResult);
         return createTestingJsonResult(jsonResult);
     }
 
     protected <BEAN> ResponseJsonBeanValidator createResponseJsonBeanValidator(JsonResponse<BEAN> response) {
-        return new ResponseJsonBeanValidator(requestManager, this, false, response);
+        return new ResponseJsonBeanValidator(_requestManager, this, false, response);
     }
 
     protected <RESULT> TestingJsonData<RESULT> createTestingJsonResult(RESULT jsonResult) {

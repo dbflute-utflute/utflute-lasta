@@ -154,7 +154,7 @@ public class JavaparserSourceParserReflector implements SourceParserReflector {
 
         @Override
         public void visit(ClassOrInterfaceDeclaration classOrInterfaceDeclaration, ActionDocMeta actionDocMeta) {
-            String comment = adjustComment(classOrInterfaceDeclaration.getComment());
+            String comment = adjustComment(classOrInterfaceDeclaration.getJavaDoc());
             if (DfStringUtil.is_NotNull_and_NotEmpty(comment)) {
                 actionDocMeta.setTypeComment(comment);
             }
@@ -167,7 +167,7 @@ public class JavaparserSourceParserReflector implements SourceParserReflector {
                 return;
             }
 
-            String comment = adjustComment(methodDeclaration.getComment());
+            String comment = adjustComment(methodDeclaration.getJavaDoc());
             if (DfStringUtil.is_NotNull_and_NotEmpty(comment)) {
                 actionDocMeta.setMethodComment(comment);
             }
@@ -230,7 +230,7 @@ public class JavaparserSourceParserReflector implements SourceParserReflector {
         protected void prepareClassComment(ClassOrInterfaceDeclaration classOrInterfaceDeclaration, TypeDocMeta typeDocMeta) {
             if (DfStringUtil.is_Null_or_Empty(typeDocMeta.getComment())
                     && classOrInterfaceDeclaration.getName().equals(typeDocMeta.getSimpleTypeName())) {
-                String comment = adjustComment(classOrInterfaceDeclaration.getComment());
+                String comment = adjustComment(classOrInterfaceDeclaration.getJavaDoc());
                 if (DfStringUtil.is_NotNull_and_NotEmpty(comment)) {
                     typeDocMeta.setComment(comment);
                     if (DfStringUtil.is_NotNull_and_NotEmpty(comment)) {
@@ -251,7 +251,7 @@ public class JavaparserSourceParserReflector implements SourceParserReflector {
 
         protected void prepareFieldComment(FieldDeclaration fieldDeclaration, TypeDocMeta typeDocMeta) {
             if (fieldDeclaration.getVariables().stream().anyMatch(variable -> variable.getId().getName().equals(typeDocMeta.getName()))) {
-                String comment = adjustComment(fieldDeclaration.getComment());
+                String comment = adjustComment(fieldDeclaration.getJavaDoc());
                 if (DfStringUtil.is_NotNull_and_NotEmpty(comment)) {
                     typeDocMeta.setComment(comment);
                     Matcher matcher = FIELD_COMMENT_END_PATTERN.matcher(saveFieldCommentSpecialExp(comment));
@@ -291,14 +291,13 @@ public class JavaparserSourceParserReflector implements SourceParserReflector {
         }
 
         for (String srcDir : srcDirList) {
-            File file = new File(srcDir + clazz.getName().replace('.', File.separatorChar) + ".java");
+            File file = new File(srcDir, clazz.getName().replace('.', File.separatorChar) + ".java");
             if (!file.exists()) {
-                file = new File(srcDir + clazz.getName().replace('.', File.separatorChar).replaceAll("\\$.*", "") + ".java");
+                file = new File(srcDir, clazz.getName().replace('.', File.separatorChar).replaceAll("\\$.*", "") + ".java");
                 if (!file.exists()) {
                     continue;
                 }
             }
-
             try (FileInputStream in = new FileInputStream(file)) {
                 CompilationUnit compilationUnit = JavaParser.parse(in);
                 compilationUnitMap.put(clazz, compilationUnit);

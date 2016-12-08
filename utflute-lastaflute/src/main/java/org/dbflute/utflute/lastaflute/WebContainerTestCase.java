@@ -17,6 +17,7 @@ package org.dbflute.utflute.lastaflute;
 
 import java.util.Date;
 import java.util.Enumeration;
+import java.util.function.Consumer;
 
 import javax.annotation.Resource;
 import javax.servlet.FilterConfig;
@@ -28,6 +29,8 @@ import javax.servlet.http.HttpServletRequest;
 
 import org.dbflute.utflute.lastadi.ContainerTestCase;
 import org.dbflute.utflute.lastaflute.document.DocumentGenerator;
+import org.dbflute.utflute.lastaflute.mail.MailMessageAssertion;
+import org.dbflute.utflute.lastaflute.mail.TestingMailData;
 import org.dbflute.utflute.lastaflute.mock.MockResopnseBeanValidator;
 import org.dbflute.utflute.lastaflute.mock.MockRuntimeFactory;
 import org.dbflute.utflute.lastaflute.mock.TestingHtmlData;
@@ -53,10 +56,13 @@ import org.lastaflute.di.core.ExternalContext;
 import org.lastaflute.di.core.LaContainer;
 import org.lastaflute.di.core.factory.SingletonLaContainerFactory;
 import org.lastaflute.web.LastaFilter;
+import org.lastaflute.web.LastaWebKey;
 import org.lastaflute.web.response.HtmlResponse;
 import org.lastaflute.web.response.JsonResponse;
 import org.lastaflute.web.ruts.process.ActionRuntime;
 import org.lastaflute.web.servlet.request.RequestManager;
+import org.lastaflute.web.token.DoubleSubmitManager;
+import org.lastaflute.web.token.DoubleSubmitTokenMap;
 
 /**
  * @author jflute
@@ -80,20 +86,33 @@ public abstract class WebContainerTestCase extends ContainerTestCase {
     private MockletHttpServletResponse _xmockResponse;
 
     // -----------------------------------------------------
+    //                                       Mail Validation
+    //                                       ---------------
+    private MailMessageAssertion _xmailMessageAssertion;
+
+    // -----------------------------------------------------
     //                                  LastaFlute Component
     //                                  --------------------
     @Resource
-    private FwAssistantDirector assistantDirector;
+    private FwAssistantDirector _assistantDirector;
     @Resource
-    private TimeManager timeManager;
+    private TimeManager _timeManager;
     @Resource
-    private JsonManager jsonManager;
+    private JsonManager _jsonManager;
     @Resource
-    private RequestManager requestManager;
+    private RequestManager _requestManager;
+    @Resource
+    private DoubleSubmitManager _doubleSubmitManager;
 
     // ===================================================================================
     //                                                                            Settings
     //                                                                            ========
+    @Override
+    protected void postTest() {
+        super.postTest();
+        xprocessMailAssertion();
+    }
+
     @Override
     public void tearDown() throws Exception {
         if (BowgunDestructiveAdjuster.hasAnyBowgun()) {
@@ -141,7 +160,7 @@ public abstract class WebContainerTestCase extends ContainerTestCase {
 
     protected void initializeTransactionTime() {
         // because of non-UserTransaction transaction in UTFlute
-        final Date transactionTime = timeManager.flashDate();
+        final Date transactionTime = _timeManager.flashDate();
         TransactionTimeContext.setTransactionTime(transactionTime);
     }
 
@@ -151,8 +170,8 @@ public abstract class WebContainerTestCase extends ContainerTestCase {
     }
 
     protected void initializeAssistantDirector() {
-        final FwCoreDirection direction = assistantDirector.assistCoreDirection();
-        direction.assistCurtainBeforeHook().hook(assistantDirector);
+        final FwCoreDirection direction = _assistantDirector.assistCoreDirection();
+        direction.assistCurtainBeforeHook().hook(_assistantDirector);
     }
 
     // -----------------------------------------------------
@@ -295,7 +314,7 @@ public abstract class WebContainerTestCase extends ContainerTestCase {
     //                                               Request
     //                                               -------
     protected MockletHttpServletRequest getMockRequest() {
-        return (MockletHttpServletRequest) _xmockRequest;
+        return _xmockRequest;
     }
 
     protected void addMockRequestHeader(String name, String value) {
@@ -335,7 +354,7 @@ public abstract class WebContainerTestCase extends ContainerTestCase {
     //                                              Response
     //                                              --------
     protected MockletHttpServletResponse getMockResponse() {
-        return (MockletHttpServletResponse) _xmockResponse;
+        return _xmockResponse;
     }
 
     protected Cookie[] getMockResponseCookies() {
@@ -383,35 +402,8 @@ public abstract class WebContainerTestCase extends ContainerTestCase {
         }
     }
 
-    // -----------------------------------------------------
-    //                                     Internal Resource
-    //                                     -----------------
-    protected static MockletServletConfig xgetCachedServletConfig() {
-        return _xcachedServletConfig;
-    }
-
-    protected static void xsetCachedServletConfig(MockletServletConfig xcachedServletConfig) {
-        _xcachedServletConfig = xcachedServletConfig;
-    }
-
-    protected MockletHttpServletRequest xgetMockRequest() {
-        return _xmockRequest;
-    }
-
-    protected void xsetMockRequest(MockletHttpServletRequest xmockRequest) {
-        _xmockRequest = xmockRequest;
-    }
-
-    protected MockletHttpServletResponse xgetMockResponse() {
-        return _xmockResponse;
-    }
-
-    protected void xsetMockResponse(MockletHttpServletResponse xmockResponse) {
-        _xmockResponse = xmockResponse;
-    }
-
     // ===================================================================================
-    //                                                                 Web Result Handling
+    //                                                                 Response Validation
     //                                                                 ===================
     protected void showJson(Object jsonBean) {
         log(jsonBean.getClass().getSimpleName() + ":" + ln() + toJson(jsonBean));
@@ -424,15 +416,56 @@ public abstract class WebContainerTestCase extends ContainerTestCase {
         } else {
             realBean = jsonBean;
         }
-        return jsonManager.toJson(realBean);
+        return _jsonManager.toJson(realBean);
     }
 
     protected TestingHtmlData validateHtmlData(HtmlResponse response) {
-        return new MockResopnseBeanValidator(requestManager).validateHtmlData(response);
+        return new MockResopnseBeanValidator(_requestManager).validateHtmlData(response);
     }
 
     protected <BEAN> TestingJsonData<BEAN> validateJsonData(JsonResponse<BEAN> response) {
-        return new MockResopnseBeanValidator(requestManager).validateJsonBean(response);
+        return new MockResopnseBeanValidator(_requestManager).validateJsonData(response);
+    }
+
+    // ===================================================================================
+    //                                                                      Mail Assertion
+    //                                                                      ==============
+    protected void reserveMailAssertion(Consumer<TestingMailData> oneArgLambda) {
+        _xmailMessageAssertion = new MailMessageAssertion(oneArgLambda);
+    }
+
+    protected void xprocessMailAssertion() {
+        if (_xmailMessageAssertion != null) {
+            _xmailMessageAssertion.assertMailData();
+            _xmailMessageAssertion = null;
+        }
+    }
+
+    // ===================================================================================
+    //                                                                     Token Assertion
+    //                                                                     ===============
+    protected void assertTokenSaved(Class<?> groupType) { // for action that calls saveToken()
+        final DoubleSubmitTokenMap tokenMap = _doubleSubmitManager.getSessionTokenMap().get();
+        final boolean condition = tokenMap.get(groupType).isPresent();
+        assertTrue("Not found the transaction token saved in session, so call saveToken(): tokenMap=" + tokenMap, condition);
+    }
+
+    protected void mockTokenRequested(Class<?> groupType) { // for action that calls verityToken()
+        final String savedToken = _doubleSubmitManager.saveToken(groupType);
+        getMockRequest().setParameter(LastaWebKey.TRANSACTION_TOKEN_KEY, savedToken);
+    }
+
+    protected void mockTokenRequestedAsDoubleSubmit(Class<?> groupType) { // for action that calls verityToken()
+        final String savedToken = _doubleSubmitManager.saveToken(groupType);
+        getMockRequest().setParameter(LastaWebKey.TRANSACTION_TOKEN_KEY, savedToken);
+        _doubleSubmitManager.verifyToken(groupType, () -> { // means first request done
+            throw new IllegalStateException("no way");
+        });
+    }
+
+    protected void assertTokenVerified() { // for action that calls verityToken()
+        final boolean condition = _doubleSubmitManager.isFirstSubmittedRequest();
+        assertTrue("Not found the transaction token verification, so call verifyToken().", condition);
     }
 
     // ===================================================================================
@@ -457,5 +490,40 @@ public abstract class WebContainerTestCase extends ContainerTestCase {
 
     protected DocumentGenerator createDocumentGenerator() {
         return new DocumentGenerator();
+    }
+
+    // ===================================================================================
+    //                                                                            Accessor
+    //                                                                            ========
+    protected static MockletServletConfig xgetCachedServletConfig() {
+        return _xcachedServletConfig;
+    }
+
+    protected static void xsetCachedServletConfig(MockletServletConfig xcachedServletConfig) {
+        _xcachedServletConfig = xcachedServletConfig;
+    }
+
+    protected MockletHttpServletRequest xgetMockRequest() {
+        return _xmockRequest;
+    }
+
+    protected void xsetMockRequest(MockletHttpServletRequest xmockRequest) {
+        _xmockRequest = xmockRequest;
+    }
+
+    protected MockletHttpServletResponse xgetMockResponse() {
+        return _xmockResponse;
+    }
+
+    protected void xsetMockResponse(MockletHttpServletResponse xmockResponse) {
+        _xmockResponse = xmockResponse;
+    }
+
+    protected MailMessageAssertion xgetMailMessageValidator() {
+        return _xmailMessageAssertion;
+    }
+
+    protected void xsetMailMessageValidator(MailMessageAssertion xmailMessageValidator) {
+        _xmailMessageAssertion = xmailMessageValidator;
     }
 }
