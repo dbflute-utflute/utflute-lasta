@@ -56,7 +56,7 @@ public class JavaparserSourceParserReflector implements SourceParserReflector {
     //                                                                          Definition
     //                                                                          ==========
     protected static final Pattern CLASS_METHOD_COMMENT_END_PATTERN = Pattern.compile("\\* (.+)[.。]?.*\r?\n");
-    protected static final Pattern FIELD_COMMENT_END_PATTERN = Pattern.compile("/?\\*\\*? ?([^.。]+).* ?\\*");
+    protected static final Pattern FIELD_COMMENT_END_PATTERN = Pattern.compile("/?\\*\\*?(?:\r?\n *\\*?)? ?([^.。\\*]+).* ?\\*?");
     protected static final Pattern RETURN_STMT_PATTERN = Pattern.compile("^[^)]+\\)");
 
     // ===================================================================================
@@ -256,7 +256,7 @@ public class JavaparserSourceParserReflector implements SourceParserReflector {
                     typeDocMeta.setComment(comment);
                     Matcher matcher = FIELD_COMMENT_END_PATTERN.matcher(saveFieldCommentSpecialExp(comment));
                     if (matcher.find()) {
-                        String description = matcher.group(1);
+                        String description = matcher.group(1).trim();
                         typeDocMeta.setDescription(restoreFieldCommentSpecialExp(description));
                     }
                 }
