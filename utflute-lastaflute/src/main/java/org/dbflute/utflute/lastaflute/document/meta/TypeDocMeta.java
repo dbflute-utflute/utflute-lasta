@@ -15,6 +15,7 @@
  */
 package org.dbflute.utflute.lastaflute.document.meta;
 
+import java.lang.annotation.Annotation;
 import java.util.List;
 
 import org.dbflute.util.DfCollectionUtil;
@@ -30,6 +31,8 @@ public class TypeDocMeta {
     //                                                                           =========
     /** name. */
     private String name;
+    /** type. */
+    private Class<?> type;
     /** type name. */
     private String typeName;
     /** simple type name. */
@@ -40,6 +43,8 @@ public class TypeDocMeta {
     private String description;
     /** comment. */
     private String comment;
+    /** annotation type list. */
+    private List<Annotation> annotationTypeList;
     /** annotation list. */
     private List<String> annotationList = DfCollectionUtil.newArrayList();
     /** nest meta bean list. */
@@ -54,6 +59,14 @@ public class TypeDocMeta {
 
     public void setName(String name) {
         this.name = name;
+    }
+
+    public Class<?> getType() {
+        return type;
+    }
+
+    public void setType(Class<?> type) {
+        this.type = type;
     }
 
     public String getTypeName() {
@@ -94,6 +107,14 @@ public class TypeDocMeta {
 
     public void setComment(String comment) {
         this.comment = comment;
+    }
+
+    public List<Annotation> getAnnotationTypeList() {
+        return annotationTypeList;
+    }
+
+    public void setAnnotationTypeList(List<Annotation> annotationTypeList) {
+        this.annotationTypeList = annotationTypeList;
     }
 
     public List<String> getAnnotationList() {

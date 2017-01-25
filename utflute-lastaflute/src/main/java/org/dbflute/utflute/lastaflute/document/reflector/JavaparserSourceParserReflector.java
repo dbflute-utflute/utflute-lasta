@@ -28,6 +28,7 @@ import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
 import org.dbflute.optional.OptionalThing;
 import org.dbflute.utflute.lastaflute.document.meta.ActionDocMeta;
@@ -36,14 +37,14 @@ import org.dbflute.util.DfCollectionUtil;
 import org.dbflute.util.DfStringUtil;
 
 import com.github.javaparser.JavaParser;
-import com.github.javaparser.ParseException;
 import com.github.javaparser.ast.CompilationUnit;
 import com.github.javaparser.ast.body.ClassOrInterfaceDeclaration;
 import com.github.javaparser.ast.body.FieldDeclaration;
 import com.github.javaparser.ast.body.MethodDeclaration;
-import com.github.javaparser.ast.comments.Comment;
+import com.github.javaparser.ast.nodeTypes.NodeWithJavadoc;
 import com.github.javaparser.ast.stmt.ReturnStmt;
 import com.github.javaparser.ast.visitor.VoidVisitorAdapter;
+import com.github.javaparser.javadoc.Javadoc;
 
 /**
  * @author p1us2er0
@@ -55,8 +56,8 @@ public class JavaparserSourceParserReflector implements SourceParserReflector {
     // ===================================================================================
     //                                                                          Definition
     //                                                                          ==========
-    protected static final Pattern CLASS_METHOD_COMMENT_END_PATTERN = Pattern.compile("\\* (.+)[.。]?.*\r?\n");
-    protected static final Pattern FIELD_COMMENT_END_PATTERN = Pattern.compile("/?\\*\\*?(?:\r?\n *\\*?)? ?([^.。\\*]+).* ?\\*?");
+    protected static final Pattern CLASS_METHOD_COMMENT_END_PATTERN = Pattern.compile("(.+)[.。]?.*(\r?\n)?");
+    protected static final Pattern FIELD_COMMENT_END_PATTERN = Pattern.compile("([^.。\\*]+).* ?\\*?");
     protected static final Pattern RETURN_STMT_PATTERN = Pattern.compile("^[^)]+\\)");
 
     // ===================================================================================
@@ -84,7 +85,7 @@ public class JavaparserSourceParserReflector implements SourceParserReflector {
         parseClass(clazz).ifPresent(compilationUnit -> {
             VoidVisitorAdapter<Void> adapter = new VoidVisitorAdapter<Void>() {
                 public void visit(final MethodDeclaration methodDeclaration, final Void arg) {
-                    methodDeclarationList.add(methodDeclaration.getName());
+                    methodDeclarationList.add(methodDeclaration.getNameAsString());
                     super.visit(methodDeclaration, arg);
                 }
             };
@@ -104,9 +105,8 @@ public class JavaparserSourceParserReflector implements SourceParserReflector {
     @Override
     public void reflect(ActionDocMeta meta, Method method) {
         parseClass(method.getDeclaringClass()).ifPresent(compilationUnit -> {
-            List<String> parameterNameList = DfCollectionUtil.newArrayList();
             Map<String, List<String>> returnMap = DfCollectionUtil.newLinkedHashMap();
-            VoidVisitorAdapter<ActionDocMeta> adapter = createMethodVoidVisitorAdapter(method, parameterNameList, returnMap);
+            VoidVisitorAdapter<ActionDocMeta> adapter = createMethodVoidVisitorAdapter(method, returnMap);
             adapter.visit(compilationUnit, meta);
             List<String> descriptionList = DfCollectionUtil.newArrayList();
             Arrays.asList(meta.getTypeComment(), meta.getMethodComment()).forEach(comment -> {
@@ -120,12 +120,13 @@ public class JavaparserSourceParserReflector implements SourceParserReflector {
             if (!descriptionList.isEmpty()) {
                 meta.setDescription(String.join(", ", descriptionList));
             }
-
+            List<TypeDocMeta> parameterTypeDocMetaList = meta.getParameterTypeDocMetaList();
             Parameter[] parameters = method.getParameters();
-            for (int i = 0; i < parameters.length; i++) {
-                if (parameterNameList.size() > i) {
-                    Parameter parameter = parameters[i];
-                    meta.setUrl(meta.getUrl().replace("{" + parameter.getName() + ":", "{" + parameterNameList.get(i) + ":"));
+            for (int parameterIndex = 0; parameterIndex < parameters.length; parameterIndex++) {
+                if (parameterIndex < parameterTypeDocMetaList.size()) {
+                    Parameter parameter = parameters[parameterIndex];
+                    TypeDocMeta typeDocMeta = parameterTypeDocMetaList.get(parameterIndex);
+                    meta.setUrl(meta.getUrl().replace("{" + parameter.getName() + "}", "{" + typeDocMeta.getName() + "}"));
                 }
             }
             String methodName = method.getName();
@@ -135,26 +136,28 @@ public class JavaparserSourceParserReflector implements SourceParserReflector {
         });
     }
 
-    protected VoidVisitorAdapter<ActionDocMeta> createMethodVoidVisitorAdapter(Method method, List<String> parameterNameList,
-            Map<String, List<String>> returnMap) {
-        return new MethodVoidVisitorAdapter(method, parameterNameList, returnMap);
+    protected VoidVisitorAdapter<ActionDocMeta> createMethodVoidVisitorAdapter(Method method, Map<String, List<String>> returnMap) {
+        return new MethodVoidVisitorAdapter(method, returnMap);
     }
 
     public class MethodVoidVisitorAdapter extends VoidVisitorAdapter<ActionDocMeta> {
 
         protected final Method method;
-        protected final List<String> parameterNameList;
         protected final Map<String, List<String>> returnMap;
 
-        public MethodVoidVisitorAdapter(Method method, List<String> parameterNameList, Map<String, List<String>> returnMap) {
+        public MethodVoidVisitorAdapter(Method method, Map<String, List<String>> returnMap) {
             this.method = method;
-            this.parameterNameList = parameterNameList;
             this.returnMap = returnMap;
         }
 
         @Override
         public void visit(ClassOrInterfaceDeclaration classOrInterfaceDeclaration, ActionDocMeta actionDocMeta) {
-            String comment = adjustComment(classOrInterfaceDeclaration.getJavaDoc());
+            classOrInterfaceDeclaration.getBegin().ifPresent(begin -> {
+                classOrInterfaceDeclaration.getEnd().ifPresent(end -> {
+                    actionDocMeta.setFileLineCount(end.line - begin.line);
+                });
+            });
+            String comment = adjustComment(classOrInterfaceDeclaration);
             if (DfStringUtil.is_NotNull_and_NotEmpty(comment)) {
                 actionDocMeta.setTypeComment(comment);
             }
@@ -163,17 +166,34 @@ public class JavaparserSourceParserReflector implements SourceParserReflector {
 
         @Override
         public void visit(MethodDeclaration methodDeclaration, ActionDocMeta actionDocMeta) {
-            if (!methodDeclaration.getName().equals(method.getName())) {
+            if (!methodDeclaration.getNameAsString().equals(method.getName())) {
                 return;
             }
 
-            String comment = adjustComment(methodDeclaration.getJavaDoc());
+            methodDeclaration.getBegin().ifPresent(begin -> {
+                methodDeclaration.getEnd().ifPresent(end -> {
+                    actionDocMeta.setMethodLineCount(end.line - begin.line);
+                });
+            });
+            String comment = adjustComment(methodDeclaration);
             if (DfStringUtil.is_NotNull_and_NotEmpty(comment)) {
                 actionDocMeta.setMethodComment(comment);
             }
-            parameterNameList.addAll(methodDeclaration.getParameters().stream().map(parameter -> {
-                return parameter.getId().getName();
-            }).collect(Collectors.toList()));
+            IntStream.range(0, actionDocMeta.getParameterTypeDocMetaList().size()).forEach(parameterIndex -> {
+                if (parameterIndex < methodDeclaration.getParameters().size()) {
+                    TypeDocMeta typeDocMeta = actionDocMeta.getParameterTypeDocMetaList().get(parameterIndex);
+                    com.github.javaparser.ast.body.Parameter parameter = methodDeclaration.getParameters().get(parameterIndex);
+                    typeDocMeta.setName(parameter.getNameAsString());
+                    if (DfStringUtil.is_NotNull_and_NotEmpty(comment)) {
+                        // parse parameter comment
+                        Pattern pattern = Pattern.compile(".*@param\\s?" + parameter.getNameAsString() + "\\s?(.*)\r?\n.*", Pattern.DOTALL);
+                        Matcher matcher = pattern.matcher(comment);
+                        if (matcher.matches()) {
+                            typeDocMeta.setDescription(matcher.group(1).replaceAll("\r?\n.*", ""));
+                        }
+                    }
+                }
+            });
 
             methodDeclaration.accept(new VoidVisitorAdapter<ActionDocMeta>() {
                 @Override
@@ -186,14 +206,14 @@ public class JavaparserSourceParserReflector implements SourceParserReflector {
         }
 
         protected void prepareReturnStmt(MethodDeclaration methodDeclaration, ReturnStmt returnStmt) {
-            if (returnStmt.getExpr() != null) {
-                String returnStmtStr = returnStmt.getExpr().toStringWithoutComments();
+            returnStmt.getExpression().ifPresent(expression -> {
+                String returnStmtStr = expression.toString();
                 Matcher matcher = RETURN_STMT_PATTERN.matcher(returnStmtStr);
-                if (!returnMap.containsKey(methodDeclaration.getName())) {
-                    returnMap.put(methodDeclaration.getName(), DfCollectionUtil.newArrayList());
+                if (!returnMap.containsKey(methodDeclaration.getNameAsString())) {
+                    returnMap.put(methodDeclaration.getNameAsString(), DfCollectionUtil.newArrayList());
                 }
-                returnMap.get(methodDeclaration.getName()).add(matcher.find() ? matcher.group(0) : "##unanalyzable##");
-            }
+                returnMap.get(methodDeclaration.getNameAsString()).add(matcher.find() ? matcher.group(0) : "##unanalyzable##");
+            });
         }
     }
 
@@ -229,8 +249,8 @@ public class JavaparserSourceParserReflector implements SourceParserReflector {
 
         protected void prepareClassComment(ClassOrInterfaceDeclaration classOrInterfaceDeclaration, TypeDocMeta typeDocMeta) {
             if (DfStringUtil.is_Null_or_Empty(typeDocMeta.getComment())
-                    && classOrInterfaceDeclaration.getName().equals(typeDocMeta.getSimpleTypeName())) {
-                String comment = adjustComment(classOrInterfaceDeclaration.getJavaDoc());
+                    && classOrInterfaceDeclaration.getNameAsString().equals(typeDocMeta.getSimpleTypeName())) {
+                String comment = adjustComment(classOrInterfaceDeclaration);
                 if (DfStringUtil.is_NotNull_and_NotEmpty(comment)) {
                     typeDocMeta.setComment(comment);
                     if (DfStringUtil.is_NotNull_and_NotEmpty(comment)) {
@@ -250,8 +270,8 @@ public class JavaparserSourceParserReflector implements SourceParserReflector {
         }
 
         protected void prepareFieldComment(FieldDeclaration fieldDeclaration, TypeDocMeta typeDocMeta) {
-            if (fieldDeclaration.getVariables().stream().anyMatch(variable -> variable.getId().getName().equals(typeDocMeta.getName()))) {
-                String comment = adjustComment(fieldDeclaration.getJavaDoc());
+            if (fieldDeclaration.getVariables().stream().anyMatch(variable -> variable.getNameAsString().equals(typeDocMeta.getName()))) {
+                String comment = adjustComment(fieldDeclaration);
                 if (DfStringUtil.is_NotNull_and_NotEmpty(comment)) {
                     typeDocMeta.setComment(comment);
                     Matcher matcher = FIELD_COMMENT_END_PATTERN.matcher(saveFieldCommentSpecialExp(comment));
@@ -275,11 +295,17 @@ public class JavaparserSourceParserReflector implements SourceParserReflector {
     // ===================================================================================
     //                                                                      Adjust Comment
     //                                                                      ==============
-    protected String adjustComment(Comment comment) {
-        if (comment == null || DfStringUtil.is_Null_or_Empty(comment.toString())) {
+    protected String adjustComment(NodeWithJavadoc<?> nodeWithJavadoc) {
+        Javadoc javadoc;
+        try {
+            javadoc = nodeWithJavadoc.getJavadoc();
+        } catch (RuntimeException e) {
+            return "javadoc parse error. error messge=" + e.getMessage();
+        }
+        if (javadoc == null || DfStringUtil.is_Null_or_Empty(javadoc.toString())) {
             return null;
         }
-        return comment.toStringWithoutComments().replaceAll("\r?\n$", "").replaceAll("(\r?\n) {2,}", "$1 ");
+        return javadoc.toText().replaceAll("(^\r?\n|\r?\n$)", "");
     }
 
     // ===================================================================================
@@ -302,8 +328,6 @@ public class JavaparserSourceParserReflector implements SourceParserReflector {
                 CompilationUnit compilationUnit = JavaParser.parse(in);
                 compilationUnitMap.put(clazz, compilationUnit);
                 return OptionalThing.of(compilationUnit);
-            } catch (ParseException e) {
-                return OptionalThing.empty();
             } catch (IOException e) {
                 return OptionalThing.empty();
             }

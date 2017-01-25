@@ -15,9 +15,8 @@
  */
 package org.dbflute.utflute.lastaflute.document.meta;
 
+import java.lang.annotation.Annotation;
 import java.util.List;
-
-import org.dbflute.util.DfCollectionUtil;
 
 /**
  * @author p1us2er0
@@ -30,6 +29,8 @@ public class ActionDocMeta {
     //                                                                           =========
     /** url. */
     private String url;
+    /** type. */
+    private Class<?> type;
     /** type name. */
     private String typeName;
     /** simple type name. */
@@ -38,16 +39,26 @@ public class ActionDocMeta {
     private String description;
     /** type comment. */
     private String typeComment;
+    /** file type doc meta. */
+    private List<TypeDocMeta> fieldTypeDocMetaList;
     /** method mame. */
     private String methodName;
     /** method comment. */
     private String methodComment;
+    /** annotation type list. */
+    private List<Annotation> annotationTypeList;
     /** annotation list. */
-    private List<String> annotationList = DfCollectionUtil.newArrayList();
-    /** form meta bean. */
+    private List<String> annotationList;
+    /** parameter type doc meta list. */
+    private List<TypeDocMeta> parameterTypeDocMetaList;
+    /** form type doc meta. */
     private TypeDocMeta formTypeDocMeta;
-    /** return Meta bean. */
+    /** return type doc meta. */
     private TypeDocMeta returnTypeDocMeta;
+    /** file line count. */
+    private Integer fileLineCount;
+    /** method line count. */
+    private Integer methodLineCount;
 
     // ===================================================================================
     //                                                                            Accessor
@@ -58,6 +69,14 @@ public class ActionDocMeta {
 
     public void setUrl(String url) {
         this.url = url;
+    }
+
+    public Class<?> getType() {
+        return type;
+    }
+
+    public void setType(Class<?> type) {
+        this.type = type;
     }
 
     public String getTypeName() {
@@ -92,6 +111,14 @@ public class ActionDocMeta {
         this.typeComment = typeComment;
     }
 
+    public List<TypeDocMeta> getFieldTypeDocMetaList() {
+        return fieldTypeDocMetaList;
+    }
+
+    public void setFieldTypeDocMetaList(List<TypeDocMeta> fieldTypeDocMetaList) {
+        this.fieldTypeDocMetaList = fieldTypeDocMetaList;
+    }
+
     public String getMethodName() {
         return methodName;
     }
@@ -108,12 +135,28 @@ public class ActionDocMeta {
         this.methodComment = methodComment;
     }
 
+    public List<Annotation> getAnnotationTypeList() {
+        return annotationTypeList;
+    }
+
+    public void setAnnotationTypeList(List<Annotation> annotationTypeList) {
+        this.annotationTypeList = annotationTypeList;
+    }
+
     public List<String> getAnnotationList() {
         return annotationList;
     }
 
     public void setAnnotationList(List<String> annotationList) {
         this.annotationList = annotationList;
+    }
+
+    public List<TypeDocMeta> getParameterTypeDocMetaList() {
+        return parameterTypeDocMetaList;
+    }
+
+    public void setParameterTypeDocMetaList(List<TypeDocMeta> parameterTypeDocMetList) {
+        this.parameterTypeDocMetaList = parameterTypeDocMetList;
     }
 
     public TypeDocMeta getFormTypeDocMeta() {
@@ -130,5 +173,21 @@ public class ActionDocMeta {
 
     public void setReturnTypeDocMeta(TypeDocMeta returnTypeDocMeta) {
         this.returnTypeDocMeta = returnTypeDocMeta;
+    }
+
+    public Integer getFileLineCount() {
+        return fileLineCount;
+    }
+
+    public void setFileLineCount(Integer fileLineCount) {
+        this.fileLineCount = fileLineCount;
+    }
+
+    public Integer getMethodLineCount() {
+        return methodLineCount;
+    }
+
+    public void setMethodLineCount(Integer methodLineCount) {
+        this.methodLineCount = methodLineCount;
     }
 }

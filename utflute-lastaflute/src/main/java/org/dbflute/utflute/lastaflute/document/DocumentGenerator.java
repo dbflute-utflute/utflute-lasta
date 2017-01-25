@@ -22,7 +22,6 @@ import java.lang.annotation.Annotation;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
-import java.lang.reflect.Parameter;
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
 import java.lang.reflect.TypeVariable;
@@ -64,6 +63,13 @@ import org.lastaflute.web.ruts.config.ActionExecute;
 import org.lastaflute.web.ruts.config.ActionFormMeta;
 import org.lastaflute.web.ruts.config.ModuleConfig;
 import org.lastaflute.web.util.LaModuleConfigUtil;
+
+import com.google.gson.GsonBuilder;
+import com.google.gson.TypeAdapter;
+import com.google.gson.internal.bind.TypeAdapters;
+import com.google.gson.stream.JsonReader;
+import com.google.gson.stream.JsonToken;
+import com.google.gson.stream.JsonWriter;
 
 // package of this class should be under lastaflute but no fix for compatible
 /**
@@ -163,10 +169,42 @@ public class DocumentGenerator {
     }
 
     protected GsonJsonEngine createJsonParser() {
-        return new GsonJsonEngine(builder -> builder.serializeNulls().setPrettyPrinting(), op -> {});
+        return new GsonJsonEngine(builder -> builder.serializeNulls().setPrettyPrinting(), op -> {}) {
+            @Override
+            protected void setupDefaultSettings(GsonBuilder builder) {
+                super.setupDefaultSettings(builder);
+                builder.registerTypeAdapterFactory(TypeAdapters.newFactory(Class.class, CLASS));
+            }
+        };
         // not to depend on application settings
         //return SingletonLaContainerFactory.getContainer().getComponent(JsonManager.class);
     }
+
+    @SuppressWarnings("rawtypes")
+    public static final TypeAdapter<Class> CLASS = new TypeAdapter<Class>() {
+        @Override
+        public void write(JsonWriter out, Class value) throws IOException {
+            if (value == null) {
+                out.nullValue();
+            } else {
+                out.value(value.getName());
+            }
+        }
+
+        @Override
+        public Class read(JsonReader in) throws IOException {
+            if (in.peek() == JsonToken.NULL) {
+                in.nextNull();
+                return null;
+            } else {
+                try {
+                    return Class.forName(in.nextString());
+                } catch (ClassNotFoundException exception) {
+                    throw new IOException(exception);
+                }
+            }
+        }
+    };
 
     protected String getLastaDocDir() {
         if (new File("./pom.xml").exists()) {
@@ -222,7 +260,7 @@ public class DocumentGenerator {
 
         srcDirList.forEach(srcDir -> {
             if (Paths.get(srcDir).toFile().exists()) {
-                try (Stream<Path> stream = Files.find(Paths.get(srcDir), Integer.MAX_VALUE, (path, attr) -> {
+                try (Stream< Path>stream = Files.find(Paths.get(srcDir), Integer.MAX_VALUE, (path, attr) -> {
                     return path.toString().endsWith("Action.java");
                 })) {
                     stream.forEach(path -> {
@@ -272,22 +310,59 @@ public class DocumentGenerator {
 
         actionDocMeta.setUrl(getActionPathResolver().toActionUrl(componentClass, urlChain));
         final Method method = execute.getExecuteMethod();
+        actionDocMeta.setType(method.getDeclaringClass());
         actionDocMeta.setTypeName(adjustTypeName(method.getDeclaringClass()));
+        List<TypeDocMeta> fieldTypeDocMetaList = DfCollectionUtil.newArrayList();
+        actionDocMeta.setFieldTypeDocMetaList(fieldTypeDocMetaList);
+        Arrays.stream(method.getDeclaringClass().getDeclaredFields()).forEach(field -> {
+            TypeDocMeta typeDocMeta = new TypeDocMeta();
+            typeDocMeta.setName(field.getName());
+            typeDocMeta.setType(field.getType());
+            typeDocMeta.setTypeName(adjustTypeName(field.getGenericType()));
+            typeDocMeta.setSimpleTypeName(adjustSimpleTypeName((field.getGenericType())));
+            typeDocMeta.setAnnotationTypeList(Arrays.asList(field.getAnnotations()));
+            typeDocMeta.setAnnotationList(analyzeAnnotationList(typeDocMeta.getAnnotationTypeList()));
+
+            sourceParserReflector.ifPresent(sourceParserReflector -> {
+                sourceParserReflector.reflect(typeDocMeta, field.getType());
+            });
+
+            fieldTypeDocMetaList.add(typeDocMeta);
+        });
         actionDocMeta.setSimpleTypeName(adjustSimpleTypeName(method.getDeclaringClass()));
         actionDocMeta.setMethodName(method.getName());
 
         final List<Annotation> annotationList = DfCollectionUtil.newArrayList();
         annotationList.addAll(Arrays.asList(method.getDeclaringClass().getAnnotations()));
         annotationList.addAll(Arrays.asList(method.getAnnotations()));
+        actionDocMeta.setAnnotationTypeList(annotationList);
         actionDocMeta.setAnnotationList(analyzeAnnotationList(annotationList));
 
-        for (int i = 0; i < method.getParameters().length; i++) {
-            final Parameter parameter = method.getParameters()[i];
+        List<TypeDocMeta> parameterTypeDocMetaList = DfCollectionUtil.newArrayList();
+        actionDocMeta.setParameterTypeDocMetaList(parameterTypeDocMetaList);
+        Arrays.stream(method.getParameters()).forEach(parameter -> {
+            if (execute.getFormMeta().isPresent() && execute.getFormMeta().get().getFormType().equals(parameter.getType())) {
+                return;
+            }
+
             final StringBuilder builder = new StringBuilder();
-            builder.append("{").append(parameter.getName()).append(":");
-            builder.append(adjustSimpleTypeName(parameter.getParameterizedType())).append("}");
+            builder.append("{").append(parameter.getName()).append("}");
             actionDocMeta.setUrl(actionDocMeta.getUrl().replaceFirst("\\{\\}", builder.toString()));
-        }
+
+            TypeDocMeta typeDocMeta = new TypeDocMeta();
+            typeDocMeta.setName(parameter.getName());
+            typeDocMeta.setType(parameter.getType());
+            typeDocMeta.setTypeName(adjustTypeName(parameter.getParameterizedType()));
+            typeDocMeta.setSimpleTypeName(adjustSimpleTypeName(parameter.getParameterizedType()));
+            typeDocMeta.setAnnotationTypeList(Arrays.asList(parameter.getAnnotations()));
+            typeDocMeta.setAnnotationList(analyzeAnnotationList(typeDocMeta.getAnnotationTypeList()));
+
+            sourceParserReflector.ifPresent(sourceParserReflector -> {
+                sourceParserReflector.reflect(typeDocMeta, parameter.getType());
+            });
+
+            parameterTypeDocMetaList.add(typeDocMeta);
+        });
 
         execute.getFormMeta().ifPresent(actionFormMeta -> {
             actionDocMeta.setFormTypeDocMeta(analyzeFormClass(actionFormMeta));
@@ -356,9 +431,11 @@ public class DocumentGenerator {
     protected TypeDocMeta analyzeFormClass(ActionFormMeta actionFormMeta) {
         final TypeDocMeta typeDocMeta = new TypeDocMeta();
         actionFormMeta.getListFormParameterParameterizedType().ifPresent(type -> {
+            typeDocMeta.setType(actionFormMeta.getFormType());
             typeDocMeta.setTypeName(adjustTypeName(type));
             typeDocMeta.setSimpleTypeName(adjustSimpleTypeName(type));
         }).orElse(() -> {
+            typeDocMeta.setType(actionFormMeta.getFormType());
             typeDocMeta.setTypeName(adjustTypeName(actionFormMeta.getFormType()));
             typeDocMeta.setSimpleTypeName(adjustSimpleTypeName(actionFormMeta.getFormType()));
         });
@@ -375,6 +452,7 @@ public class DocumentGenerator {
     //                                        --------------
     protected TypeDocMeta analyzeReturnClass(Method method) {
         final TypeDocMeta returnTypeDocMeta = new TypeDocMeta();
+        returnTypeDocMeta.setType(method.getReturnType());
         returnTypeDocMeta.setTypeName(adjustTypeName(method.getGenericReturnType()));
         returnTypeDocMeta.setSimpleTypeName(adjustSimpleTypeName(method.getGenericReturnType()));
         Class<?> returnClass = DfReflectionUtil.getGenericFirstClass(method.getGenericReturnType());
@@ -448,9 +526,11 @@ public class DocumentGenerator {
         final Type type = genericClass != null ? genericClass : field.getType();
         final TypeDocMeta meta = new TypeDocMeta();
         meta.setName(field.getName());
+        meta.setType(field.getType());
         meta.setTypeName(adjustTypeName(type));
         meta.setSimpleTypeName(adjustSimpleTypeName(type));
-        meta.setAnnotationList(analyzeAnnotationList(Arrays.asList(field.getAnnotations())));
+        meta.setAnnotationTypeList(Arrays.asList(field.getAnnotations()));
+        meta.setAnnotationList(analyzeAnnotationList(meta.getAnnotationTypeList()));
         final Class<?> typeClass = type instanceof Class ? (Class<?>) type : (Class<?>) DfReflectionUtil.getGenericParameterTypes(type)[0];
         if (typeClass.isEnum()) {
             meta.setValue(buildEnumValuesExp(typeClass));
