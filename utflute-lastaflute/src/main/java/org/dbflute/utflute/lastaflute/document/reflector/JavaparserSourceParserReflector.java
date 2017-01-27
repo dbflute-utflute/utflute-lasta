@@ -85,7 +85,12 @@ public class JavaparserSourceParserReflector implements SourceParserReflector {
         parseClass(clazz).ifPresent(compilationUnit -> {
             VoidVisitorAdapter<Void> adapter = new VoidVisitorAdapter<Void>() {
                 public void visit(final MethodDeclaration methodDeclaration, final Void arg) {
-                    methodDeclarationList.add(methodDeclaration.getNameAsString());
+                    try {
+                        methodDeclarationList.add(methodDeclaration.getNameAsString());
+                    } catch (NoSuchMethodError e) {
+                        String msg = "Upgrade javaparser-core version to (at least) 3.0.1 for rich LastaDoc.";
+                        throw new PleaseUpgradeJavaParserVersion(msg, e);
+                    }
                     super.visit(methodDeclaration, arg);
                 }
             };
@@ -97,6 +102,15 @@ public class JavaparserSourceParserReflector implements SourceParserReflector {
         })).collect(Collectors.toList());
 
         return methodList;
+    }
+
+    public static class PleaseUpgradeJavaParserVersion extends RuntimeException {
+
+        private static final long serialVersionUID = 1L;
+
+        public PleaseUpgradeJavaParserVersion(String msg, Throwable cause) {
+            super(msg, cause);
+        }
     }
 
     // ===================================================================================
