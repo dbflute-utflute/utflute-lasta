@@ -16,14 +16,15 @@
 package org.dbflute.utflute.core.exception;
 
 /**
+ * @param <CAUSE> The type of cause exception.
  * @author jflute
  * @since 1.1.2 (2017/02/11 Saturday)
  */
 @FunctionalInterface
-public interface ExceptionExpectationCall {
+public interface ExceptionExpectationCall<CAUSE extends Throwable> {
 
     /**
      * @param cause The expected cause. (NotNull)
      */
-    void callback(Throwable cause);
+    void callback(CAUSE cause);
 }

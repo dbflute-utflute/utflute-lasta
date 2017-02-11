@@ -16,17 +16,18 @@
 package org.dbflute.utflute.core.exception;
 
 /**
+ * @param <CAUSE> The type of cause exception.
  * @author jflute
  * @since 1.1.2 (2017/02/11 Saturday)
  */
-public class ExceptionExpectationAfter {
+public class ExceptionExpectationAfter<CAUSE extends Throwable> {
 
-    protected final Throwable cause; // not null
+    protected final CAUSE cause; // not null
 
     /**
      * @param cause The expected cause. (NotNull)
      */
-    public ExceptionExpectationAfter(Throwable cause) {
+    public ExceptionExpectationAfter(CAUSE cause) {
         this.cause = cause;
     }
 
@@ -34,7 +35,7 @@ public class ExceptionExpectationAfter {
      * Handle the expected cause to assert.
      * @param oneArgLambda The callback for handling of expected cause. (NotNull)
      */
-    public void handle(ExceptionExpectationCall oneArgLambda) {
+    public void handle(ExceptionExpectationCall<CAUSE> oneArgLambda) {
         oneArgLambda.callback(cause);
     }
 }

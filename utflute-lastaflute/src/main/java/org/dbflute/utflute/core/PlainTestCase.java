@@ -497,14 +497,15 @@ public abstract class PlainTestCase extends TestCase {
      * <span style="color: #CC4747">assertException</span>(NullPointerException.<span style="color: #70226C">class</span>, () <span style="color: #90226C; font-weight: bold"><span style="font-size: 120%">-</span>&gt;</span> <span style="color: #553000">str</span>.toString());
      * 
      * <span style="color: #CC4747">assertException</span>(NullPointerException.<span style="color: #70226C">class</span>, () <span style="color: #90226C; font-weight: bold"><span style="font-size: 120%">-</span>&gt;</span> <span style="color: #553000">str</span>.toString()).<span style="color: #994747">handle</span>(<span style="color: #553000">cause</span> <span style="color: #90226C; font-weight: bold"><span style="font-size: 120%">-</span>&gt;</span> {
-     *     assertContains(<span style="color: #553000">cause</span>.getMessage(), "...");
+     *     assertContains(<span style="color: #553000">cause</span>.getMessage(), ...);
      * });
      * </pre>
      * @param exceptionType The expected exception type. (NotNull)
      * @param noArgInLambda The callback for calling methods that should throw the exception. (NotNull)
      * @return The after object that has handler of expected cause for chain call. (NotNull) 
      */
-    protected ExceptionExpectationAfter assertException(Class<? extends Throwable> exceptionType, ExceptionExaminer noArgInLambda) {
+    protected <CAUSE extends Throwable> ExceptionExpectationAfter<CAUSE> assertException(Class<CAUSE> exceptionType,
+            ExceptionExaminer noArgInLambda) {
         assertNotNull(exceptionType);
         Throwable cause = null;
         try {
@@ -522,7 +523,9 @@ public abstract class PlainTestCase extends TestCase {
         if (cause == null) {
             fail("expected: " + exceptionType.getSimpleName() + " but: no exception");
         }
-        return new ExceptionExpectationAfter(cause);
+        @SuppressWarnings("unchecked")
+        final CAUSE castCause = (CAUSE) cause;
+        return new ExceptionExpectationAfter<CAUSE>(castCause);
     }
 
     // -----------------------------------------------------
