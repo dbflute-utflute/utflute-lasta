@@ -493,11 +493,11 @@ public abstract class PlainTestCase extends TestCase {
     /**
      * Assert that the callback throws the exception.
      * <pre>
-     * String str = null;
-     * assertException(NullPointerException.class, () <span style="color: #90226C; font-weight: bold"><span style="font-size: 120%">-</span>&gt;</span> str.toString());
+     * String <span style="color: #553000">str</span> = <span style="color: #70226C">null</span>;
+     * <span style="color: #CC4747">assertException</span>(NullPointerException.<span style="color: #70226C">class</span>, () <span style="color: #90226C; font-weight: bold"><span style="font-size: 120%">-</span>&gt;</span> <span style="color: #553000">str</span>.toString());
      * 
-     * assertException(NullPointerException.class, () <span style="color: #90226C; font-weight: bold"><span style="font-size: 120%">-</span>&gt;</span> str.toString()).handle(cause <span style="color: #90226C; font-weight: bold"><span style="font-size: 120%">-</span>&gt;</span> {
-     *     assertContains(cause.getMessage(), "...");
+     * <span style="color: #CC4747">assertException</span>(NullPointerException.<span style="color: #70226C">class</span>, () <span style="color: #90226C; font-weight: bold"><span style="font-size: 120%">-</span>&gt;</span> <span style="color: #553000">str</span>.toString()).<span style="color: #994747">handle</span>(<span style="color: #553000">cause</span> <span style="color: #90226C; font-weight: bold"><span style="font-size: 120%">-</span>&gt;</span> {
+     *     assertContains(<span style="color: #553000">cause</span>.getMessage(), "...");
      * });
      * </pre>
      * @param exceptionType The expected exception type. (NotNull)

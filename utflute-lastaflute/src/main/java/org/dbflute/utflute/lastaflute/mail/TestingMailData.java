@@ -31,6 +31,10 @@ public class TestingMailData {
 
     protected final Map<Class<?>, List<TestingPreparedMessage>> _messageMap = new ConcurrentHashMap<>();
 
+    /**
+     * @param postcardType The postcard type of MailFlute. (NotNull)
+     * @return The list of prepared message for testing. (NotNull, NotEmpty)
+     */
     public List<TestingPreparedMessage> required(Class<?> postcardType) {
         final List<TestingPreparedMessage> messageList = _messageMap.get(postcardType);
         if (messageList == null) {

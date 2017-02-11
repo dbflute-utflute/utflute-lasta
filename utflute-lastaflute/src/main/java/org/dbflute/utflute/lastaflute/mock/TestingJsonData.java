@@ -32,6 +32,10 @@ public class TestingJsonData<RESULT> {
         return _jsonResult;
     }
 
+    /**
+     * Get the result object of JSON.
+     * @return The result object of JSON. (NotNull)
+     */
     public RESULT getJsonResult() {
         return _jsonResult;
     }

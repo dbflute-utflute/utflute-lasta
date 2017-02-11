@@ -57,12 +57,14 @@ import org.lastaflute.di.core.LaContainer;
 import org.lastaflute.di.core.factory.SingletonLaContainerFactory;
 import org.lastaflute.web.LastaFilter;
 import org.lastaflute.web.LastaWebKey;
+import org.lastaflute.web.response.ActionResponse;
 import org.lastaflute.web.response.HtmlResponse;
 import org.lastaflute.web.response.JsonResponse;
 import org.lastaflute.web.ruts.process.ActionRuntime;
 import org.lastaflute.web.servlet.request.RequestManager;
 import org.lastaflute.web.token.DoubleSubmitManager;
 import org.lastaflute.web.token.DoubleSubmitTokenMap;
+import org.lastaflute.web.validation.exception.ValidationErrorException;
 
 /**
  * @author jflute
@@ -405,10 +407,19 @@ public abstract class WebContainerTestCase extends ContainerTestCase {
     // ===================================================================================
     //                                                                 Response Validation
     //                                                                 ===================
+    /**
+     * Show JSON string for the JSON bean.
+     * @param jsonBean The JSON bean to be serialized. (NotNull)
+     */
     protected void showJson(Object jsonBean) {
         log(jsonBean.getClass().getSimpleName() + ":" + ln() + toJson(jsonBean));
     }
 
+    /**
+     * Convert to JSON string from the JSON bean.
+     * @param jsonBean The JSON bean to be serialized. (NotNull)
+     * @return The JSON string. (NotNull)
+     */
     protected String toJson(Object jsonBean) {
         final Object realBean;
         if (jsonBean instanceof JsonResponse<?>) {
@@ -419,17 +430,87 @@ public abstract class WebContainerTestCase extends ContainerTestCase {
         return _jsonManager.toJson(realBean);
     }
 
+    /**
+     * Validate HTML data, evaluating HTML bean's validator annotations.
+     * <pre>
+     * <span style="color: #3F7E5E">// ## Act ##</span>
+     * HtmlResponse <span style="color: #553000">response</span> = <span style="color: #553000">action</span>.index(<span style="color: #553000">form</span>);
+     * 
+     * <span style="color: #3F7E5E">// ## Assert ##</span>
+     * TestingHtmlData <span style="color: #553000">htmlData</span> = <span style="color: #CC4747">validateHtmlData</span>(<span style="color: #553000">response</span>);
+     * <span style="color: #553000">htmlData</span>.<span style="color: #994747">requiredList</span>("beans", ProductBean.<span style="color: #70226C">class</span>).forEach(bean <span style="color: #90226C; font-weight: bold"><span style="font-size: 120%">-</span>&gt;</span> {
+     *     assertEquals("...", <span style="color: #553000">bean</span>.productName);
+     * });
+     * </pre>
+     * @param response The HTML response to be validated. (NotNull)
+     * @return The HTML data for testing. (NotNull)
+     */
     protected TestingHtmlData validateHtmlData(HtmlResponse response) {
         return new MockResopnseBeanValidator(_requestManager).validateHtmlData(response);
     }
 
+    /**
+     * Validate JSON data, evaluating JSON result's validator annotations.
+     * <pre>
+     * <span style="color: #3F7E5E">// ## Act ##</span>
+     * JsonResponse&lt;ProductRowResult&gt; <span style="color: #553000">response</span> = <span style="color: #553000">action</span>.index(<span style="color: #553000">form</span>);
+     * 
+     * <span style="color: #3F7E5E">// ## Assert ##</span>
+     * TestingJsonData&lt;ProductRowResult&gt; <span style="color: #553000">jsonData</span> = <span style="color: #CC4747">validateJsonData</span>(<span style="color: #553000">response</span>);
+     * ProductRowResult <span style="color: #553000">result</span> = <span style="color: #553000">jsonData</span>.getJsonResult();
+     * ...
+     * </pre>
+     * @param response The HTML response to be validated. (NotNull)
+     * @return The HTML data for testing. (NotNull)
+     */
     protected <BEAN> TestingJsonData<BEAN> validateJsonData(JsonResponse<BEAN> response) {
         return new MockResopnseBeanValidator(_requestManager).validateJsonData(response);
+    }
+
+    /**
+     * Evaluate validation error hook for action response.
+     * <pre>
+     * <span style="color: #3F7E5E">// if HTML response</span>
+     * assertException(ValidationErrorException.<span style="color: #70226C">class</span>, () <span style="color: #90226C; font-weight: bold"><span style="font-size: 120%">-</span>&gt;</span> <span style="color: #553000">action</span>.update(<span style="color: #553000">form</span>)).handle(<span style="color: #553000">cause</span> <span style="color: #90226C; font-weight: bold"><span style="font-size: 120%">-</span>&gt;</span> {
+     *     HtmlResponse <span style="color: #553000">response</span> = <span style="color: #CC4747">hookValidationError</span>(<span style="color: #553000">cause</span>);
+     *     TestingHtmlData <span style="color: #553000">htmlData</span> = validateHtmlData(<span style="color: #553000">response</span>);
+     *     ...
+     * });
+     * </pre>
+     * @param cause The exception of validation error. (NotNull)
+     * @return The action response from validation error hook.
+     */
+    @SuppressWarnings("unchecked")
+    protected <RESPONSE extends ActionResponse> RESPONSE hookValidationError(ValidationErrorException cause) {
+        return (RESPONSE) cause.getErrorHook().hook();
     }
 
     // ===================================================================================
     //                                                                      Mail Assertion
     //                                                                      ==============
+    /**
+     * Reserve mail assertion, should be called before action execution.
+     * <pre>
+     * <span style="color: #3F7E5E">// ## Arrange ##</span>
+     * SignupAction <span style="color: #553000">action</span> = <span style="color: #70226C">new</span> SignupAction();
+     * inject(<span style="color: #553000">action</span>);
+     * SignupForm <span style="color: #553000">form</span> = <span style="color: #70226C">new</span> SignupForm();
+     * <span style="color: #CC4747">reserveMailAssertion</span>(<span style="color: #553000">mailData</span> <span style="color: #90226C; font-weight: bold"><span style="font-size: 120%">-</span>&gt;</span> {
+     *     <span style="color: #553000">mailData</span>.required(<span style="color: #994747">WelcomeMemberPostcard</span>.<span style="color: #70226C">class</span>).forEach(<span style="color: #553000">message</span> <span style="color: #90226C; font-weight: bold"><span style="font-size: 120%">-</span>&gt;</span> {
+     *        <span style="color: #553000">message</span>.requiredToList().forEach(<span style="color: #553000">addr</span> <span style="color: #90226C; font-weight: bold"><span style="font-size: 120%">-</span>&gt;</span> {
+     *            assertContains(<span style="color: #553000">addr</span>.getAddress(), <span style="color: #553000">form</span>.memberAccount); <span style="color: #3F7E5E">// e.g. land@docksidestage.org</span>
+     *        });
+     *        <span style="color: #553000">message</span>.assertPlainTextContains(<span style="color: #553000">form</span>.memberName);
+     *        <span style="color: #553000">message</span>.assertPlainTextContains(<span style="color: #553000">form</span>.memberAccount);
+     *     });
+     * });
+     * 
+     * <span style="color: #3F7E5E">// ## Act ##</span>
+     * HtmlResponse <span style="color: #553000">response</span> = <span style="color: #553000">action</span>.signup(<span style="color: #553000">form</span>);
+     * ...
+     * </pre>
+     * @param oneArgLambda The callback for mail data. (NotNull)
+     */
     protected void reserveMailAssertion(Consumer<TestingMailData> oneArgLambda) {
         _xmailMessageAssertion = new MailMessageAssertion(oneArgLambda);
     }
@@ -444,17 +525,60 @@ public abstract class WebContainerTestCase extends ContainerTestCase {
     // ===================================================================================
     //                                                                     Token Assertion
     //                                                                     ===============
+    /**
+     * Assert double submit token is saved in action execution.
+     * <pre>
+     * <span style="color: #3F7E5E">// ## Act ##</span>
+     * HtmlResponse <span style="color: #553000">response</span> = <span style="color: #553000">action</span>.index(<span style="color: #553000">memberId</span>); <span style="color: #3F7E5E">// calls saveToken()</span>
+     * 
+     * <span style="color: #3F7E5E">// ## Assert ##</span>
+     * <span style="color: #CC4747">assertTokenSaved</span>(<span style="color: #553000">action</span>.getClass());
+     * </pre>
+     * @param groupType The group type to get double submit token, basically action type. (NotNull)
+     */
     protected void assertTokenSaved(Class<?> groupType) { // for action that calls saveToken()
         final DoubleSubmitTokenMap tokenMap = _doubleSubmitManager.getSessionTokenMap().get();
         final boolean condition = tokenMap.get(groupType).isPresent();
         assertTrue("Not found the transaction token saved in session, so call saveToken(): tokenMap=" + tokenMap, condition);
     }
 
+    /**
+     * Mock double submit token is requested in the test process.
+     * <pre>
+     * <span style="color: #3F7E5E">// ## Arrange ##</span>
+     * MemberEditAction <span style="color: #553000">action</span> = <span style="color: #70226C">new</span> MemberEditAction();
+     * inject(<span style="color: #553000">action</span>);
+     * <span style="color: #CC4747">mockTokenRequested</span>(<span style="color: #553000">action</span>.getClass());
+     * ...
+     * 
+     * <span style="color: #3F7E5E">// ## Act ##</span>
+     * HtmlResponse <span style="color: #553000">response</span> = <span style="color: #553000">action</span>.update(<span style="color: #553000">form</span>); <span style="color: #3F7E5E">// calls verifyToken()</span>
+     * 
+     * <span style="color: #3F7E5E">// ## Assert ##</span>
+     * <span style="color: #994747">assertTokenVerified()</span>;
+     * </pre>
+     * @param groupType The group type to get double submit token, basically action type. (NotNull)
+     */
     protected void mockTokenRequested(Class<?> groupType) { // for action that calls verityToken()
         final String savedToken = _doubleSubmitManager.saveToken(groupType);
         getMockRequest().setParameter(LastaWebKey.TRANSACTION_TOKEN_KEY, savedToken);
     }
 
+    /**
+     * Mock double submit token is requested as double submit in the test process.
+     * <pre>
+     * <span style="color: #3F7E5E">// ## Arrange ##</span>
+     * MemberEditAction <span style="color: #553000">action</span> = <span style="color: #70226C">new</span> MemberEditAction();
+     * inject(<span style="color: #553000">action</span>);
+     * <span style="color: #CC4747">mockTokenRequestedAsDoubleSubmit</span>(<span style="color: #553000">action</span>.getClass());
+     * ...
+     * 
+     * <span style="color: #3F7E5E">// ## Act ##</span>
+     * <span style="color: #3F7E5E">// ## Assert ##</span>
+     * assertException(<span style="color: #994747">DoubleSubmittedRequestException</span>.<span style="color: #70226C">class</span>, () <span style="color: #90226C; font-weight: bold"><span style="font-size: 120%">-</span>&gt;</span> <span style="color: #553000">action</span>.update(<span style="color: #553000">form</span>));
+     * </pre>
+     * @param groupType The group type to get double submit token, basically action type. (NotNull)
+     */
     protected void mockTokenRequestedAsDoubleSubmit(Class<?> groupType) { // for action that calls verityToken()
         final String savedToken = _doubleSubmitManager.saveToken(groupType);
         getMockRequest().setParameter(LastaWebKey.TRANSACTION_TOKEN_KEY, savedToken);
@@ -463,6 +587,22 @@ public abstract class WebContainerTestCase extends ContainerTestCase {
         });
     }
 
+    /**
+     * Assert double submit token is verified in action execution.
+     * <pre>
+     * <span style="color: #3F7E5E">// ## Arrange ##</span>
+     * MemberEditAction <span style="color: #553000">action</span> = <span style="color: #70226C">new</span> MemberEditAction();
+     * inject(<span style="color: #553000">action</span>);
+     * <span style="color: #994747">mockTokenRequested</span>(<span style="color: #553000">action</span>.getClass());
+     * ...
+     * 
+     * <span style="color: #3F7E5E">// ## Act ##</span>
+     * HtmlResponse <span style="color: #553000">response</span> = <span style="color: #553000">action</span>.update(<span style="color: #553000">form</span>); <span style="color: #3F7E5E">// calls verityToken()</span>
+     * 
+     * <span style="color: #3F7E5E">// ## Assert ##</span>
+     * <span style="color: #CC4747">assertTokenVerified()</span>;
+     * </pre>
+     */
     protected void assertTokenVerified() { // for action that calls verityToken()
         final boolean condition = _doubleSubmitManager.isFirstSubmittedRequest();
         assertTrue("Not found the transaction token verification, so call verifyToken().", condition);
@@ -471,11 +611,29 @@ public abstract class WebContainerTestCase extends ContainerTestCase {
     // ===================================================================================
     //                                                                         Destructive
     //                                                                         ===========
+    /**
+     * Change asynchronous process to normal synchronous, to be easy to assert. <br>
+     * (Invalidate AsyncManager)
+     * <pre>
+     * <span style="color: #3F7E5E">// ## Arrange ##</span>
+     * <span style="color: #CC4747">changeAsyncToNormalSync()</span>;
+     * ...
+     * </pre>
+     */
     protected void changeAsyncToNormalSync() {
         BowgunDestructiveAdjuster.unlock();
         BowgunDestructiveAdjuster.shootBowgunAsyncToNormalSync();
     }
 
+    /**
+     * Change requires-new transaction to required transaction, to be easy to assert. <br>
+     * (All transactions can be in test transaction)
+     * <pre>
+     * <span style="color: #3F7E5E">// ## Arrange ##</span>
+     * <span style="color: #CC4747">changeRequiresNewToRequired()</span>;
+     * ...
+     * </pre>
+     */
     protected void changeRequiresNewToRequired() {
         BowgunDestructiveAdjuster.unlock();
         BowgunDestructiveAdjuster.shootBowgunRequiresNewToRequired();
@@ -484,10 +642,22 @@ public abstract class WebContainerTestCase extends ContainerTestCase {
     // ===================================================================================
     //                                                                            LastaDoc
     //                                                                            ========
+    /**
+     * Save meta data for rich LastaDoc.
+     * <pre>
+     * 1. call this method in your unit test
+     * 2. execute FreeGen task (manage.sh 12) of DBFlute
+     * 3. see auto-generated LastaDoc
+     * </pre>
+     */
     protected void saveLastaDocMeta() {
         createDocumentGenerator().saveLastaDocMeta();
     }
 
+    /**
+     * Create document generator for rich LastaDoc.
+     * @return The new-created document generator. (NotNull)
+     */
     protected DocumentGenerator createDocumentGenerator() {
         return new DocumentGenerator();
     }
