@@ -53,6 +53,7 @@ import org.dbflute.utflute.core.cannonball.CannonballRun;
 import org.dbflute.utflute.core.cannonball.CannonballStaff;
 import org.dbflute.utflute.core.dbflute.GatheredExecutedSqlHolder;
 import org.dbflute.utflute.core.exception.ExceptionExaminer;
+import org.dbflute.utflute.core.exception.ExceptionExpectationAfter;
 import org.dbflute.utflute.core.filesystem.FileLineHandler;
 import org.dbflute.utflute.core.filesystem.FilesystemPlayer;
 import org.dbflute.utflute.core.markhere.MarkHereManager;
@@ -494,17 +495,22 @@ public abstract class PlainTestCase extends TestCase {
      * <pre>
      * String str = null;
      * assertException(NullPointerException.class, () <span style="color: #90226C; font-weight: bold"><span style="font-size: 120%">-</span>&gt;</span> str.toString());
+     * 
+     * assertException(NullPointerException.class, () <span style="color: #90226C; font-weight: bold"><span style="font-size: 120%">-</span>&gt;</span> str.toString()).handle(cause <span style="color: #90226C; font-weight: bold"><span style="font-size: 120%">-</span>&gt;</span> {
+     *     assertContains(cause.getMessage(), "...");
+     * });
      * </pre>
      * @param exceptionType The expected exception type. (NotNull)
      * @param noArgInLambda The callback for calling methods that should throw the exception. (NotNull)
+     * @return The after object that has handler of expected cause for chain call. (NotNull) 
      */
-    protected void assertException(Class<? extends Throwable> exceptionType, ExceptionExaminer noArgInLambda) {
+    protected ExceptionExpectationAfter assertException(Class<? extends Throwable> exceptionType, ExceptionExaminer noArgInLambda) {
         assertNotNull(exceptionType);
-        boolean noThrow = false;
+        Throwable cause = null;
         try {
             noArgInLambda.examine();
-            noThrow = true;
-        } catch (Throwable cause) {
+        } catch (Throwable e) {
+            cause = e;
             final Class<? extends Throwable> causeClass = cause.getClass();
             final String msg = cause.getMessage();
             final String exp = (msg != null && msg.contains(ln()) ? ln() : "") + msg;
@@ -513,9 +519,10 @@ public abstract class PlainTestCase extends TestCase {
             }
             log("expected: " + exp);
         }
-        if (noThrow) {
+        if (cause == null) {
             fail("expected: " + exceptionType.getSimpleName() + " but: no exception");
         }
+        return new ExceptionExpectationAfter(cause);
     }
 
     // -----------------------------------------------------
