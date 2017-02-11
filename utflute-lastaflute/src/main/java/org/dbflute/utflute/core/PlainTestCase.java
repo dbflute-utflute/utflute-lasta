@@ -500,6 +500,7 @@ public abstract class PlainTestCase extends TestCase {
      *     assertContains(<span style="color: #553000">cause</span>.getMessage(), ...);
      * });
      * </pre>
+     * @param <CAUSE> The type of expected cause exception. 
      * @param exceptionType The expected exception type. (NotNull)
      * @param noArgInLambda The callback for calling methods that should throw the exception. (NotNull)
      * @return The after object that has handler of expected cause for chain call. (NotNull) 

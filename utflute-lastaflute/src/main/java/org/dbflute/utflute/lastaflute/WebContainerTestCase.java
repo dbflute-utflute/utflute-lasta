@@ -460,6 +460,7 @@ public abstract class WebContainerTestCase extends ContainerTestCase {
      * ProductRowResult <span style="color: #553000">result</span> = <span style="color: #553000">jsonData</span>.getJsonResult();
      * ...
      * </pre>
+     * @param <BEAN> The type of JSON bean.
      * @param response The HTML response to be validated. (NotNull)
      * @return The HTML data for testing. (NotNull)
      */
@@ -477,6 +478,7 @@ public abstract class WebContainerTestCase extends ContainerTestCase {
      *     ...
      * });
      * </pre>
+     * @param <RESPONSE> The type of action response, e.g. HtmlResponse, JsonResponse.
      * @param cause The exception of validation error. (NotNull)
      * @return The action response from validation error hook.
      */
