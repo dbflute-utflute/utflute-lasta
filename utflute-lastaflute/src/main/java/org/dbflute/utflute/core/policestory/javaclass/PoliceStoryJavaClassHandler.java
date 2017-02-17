@@ -28,4 +28,11 @@ public interface PoliceStoryJavaClassHandler {
      * @param clazz The type of the Java class. (NotNull)
      */
     void handle(File srcFile, Class<?> clazz);
+
+    /**
+     * @return true if the test classes (under e.g. src/test/java) are target. 
+     */
+    default boolean containsTestClass() {
+        return false;
+    }
 }

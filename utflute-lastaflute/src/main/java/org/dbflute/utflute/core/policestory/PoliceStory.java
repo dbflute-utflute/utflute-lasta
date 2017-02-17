@@ -54,6 +54,9 @@ public class PoliceStory {
     //                                                                               =====
     public void chaseJavaClass(PoliceStoryJavaClassHandler handler) {
         createJavaClassChase(getSrcMainJavaDir()).chaseJavaClass(handler);
+        if (handler.containsTestClass()) { // simple way #for_now
+            createJavaClassChase(getSrcTestJavaDir()).chaseJavaClass(handler);
+        }
     }
 
     public void chaseJspFile(PoliceStoryJspFileHandler handler) {
@@ -98,12 +101,21 @@ public class PoliceStory {
     // ===================================================================================
     //                                                                         File System
     //                                                                         ===========
+
     protected File getSrcMainJavaDir() {
         return new File(getProjectPath() + "/src/main/java/");
     }
 
     protected File getSrcMainResourcesDir() {
         return new File(getProjectPath() + "/src/main/resources/");
+    }
+
+    protected File getSrcTestJavaDir() {
+        return new File(getProjectPath() + "/src/test/java/");
+    }
+
+    protected File getSrcTestResourcesDir() {
+        return new File(getProjectPath() + "/src/test/resources/");
     }
 
     protected File getWebappDir() {
