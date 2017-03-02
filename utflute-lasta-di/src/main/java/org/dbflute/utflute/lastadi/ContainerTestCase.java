@@ -15,6 +15,7 @@
  */
 package org.dbflute.utflute.lastadi;
 
+import javax.annotation.Resource;
 import javax.sql.DataSource;
 
 /**
@@ -27,7 +28,8 @@ public abstract class ContainerTestCase extends LastaDiTestCase {
     //                                                                           Attribute
     //                                                                           =========
     /** The (main) data source for database. (NotNull: after injection) */
-    protected DataSource _xdataSource;
+    @Resource
+    private DataSource _xdataSource;
 
     // ===================================================================================
     //                                                                         JDBC Helper
