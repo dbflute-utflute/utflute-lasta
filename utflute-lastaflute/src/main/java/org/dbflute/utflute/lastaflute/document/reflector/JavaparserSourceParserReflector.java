@@ -32,6 +32,7 @@ import java.util.stream.IntStream;
 
 import org.dbflute.optional.OptionalThing;
 import org.dbflute.utflute.lastaflute.document.meta.ActionDocMeta;
+import org.dbflute.utflute.lastaflute.document.meta.JobDocMeta;
 import org.dbflute.utflute.lastaflute.document.meta.TypeDocMeta;
 import org.dbflute.util.DfCollectionUtil;
 import org.dbflute.util.DfStringUtil;
@@ -114,13 +115,13 @@ public class JavaparserSourceParserReflector implements SourceParserReflector {
     }
 
     // ===================================================================================
-    //                                                                      Reflect Method
-    //                                                                      ==============
+    //                                                               Reflect ActionDocMeta
+    //                                                               =====================
     @Override
     public void reflect(ActionDocMeta meta, Method method) {
         parseClass(method.getDeclaringClass()).ifPresent(compilationUnit -> {
             Map<String, List<String>> returnMap = DfCollectionUtil.newLinkedHashMap();
-            VoidVisitorAdapter<ActionDocMeta> adapter = createMethodVoidVisitorAdapter(method, returnMap);
+            VoidVisitorAdapter<ActionDocMeta> adapter = createActionDocMetaVisitorAdapter(method, returnMap);
             adapter.visit(compilationUnit, meta);
             List<String> descriptionList = DfCollectionUtil.newArrayList();
             Arrays.asList(meta.getTypeComment(), meta.getMethodComment()).forEach(comment -> {
@@ -150,16 +151,16 @@ public class JavaparserSourceParserReflector implements SourceParserReflector {
         });
     }
 
-    protected VoidVisitorAdapter<ActionDocMeta> createMethodVoidVisitorAdapter(Method method, Map<String, List<String>> returnMap) {
-        return new MethodVoidVisitorAdapter(method, returnMap);
+    protected VoidVisitorAdapter<ActionDocMeta> createActionDocMetaVisitorAdapter(Method method, Map<String, List<String>> returnMap) {
+        return new ActionDocMetaVisitorAdapter(method, returnMap);
     }
 
-    public class MethodVoidVisitorAdapter extends VoidVisitorAdapter<ActionDocMeta> {
+    public class ActionDocMetaVisitorAdapter extends VoidVisitorAdapter<ActionDocMeta> {
 
         protected final Method method;
         protected final Map<String, List<String>> returnMap;
 
-        public MethodVoidVisitorAdapter(Method method, Map<String, List<String>> returnMap) {
+        public ActionDocMetaVisitorAdapter(Method method, Map<String, List<String>> returnMap) {
             this.method = method;
             this.returnMap = returnMap;
         }
@@ -232,8 +233,70 @@ public class JavaparserSourceParserReflector implements SourceParserReflector {
     }
 
     // ===================================================================================
-    //                                                                       Reflect Class
-    //                                                                       =============
+    //                                                                  Reflect JobDocMeta
+    //                                                                  ==================
+    @Override
+    public void reflect(JobDocMeta jobDocMeta, Class<?> clazz) {
+        parseClass(clazz).ifPresent(compilationUnit -> {
+            VoidVisitorAdapter<JobDocMeta> adapter = createJobDocMetaVisitorAdapter();
+            adapter.visit(compilationUnit, jobDocMeta);
+            List<String> descriptionList = DfCollectionUtil.newArrayList();
+            Arrays.asList(jobDocMeta.getTypeComment(), jobDocMeta.getMethodComment()).forEach(comment -> {
+                if (DfStringUtil.is_NotNull_and_NotEmpty(comment)) {
+                    Matcher matcher = CLASS_METHOD_COMMENT_END_PATTERN.matcher(comment);
+                    if (matcher.find()) {
+                        descriptionList.add(matcher.group(1));
+                    }
+                }
+            });
+            if (!descriptionList.isEmpty()) {
+                jobDocMeta.setDescription(String.join(", ", descriptionList));
+            }
+        });
+    }
+
+    protected VoidVisitorAdapter<JobDocMeta> createJobDocMetaVisitorAdapter() {
+        return new JobDocMetaVisitorAdapter();
+    }
+
+    public class JobDocMetaVisitorAdapter extends VoidVisitorAdapter<JobDocMeta> {
+
+        @Override
+        public void visit(ClassOrInterfaceDeclaration classOrInterfaceDeclaration, JobDocMeta jobDocMeta) {
+            classOrInterfaceDeclaration.getBegin().ifPresent(begin -> {
+                classOrInterfaceDeclaration.getEnd().ifPresent(end -> {
+                    jobDocMeta.setFileLineCount(end.line - begin.line);
+                });
+            });
+            String comment = adjustComment(classOrInterfaceDeclaration);
+            if (DfStringUtil.is_NotNull_and_NotEmpty(comment)) {
+                jobDocMeta.setTypeComment(comment);
+            }
+            super.visit(classOrInterfaceDeclaration, jobDocMeta);
+        }
+
+        @Override
+        public void visit(MethodDeclaration methodDeclaration, JobDocMeta jobDocMeta) {
+            if (!methodDeclaration.getNameAsString().equals(jobDocMeta.getMethodName())) {
+                return;
+            }
+
+            methodDeclaration.getBegin().ifPresent(begin -> {
+                methodDeclaration.getEnd().ifPresent(end -> {
+                    jobDocMeta.setMethodLineCount(end.line - begin.line);
+                });
+            });
+            String comment = adjustComment(methodDeclaration);
+            if (DfStringUtil.is_NotNull_and_NotEmpty(comment)) {
+                jobDocMeta.setMethodComment(comment);
+            }
+            super.visit(methodDeclaration, jobDocMeta);
+        }
+    }
+
+    // ===================================================================================
+    //                                                                 Reflect TypeDocMeta
+    //                                                                 ===================
     @Override
     public void reflect(TypeDocMeta typeDocMeta, Class<?> clazz) {
         List<Class<?>> classList = DfCollectionUtil.newArrayList();
@@ -243,17 +306,17 @@ public class JavaparserSourceParserReflector implements SourceParserReflector {
         Collections.reverse(classList);
         classList.forEach(targetClass -> {
             parseClass(targetClass).ifPresent(compilationUnit -> {
-                VoidVisitorAdapter<TypeDocMeta> adapter = createClassOrInterfaceVoidVisitorAdapter();
+                VoidVisitorAdapter<TypeDocMeta> adapter = createTypeDocMetaVisitorAdapter();
                 adapter.visit(compilationUnit, typeDocMeta);
             });
         });
     }
 
-    protected VoidVisitorAdapter<TypeDocMeta> createClassOrInterfaceVoidVisitorAdapter() {
-        return new ClassOrInterfaceVoidVisitorAdapter();
+    protected VoidVisitorAdapter<TypeDocMeta> createTypeDocMetaVisitorAdapter() {
+        return new TypeDocMetaVisitorAdapter();
     }
 
-    public class ClassOrInterfaceVoidVisitorAdapter extends VoidVisitorAdapter<TypeDocMeta> {
+    public class TypeDocMetaVisitorAdapter extends VoidVisitorAdapter<TypeDocMeta> {
 
         @Override
         public void visit(ClassOrInterfaceDeclaration classOrInterfaceDeclaration, TypeDocMeta typeDocMeta) {

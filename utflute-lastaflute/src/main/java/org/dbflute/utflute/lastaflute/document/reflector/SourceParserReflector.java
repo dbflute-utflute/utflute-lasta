@@ -19,6 +19,7 @@ import java.lang.reflect.Method;
 import java.util.List;
 
 import org.dbflute.utflute.lastaflute.document.meta.ActionDocMeta;
+import org.dbflute.utflute.lastaflute.document.meta.JobDocMeta;
 import org.dbflute.utflute.lastaflute.document.meta.TypeDocMeta;
 
 /**
@@ -32,7 +33,9 @@ public interface SourceParserReflector {
     //                                                                             =======
     List<Method> getMethodListOrderByDefinition(Class<?> clazz);
 
-    void reflect(ActionDocMeta bean, Method method);
+    void reflect(ActionDocMeta actionDocMeta, Method method);
 
-    void reflect(TypeDocMeta bean, Class<?> clazz);
+    void reflect(JobDocMeta jobDocMeta, Class<?> clazz);
+
+    void reflect(TypeDocMeta typeDocMeta, Class<?> clazz);
 }
