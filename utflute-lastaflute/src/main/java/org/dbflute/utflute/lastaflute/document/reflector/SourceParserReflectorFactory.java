@@ -71,6 +71,8 @@ public class SourceParserReflectorFactory {
                     String msg = "Upgrade javaparser-core version to (at least) " + JAVA_PARSER_VERSION + " for rich LastaDoc.";
                     throw new PleaseUpgradeJavaParserVersion(msg);
                 }
+            } else {
+                _log.debug("...Loading java parser for version: Could not analyze.");
             }
         }).orElse(() -> {
             _log.debug("...Loading java parser for version: Not found.");

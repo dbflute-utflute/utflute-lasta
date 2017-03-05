@@ -66,9 +66,7 @@ public class JobDocumentGenerator extends BaseDocumentGenerator {
             jobDocMeta.setJobUnique(getNoException(() -> job.getJobUnique().map(jobUnique -> jobUnique.value()).orElse(null)));
             jobDocMeta.setJobTitle(getNoException(() -> job.getJobNote().flatMap(jobNote -> jobNote.getTitle()).orElse(null)));
             jobDocMeta.setJobDescription(getNoException(() -> job.getJobNote().flatMap(jobNote -> jobNote.getDesc()).orElse(null)));
-
             jobDocMeta.setCronExp(getNoException(() -> job.getCronExp().orElse(null)));
-
             Class<? extends LaJob> jobClass = getNoException(() -> job.getJobType());
             if (jobClass != null) {
                 jobDocMeta.setTypeName(jobClass.getName());
