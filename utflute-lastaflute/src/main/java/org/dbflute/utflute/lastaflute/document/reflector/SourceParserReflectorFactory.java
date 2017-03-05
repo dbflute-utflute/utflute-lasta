@@ -15,11 +15,16 @@
  */
 package org.dbflute.utflute.lastaflute.document.reflector;
 
+import java.io.InputStream;
+import java.net.URL;
+import java.util.Enumeration;
 import java.util.List;
+import java.util.Properties;
 
 import org.dbflute.optional.OptionalThing;
 import org.dbflute.util.DfReflectionUtil;
 import org.dbflute.util.DfReflectionUtil.ReflectionFailureException;
+import org.dbflute.util.DfStringUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -35,6 +40,7 @@ public class SourceParserReflectorFactory {
     //                                                                          ==========
     private static final Logger _log = LoggerFactory.getLogger(SourceParserReflectorFactory.class);
     private static final String JAVA_PARSER_CLASS_NAME = "com.github.javaparser.JavaParser";
+    private static final float JAVA_PARSER_VERSION = 3.1f;
 
     // ===================================================================================
     //                                                                           Reflector
@@ -45,6 +51,7 @@ public class SourceParserReflectorFactory {
         try {
             DfReflectionUtil.forName(className);
             _log.debug("...Loading java parser for document: {}", className);
+            validateVersion(JAVA_PARSER_VERSION);
             reflector = createJavaparserSourceParserReflector(srcDirList);
         } catch (ReflectionFailureException ignored) {
             reflector = null;
@@ -52,6 +59,48 @@ public class SourceParserReflectorFactory {
         return OptionalThing.ofNullable(reflector, () -> {
             throw new IllegalStateException("Not found the java parser: " + className);
         });
+    }
+
+    public void validateVersion(float leastVersion) {
+        getVersion("com.github.javaparser", "javaparser-core").ifPresent(version -> {
+            _log.debug("...Loading java parser for version: {}", version);
+            String majorMinorVersionStr = version.replaceAll("[^\\d.]", "").replaceAll("(\\d+(\\.\\d+)?).*", "$1");
+            if (DfStringUtil.is_NotNull_and_NotEmpty(majorMinorVersionStr)) {
+                float majorMinorVersion = Float.parseFloat(majorMinorVersionStr);
+                if (majorMinorVersion < leastVersion) {
+                    String msg = "Upgrade javaparser-core version to (at least) " + JAVA_PARSER_VERSION + " for rich LastaDoc.";
+                    throw new PleaseUpgradeJavaParserVersion(msg);
+                }
+            }
+        }).orElse(() -> {
+            _log.debug("...Loading java parser for version: Not found.");
+        });
+    }
+
+    protected OptionalThing<String> getVersion(final String groupId, final String artifactId) {
+        try {
+            final String name = "META-INF/maven/" + groupId + "/" + artifactId + "/pom.properties";
+            final Enumeration<?> urls = Thread.currentThread().getContextClassLoader().getResources(name);
+            while (urls.hasMoreElements()) {
+                URL url = (URL) urls.nextElement();
+                try (InputStream is = url.openStream()) {
+                    final Properties props = new Properties();
+                    props.load(is);
+                    String version = props.getProperty("version");
+                    return OptionalThing.of(version);
+                }
+            }
+        } catch (final Exception ignore) {}
+        return OptionalThing.empty();
+    }
+
+    protected static class PleaseUpgradeJavaParserVersion extends RuntimeException {
+
+        private static final long serialVersionUID = 1L;
+
+        public PleaseUpgradeJavaParserVersion(String msg) {
+            super(msg);
+        }
     }
 
     protected JavaparserSourceParserReflector createJavaparserSourceParserReflector(List<String> srcDirList) {

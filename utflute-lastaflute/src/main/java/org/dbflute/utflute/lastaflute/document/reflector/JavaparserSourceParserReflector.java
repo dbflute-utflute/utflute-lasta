@@ -45,7 +45,6 @@ import com.github.javaparser.ast.body.MethodDeclaration;
 import com.github.javaparser.ast.nodeTypes.NodeWithJavadoc;
 import com.github.javaparser.ast.stmt.ReturnStmt;
 import com.github.javaparser.ast.visitor.VoidVisitorAdapter;
-import com.github.javaparser.javadoc.Javadoc;
 
 /**
  * @author p1us2er0
@@ -86,12 +85,7 @@ public class JavaparserSourceParserReflector implements SourceParserReflector {
         parseClass(clazz).ifPresent(compilationUnit -> {
             VoidVisitorAdapter<Void> adapter = new VoidVisitorAdapter<Void>() {
                 public void visit(final MethodDeclaration methodDeclaration, final Void arg) {
-                    try {
-                        methodDeclarationList.add(methodDeclaration.getNameAsString());
-                    } catch (NoSuchMethodError e) {
-                        String msg = "Upgrade javaparser-core version to (at least) 3.0.1 for rich LastaDoc.";
-                        throw new PleaseUpgradeJavaParserVersion(msg, e);
-                    }
+                    methodDeclarationList.add(methodDeclaration.getNameAsString());
                     super.visit(methodDeclaration, arg);
                 }
             };
@@ -103,15 +97,6 @@ public class JavaparserSourceParserReflector implements SourceParserReflector {
         })).collect(Collectors.toList());
 
         return methodList;
-    }
-
-    public static class PleaseUpgradeJavaParserVersion extends RuntimeException {
-
-        private static final long serialVersionUID = 1L;
-
-        public PleaseUpgradeJavaParserVersion(String msg, Throwable cause) {
-            super(msg, cause);
-        }
     }
 
     // ===================================================================================
@@ -373,16 +358,11 @@ public class JavaparserSourceParserReflector implements SourceParserReflector {
     //                                                                      Adjust Comment
     //                                                                      ==============
     protected String adjustComment(NodeWithJavadoc<?> nodeWithJavadoc) {
-        Javadoc javadoc;
         try {
-            javadoc = nodeWithJavadoc.getJavadoc();
-        } catch (RuntimeException e) {
-            return "javadoc parse error. error messge=" + e.getMessage();
+            return nodeWithJavadoc.getJavadoc().map(javadoc -> javadoc.toText().replaceAll("(^\r?\n|\r?\n$)", "")).orElse(null);
+        } catch (Throwable t) {
+            return "javadoc parse error. error messge=" + t.getMessage();
         }
-        if (javadoc == null || DfStringUtil.is_Null_or_Empty(javadoc.toString())) {
-            return null;
-        }
-        return javadoc.toText().replaceAll("(^\r?\n|\r?\n$)", "");
     }
 
     // ===================================================================================

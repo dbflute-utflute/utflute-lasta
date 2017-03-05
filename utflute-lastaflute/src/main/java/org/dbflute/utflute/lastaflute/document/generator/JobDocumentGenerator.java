@@ -64,7 +64,9 @@ public class JobDocumentGenerator extends BaseDocumentGenerator {
             JobDocMeta jobDocMeta = new JobDocMeta();
             jobDocMeta.setJobKey(getNoException(() -> job.getJobKey().value()));
             jobDocMeta.setJobUnique(getNoException(() -> job.getJobUnique().map(jobUnique -> jobUnique.value()).orElse(null)));
-            jobDocMeta.setJobTitle(getNoException(() -> job.getJobTitle().orElse(null)));
+            jobDocMeta.setJobTitle(getNoException(() -> job.getJobNote().flatMap(jobNote -> jobNote.getTitle()).orElse(null)));
+            jobDocMeta.setJobDescription(getNoException(() -> job.getJobNote().flatMap(jobNote -> jobNote.getDesc()).orElse(null)));
+
             jobDocMeta.setCronExp(getNoException(() -> job.getCronExp().orElse(null)));
 
             Class<? extends LaJob> jobClass = getNoException(() -> job.getJobType());
@@ -103,7 +105,7 @@ public class JobDocumentGenerator extends BaseDocumentGenerator {
     protected <T extends Object> T getNoException(Supplier<T> supplier) {
         try {
             return supplier.get();
-        } catch (Throwable e) {
+        } catch (Throwable t) {
             return null;
         }
     }

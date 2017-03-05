@@ -33,6 +33,8 @@ public class JobDocMeta {
     private String jobUnique;
     /** jobTitle. */
     private String jobTitle;
+    /** jobDescription. */
+    private String jobDescription;
     /** cronExp. */
     private String cronExp;
     /** typeName. */
@@ -85,6 +87,14 @@ public class JobDocMeta {
 
     public void setJobTitle(String jobTitle) {
         this.jobTitle = jobTitle;
+    }
+
+    public String getJobDescription() {
+        return jobDescription;
+    }
+
+    public void setJobDescription(String jobDescription) {
+        this.jobDescription = jobDescription;
     }
 
     public String getCronExp() {
