@@ -55,6 +55,8 @@ public class JobDocMeta {
     private Map<String, Object> params;
     /** noticeLogLevel. */
     private String noticeLogLevel;
+    /** concurrentExec. */
+    private String concurrentExec;
     /** triggeredJobKeyList. */
     private List<String> triggeredJobKeyList;
     /** file line count. */
@@ -175,6 +177,14 @@ public class JobDocMeta {
 
     public void setNoticeLogLevel(String noticeLogLevel) {
         this.noticeLogLevel = noticeLogLevel;
+    }
+
+    public String getConcurrentExec() {
+        return concurrentExec;
+    }
+
+    public void setConcurrentExec(String concurrentExec) {
+        this.concurrentExec = concurrentExec;
     }
 
     public List<String> getTriggeredJobKeyList() {

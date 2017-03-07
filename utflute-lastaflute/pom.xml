@@ -26,7 +26,7 @@
 		<dependency>
 				<groupId>org.lastaflute.job</groupId>
 				<artifactId>lasta-job</artifactId>
-				<version>0.2.8-RC4</version>
+				<version>0.2.8</version>
 				<optional>true</optional>
 		</dependency>
 		<dependency>
