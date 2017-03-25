@@ -45,7 +45,6 @@ import org.dbflute.utflute.mocklet.MockletServletConfigImpl;
 import org.dbflute.utflute.mocklet.MockletServletContext;
 import org.dbflute.utflute.mocklet.MockletServletContextImpl;
 import org.lastaflute.core.direction.FwAssistantDirector;
-import org.lastaflute.core.direction.FwCoreDirection;
 import org.lastaflute.core.json.JsonManager;
 import org.lastaflute.core.magic.ThreadCacheContext;
 import org.lastaflute.core.magic.TransactionTimeContext;
@@ -153,7 +152,6 @@ public abstract class WebContainerTestCase extends ContainerTestCase {
         initializeThreadCacheContext();
         initializeTransactionTime();
         initializePreparedAccessContext();
-        initializeAssistantDirector();
     }
 
     protected void initializeThreadCacheContext() {
@@ -171,10 +169,11 @@ public abstract class WebContainerTestCase extends ContainerTestCase {
         PreparedAccessContext.setAccessContextOnThread(getAccessContext()); // inherit one of test case
     }
 
-    protected void initializeAssistantDirector() {
-        final FwCoreDirection direction = _assistantDirector.assistCoreDirection();
-        direction.assistCurtainBeforeHook().hook(_assistantDirector);
-    }
+    // *unneeded because web mock call curtain-before hook via LastaFilter
+    //protected void initializeAssistantDirector() {
+    //    final FwCoreDirection direction = _assistantDirector.assistCoreDirection();
+    //    direction.assistCurtainBeforeHook().hook(_assistantDirector);
+    //}
 
     // -----------------------------------------------------
     //                                       End Transaction
