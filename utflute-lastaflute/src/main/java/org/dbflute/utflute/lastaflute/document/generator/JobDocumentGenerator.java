@@ -93,7 +93,7 @@ public class JobDocumentGenerator extends BaseDocumentGenerator {
             jobDocMeta.setParams(getNoException(() -> job.getParamsSupplier().map(paramsSupplier -> paramsSupplier.supply()).orElse(null)));
             jobDocMeta.setNoticeLogLevel(getNoException(() -> job.getNoticeLogLevel().name()));
             jobDocMeta.setConcurrentExec(getNoException(() -> job.getConcurrentExec().name()));
-            jobDocMeta.setTriggeredJobKeyList(getNoException(() -> job.getTriggeredJobKeyList().stream()
+            jobDocMeta.setTriggeredJobKeyList(getNoException(() -> job.getTriggeredJobKeySet().stream()
                     .map(triggeredJobKey -> triggeredJobKey.value()).collect(Collectors.toList())));
 
             return jobDocMeta;
