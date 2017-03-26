@@ -13,30 +13,29 @@
  * either express or implied. See the License for the specific language
  * governing permissions and limitations under the License.
  */
-package org.dbflute.utflute.lastaflute.mock;
+package org.dbflute.utflute.core.exception;
 
 /**
- * @param <RESULT> The type of JSON result.
+ * @param <CAUSE> The type of cause exception.
  * @author jflute
+ * @since 1.1.2 (2017/02/11 Saturday)
  */
-public class TestingJsonData<RESULT> {
+public class ExceptionExpectationAfter<CAUSE extends Throwable> {
 
-    protected final RESULT _jsonResult; // not null
+    protected final CAUSE cause; // not null
 
-    public TestingJsonData(RESULT jsonResult) {
-        _jsonResult = jsonResult;
-    }
-
-    @Deprecated
-    public RESULT getJsonBean() { // for compatible
-        return _jsonResult;
+    /**
+     * @param cause The expected cause. (NotNull)
+     */
+    public ExceptionExpectationAfter(CAUSE cause) {
+        this.cause = cause;
     }
 
     /**
-     * Get the result object of JSON.
-     * @return The result object of JSON. (NotNull)
+     * Handle the expected cause to assert.
+     * @param oneArgLambda The callback for handling of expected cause. (NotNull)
      */
-    public RESULT getJsonResult() {
-        return _jsonResult;
+    public void handle(ExceptionExpectationCall<CAUSE> oneArgLambda) {
+        oneArgLambda.callback(cause);
     }
 }

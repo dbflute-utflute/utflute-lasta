@@ -1,5 +1,5 @@
 /*
- * Copyright 2014-2015 the original author or authors.
+ * Copyright 2014-2017 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,6 +15,7 @@
  */
 package org.dbflute.utflute.lastadi;
 
+import javax.annotation.Resource;
 import javax.sql.DataSource;
 
 /**
@@ -27,7 +28,8 @@ public abstract class ContainerTestCase extends LastaDiTestCase {
     //                                                                           Attribute
     //                                                                           =========
     /** The (main) data source for database. (NotNull: after injection) */
-    protected DataSource _xdataSource;
+    @Resource
+    private DataSource _xdataSource;
 
     // ===================================================================================
     //                                                                         JDBC Helper

@@ -1,5 +1,5 @@
 /*
- * Copyright 2014-2015 the original author or authors.
+ * Copyright 2014-2017 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,6 +31,10 @@ public class TestingMailData {
 
     protected final Map<Class<?>, List<TestingPreparedMessage>> _messageMap = new ConcurrentHashMap<>();
 
+    /**
+     * @param postcardType The postcard type of MailFlute. (NotNull)
+     * @return The list of prepared message for testing. (NotNull, NotEmpty)
+     */
     public List<TestingPreparedMessage> required(Class<?> postcardType) {
         final List<TestingPreparedMessage> messageList = _messageMap.get(postcardType);
         if (messageList == null) {

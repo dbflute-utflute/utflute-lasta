@@ -1,5 +1,5 @@
 /*
- * Copyright 2014-2015 the original author or authors.
+ * Copyright 2014-2017 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -53,6 +53,7 @@ import org.dbflute.utflute.core.cannonball.CannonballRun;
 import org.dbflute.utflute.core.cannonball.CannonballStaff;
 import org.dbflute.utflute.core.dbflute.GatheredExecutedSqlHolder;
 import org.dbflute.utflute.core.exception.ExceptionExaminer;
+import org.dbflute.utflute.core.exception.ExceptionExpectationAfter;
 import org.dbflute.utflute.core.filesystem.FileLineHandler;
 import org.dbflute.utflute.core.filesystem.FilesystemPlayer;
 import org.dbflute.utflute.core.markhere.MarkHereManager;
@@ -492,19 +493,26 @@ public abstract class PlainTestCase extends TestCase {
     /**
      * Assert that the callback throws the exception.
      * <pre>
-     * String str = null;
-     * assertException(NullPointerException.class, () <span style="color: #90226C; font-weight: bold"><span style="font-size: 120%">-</span>&gt;</span> str.toString());
+     * String <span style="color: #553000">str</span> = <span style="color: #70226C">null</span>;
+     * <span style="color: #CC4747">assertException</span>(NullPointerException.<span style="color: #70226C">class</span>, () <span style="color: #90226C; font-weight: bold"><span style="font-size: 120%">-</span>&gt;</span> <span style="color: #553000">str</span>.toString());
+     * 
+     * <span style="color: #CC4747">assertException</span>(NullPointerException.<span style="color: #70226C">class</span>, () <span style="color: #90226C; font-weight: bold"><span style="font-size: 120%">-</span>&gt;</span> <span style="color: #553000">str</span>.toString()).<span style="color: #994747">handle</span>(<span style="color: #553000">cause</span> <span style="color: #90226C; font-weight: bold"><span style="font-size: 120%">-</span>&gt;</span> {
+     *     assertContains(<span style="color: #553000">cause</span>.getMessage(), ...);
+     * });
      * </pre>
+     * @param <CAUSE> The type of expected cause exception. 
      * @param exceptionType The expected exception type. (NotNull)
      * @param noArgInLambda The callback for calling methods that should throw the exception. (NotNull)
+     * @return The after object that has handler of expected cause for chain call. (NotNull) 
      */
-    protected void assertException(Class<? extends Throwable> exceptionType, ExceptionExaminer noArgInLambda) {
+    protected <CAUSE extends Throwable> ExceptionExpectationAfter<CAUSE> assertException(Class<CAUSE> exceptionType,
+            ExceptionExaminer noArgInLambda) {
         assertNotNull(exceptionType);
-        boolean noThrow = false;
+        Throwable cause = null;
         try {
             noArgInLambda.examine();
-            noThrow = true;
-        } catch (Throwable cause) {
+        } catch (Throwable e) {
+            cause = e;
             final Class<? extends Throwable> causeClass = cause.getClass();
             final String msg = cause.getMessage();
             final String exp = (msg != null && msg.contains(ln()) ? ln() : "") + msg;
@@ -513,9 +521,12 @@ public abstract class PlainTestCase extends TestCase {
             }
             log("expected: " + exp);
         }
-        if (noThrow) {
+        if (cause == null) {
             fail("expected: " + exceptionType.getSimpleName() + " but: no exception");
         }
+        @SuppressWarnings("unchecked")
+        final CAUSE castCause = (CAUSE) cause;
+        return new ExceptionExpectationAfter<CAUSE>(castCause);
     }
 
     // -----------------------------------------------------

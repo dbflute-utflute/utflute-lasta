@@ -1,5 +1,5 @@
 /*
- * Copyright 2014-2015 the original author or authors.
+ * Copyright 2014-2017 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,11 +13,18 @@
  * either express or implied. See the License for the specific language
  * governing permissions and limitations under the License.
  */
-package org.dbflute.utflute.core.document;
+package org.dbflute.utflute.core.exception;
 
 /**
+ * @param <CAUSE> The type of cause exception.
  * @author jflute
- * @deprecated use org.dbflute.utflute.lastaflute.document.DocumentGenerator
+ * @since 1.1.2 (2017/02/11 Saturday)
  */
-public class DocumentGenerator extends org.dbflute.utflute.lastaflute.document.DocumentGenerator {
+@FunctionalInterface
+public interface ExceptionExpectationCall<CAUSE extends Throwable> {
+
+    /**
+     * @param cause The expected cause. (NotNull)
+     */
+    void callback(CAUSE cause);
 }

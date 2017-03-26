@@ -1,5 +1,5 @@
 /*
- * Copyright 2014-2015 the original author or authors.
+ * Copyright 2014-2017 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -108,22 +108,22 @@ public class TestingPreparedMessage {
     //                                                                  Prepared Assertion
     //                                                                  ==================
     public void assertSubjectContains(String keyword) { // ignoring case
-        final String lowerText = requiredSubject().toLowerCase();
-        assertContainsKeyword("subject", lowerText, keyword);
+        assertTrue("The argument 'keyword' should not be null.", keyword != null);
+        assertContainsKeyword("subject", requiredSubject().toLowerCase(), keyword.toLowerCase());
     }
 
     public void assertPlainTextContains(String keyword) { // ignoring case
-        final String lowerText = requiredPlainText().toLowerCase();
-        assertContainsKeyword("plainText", lowerText, keyword);
+        assertTrue("The argument 'keyword' should not be null.", keyword != null);
+        assertContainsKeyword("plainText", requiredPlainText().toLowerCase(), keyword.toLowerCase());
     }
 
     public void assertHtmlTextContains(String keyword) { // ignoring case
-        final String lowerText = requiredHtmlText().toLowerCase();
-        assertContainsKeyword("htmlText", lowerText, keyword);
+        assertTrue("The argument 'keyword' should not be null.", keyword != null);
+        assertContainsKeyword("htmlText", requiredHtmlText().toLowerCase(), keyword.toLowerCase());
     }
 
-    protected void assertContainsKeyword(String title, String lowerText, String keyword) {
-        final boolean result = lowerText.contains(keyword);
+    protected void assertContainsKeyword(String title, String text, String keyword) {
+        final boolean result = text.contains(keyword);
         if (!result) {
             final ExceptionMessageBuilder br = new ExceptionMessageBuilder();
             br.addNotice("Not found the keyword in the mail message.");
