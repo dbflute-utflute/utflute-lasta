@@ -28,7 +28,6 @@ import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpServletRequest;
 
 import org.dbflute.utflute.lastadi.ContainerTestCase;
-import org.dbflute.utflute.lastaflute.document.DocumentGenerator;
 import org.dbflute.utflute.lastaflute.mail.MailMessageAssertion;
 import org.dbflute.utflute.lastaflute.mail.TestingMailData;
 import org.dbflute.utflute.lastaflute.mock.MockResopnseBeanValidator;
@@ -54,6 +53,7 @@ import org.lastaflute.db.dbflute.accesscontext.PreparedAccessContext;
 import org.lastaflute.di.core.ExternalContext;
 import org.lastaflute.di.core.LaContainer;
 import org.lastaflute.di.core.factory.SingletonLaContainerFactory;
+import org.lastaflute.doc.DocumentGenerator;
 import org.lastaflute.web.LastaFilter;
 import org.lastaflute.web.LastaWebKey;
 import org.lastaflute.web.response.ActionResponse;
@@ -434,7 +434,7 @@ public abstract class WebContainerTestCase extends ContainerTestCase {
      * <pre>
      * <span style="color: #3F7E5E">// ## Act ##</span>
      * HtmlResponse <span style="color: #553000">response</span> = <span style="color: #553000">action</span>.index(<span style="color: #553000">form</span>);
-     * 
+     *
      * <span style="color: #3F7E5E">// ## Assert ##</span>
      * TestingHtmlData <span style="color: #553000">htmlData</span> = <span style="color: #CC4747">validateHtmlData</span>(<span style="color: #553000">response</span>);
      * <span style="color: #553000">htmlData</span>.<span style="color: #994747">requiredList</span>("beans", ProductBean.<span style="color: #70226C">class</span>).forEach(bean <span style="color: #90226C; font-weight: bold"><span style="font-size: 120%">-</span>&gt;</span> {
@@ -453,7 +453,7 @@ public abstract class WebContainerTestCase extends ContainerTestCase {
      * <pre>
      * <span style="color: #3F7E5E">// ## Act ##</span>
      * JsonResponse&lt;ProductRowResult&gt; <span style="color: #553000">response</span> = <span style="color: #553000">action</span>.index(<span style="color: #553000">form</span>);
-     * 
+     *
      * <span style="color: #3F7E5E">// ## Assert ##</span>
      * TestingJsonData&lt;ProductRowResult&gt; <span style="color: #553000">jsonData</span> = <span style="color: #CC4747">validateJsonData</span>(<span style="color: #553000">response</span>);
      * ProductRowResult <span style="color: #553000">result</span> = <span style="color: #553000">jsonData</span>.getJsonResult();
@@ -505,7 +505,7 @@ public abstract class WebContainerTestCase extends ContainerTestCase {
      *        <span style="color: #553000">message</span>.assertPlainTextContains(<span style="color: #553000">form</span>.memberAccount);
      *     });
      * });
-     * 
+     *
      * <span style="color: #3F7E5E">// ## Act ##</span>
      * HtmlResponse <span style="color: #553000">response</span> = <span style="color: #553000">action</span>.signup(<span style="color: #553000">form</span>);
      * ...
@@ -531,7 +531,7 @@ public abstract class WebContainerTestCase extends ContainerTestCase {
      * <pre>
      * <span style="color: #3F7E5E">// ## Act ##</span>
      * HtmlResponse <span style="color: #553000">response</span> = <span style="color: #553000">action</span>.index(<span style="color: #553000">memberId</span>); <span style="color: #3F7E5E">// calls saveToken()</span>
-     * 
+     *
      * <span style="color: #3F7E5E">// ## Assert ##</span>
      * <span style="color: #CC4747">assertTokenSaved</span>(<span style="color: #553000">action</span>.getClass());
      * </pre>
@@ -551,10 +551,10 @@ public abstract class WebContainerTestCase extends ContainerTestCase {
      * inject(<span style="color: #553000">action</span>);
      * <span style="color: #CC4747">mockTokenRequested</span>(<span style="color: #553000">action</span>.getClass());
      * ...
-     * 
+     *
      * <span style="color: #3F7E5E">// ## Act ##</span>
      * HtmlResponse <span style="color: #553000">response</span> = <span style="color: #553000">action</span>.update(<span style="color: #553000">form</span>); <span style="color: #3F7E5E">// calls verifyToken()</span>
-     * 
+     *
      * <span style="color: #3F7E5E">// ## Assert ##</span>
      * <span style="color: #994747">assertTokenVerified()</span>;
      * </pre>
@@ -573,7 +573,7 @@ public abstract class WebContainerTestCase extends ContainerTestCase {
      * inject(<span style="color: #553000">action</span>);
      * <span style="color: #CC4747">mockTokenRequestedAsDoubleSubmit</span>(<span style="color: #553000">action</span>.getClass());
      * ...
-     * 
+     *
      * <span style="color: #3F7E5E">// ## Act ##</span>
      * <span style="color: #3F7E5E">// ## Assert ##</span>
      * assertException(<span style="color: #994747">DoubleSubmittedRequestException</span>.<span style="color: #70226C">class</span>, () <span style="color: #90226C; font-weight: bold"><span style="font-size: 120%">-</span>&gt;</span> <span style="color: #553000">action</span>.update(<span style="color: #553000">form</span>));
@@ -596,10 +596,10 @@ public abstract class WebContainerTestCase extends ContainerTestCase {
      * inject(<span style="color: #553000">action</span>);
      * <span style="color: #994747">mockTokenRequested</span>(<span style="color: #553000">action</span>.getClass());
      * ...
-     * 
+     *
      * <span style="color: #3F7E5E">// ## Act ##</span>
      * HtmlResponse <span style="color: #553000">response</span> = <span style="color: #553000">action</span>.update(<span style="color: #553000">form</span>); <span style="color: #3F7E5E">// calls verityToken()</span>
-     * 
+     *
      * <span style="color: #3F7E5E">// ## Assert ##</span>
      * <span style="color: #CC4747">assertTokenVerified()</span>;
      * </pre>
