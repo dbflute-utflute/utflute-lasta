@@ -21,7 +21,7 @@
 		<dependency>
 			<groupId>org.lastaflute</groupId>
 			<artifactId>lastaflute</artifactId>
-			<version>0.9.2-RC1</version>
+			<version>0.9.2</version>
 		</dependency>
 		<dependency>
 			<groupId>org.lastaflute.job</groupId>
