@@ -15,6 +15,7 @@
  */
 package org.dbflute.utflute.lastaflute;
 
+import java.lang.reflect.Method;
 import java.util.Date;
 import java.util.Enumeration;
 import java.util.function.Consumer;
@@ -108,6 +109,14 @@ public abstract class WebContainerTestCase extends ContainerTestCase {
     // ===================================================================================
     //                                                                            Settings
     //                                                                            ========
+    @Override
+    public void setUp() throws Exception {
+        if (isSuppressJobScheduling()) {
+            xsuppressJobScheduling();
+        }
+        super.setUp();
+    }
+
     @Override
     protected void postTest() {
         super.postTest();
@@ -661,6 +670,26 @@ public abstract class WebContainerTestCase extends ContainerTestCase {
      */
     protected DocumentGenerator createDocumentGenerator() {
         return new DocumentGenerator();
+    }
+
+    // ===================================================================================
+    //                                                                            LastaJob
+    //                                                                            ========
+    protected boolean isSuppressJobScheduling() { // you can override, for e.g. heavy scheduling (using e.g. DB)
+        return false; // you can set true only when including LastaJob
+    }
+
+    protected void xsuppressJobScheduling() {
+        try {
+            // reflection on parade not to depends on LastaJob library
+            final Class<?> jobManagerType = Class.forName("org.lastaflute.job.SimpleJobManager");
+            final Method unlockMethod = jobManagerType.getMethod("unlock", (Class[]) null);
+            unlockMethod.invoke(null, (Object[]) null);
+            final Method shootMethod = jobManagerType.getMethod("shootBowgunEmptyScheduling", (Class[]) null);
+            shootMethod.invoke(null, (Object[]) null);
+        } catch (Exception continued) {
+            log("*Failed to suppress job scheduling", continued);
+        }
     }
 
     // ===================================================================================
