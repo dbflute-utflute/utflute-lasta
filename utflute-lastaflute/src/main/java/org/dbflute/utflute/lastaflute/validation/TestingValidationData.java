@@ -93,6 +93,7 @@ public class TestingValidationData {
     //                                                                          ==========
     /**
      * Hook validation error returning action response.
+     * @param <RESPONSE> The type of action response.
      * @return The action response for validation error. (NotNull)
      */
     @SuppressWarnings("unchecked")
@@ -104,7 +105,7 @@ public class TestingValidationData {
     //                                                                        Assist Logic
     //                                                                        ============
     protected String toDefinedMessageKey(Class<?> annotationType) {
-        return "constraints." + annotationType.getSimpleName() + "message";
+        return "constraints." + annotationType.getSimpleName() + ".message";
     }
 
     /**

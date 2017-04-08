@@ -539,6 +539,7 @@ public abstract class PlainTestCase extends TestCase {
      *     orderBy.desc(mb -&gt; mb.getBirthdate()).asc(mb -&gt; mb.getMemberId());
      * });
      * </pre>
+     * @param <BEAN> The type of element of ordered list.
      * @param beanList The list of bean. (NotNull)
      * @param oneArgLambda The callback for order specification. (NotNull)
      */
