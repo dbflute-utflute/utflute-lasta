@@ -17,6 +17,7 @@ package org.dbflute.utflute.lastaflute.validation;
 
 import java.lang.annotation.Annotation;
 import java.util.Iterator;
+import java.util.Map;
 import java.util.Set;
 
 import org.dbflute.helper.message.ExceptionMessageBuilder;
@@ -139,6 +140,27 @@ public class TestingValidationData {
                 br.addElement("  " + userMessage);
             }
         }
+    }
+
+    // ===================================================================================
+    //                                                                   Success Attribute
+    //                                                                   =================
+    /**
+     * Assert the success attribute for the key is required.
+     * @param key The key of attribute. (NotNull)
+     * @return The found attribute by the key. (NotNull: if not found, assertion failure)
+     */
+    public Object requiredSuccessAttribute(String key) {
+        final Map<String, Object> successAttributeMap = _cause.getMessages().getSuccessAttributeMap();
+        final Object attr = successAttributeMap.get(key);
+        if (attr == null) {
+            Assert.fail(buildSuccessAttributeFailureMessage(successAttributeMap, key));
+        }
+        return attr;
+    }
+
+    protected String buildSuccessAttributeFailureMessage(Map<String, Object> successAttributeMap, String key) {
+        return "Not found the success attribute: key=" + key + ", existing=" + successAttributeMap.keySet();
     }
 
     // ===================================================================================
