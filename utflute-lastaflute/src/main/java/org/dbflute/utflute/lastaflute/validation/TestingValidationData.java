@@ -113,7 +113,7 @@ public class TestingValidationData {
         br.addItem("Property");
         br.addElement(property);
         br.addItem("Validator Annotation");
-        br.addElement(annotationType);
+        br.addElement(annotationType.getName());
         br.addItem("UserMessages");
         setupUserMessagesDisplay(messages, br);
         return br.buildExceptionMessage();
@@ -141,6 +141,21 @@ public class TestingValidationData {
                 br.addElement("  " + userMessage);
             }
         }
+    }
+
+    /**
+     * Assert the messages is required (not empty).
+     * <pre>
+     * DocksideMessages messages = data.requiredMessages();
+     * </pre>
+     * @param <MESSAGES> The type of messages.
+     * @return The user messages for validation error. (NotNull)
+     */
+    @SuppressWarnings("unchecked")
+    public <MESSAGES extends UserMessages> MESSAGES requiredMessages() {
+        final UserMessages messages = _cause.getMessages();
+        Assert.assertFalse("No messages for validation error: " + _cause, messages.isEmpty());
+        return (MESSAGES) messages;
     }
 
     // ===================================================================================
@@ -200,6 +215,14 @@ public class TestingValidationData {
     //                                                                        ============
     protected String toDefinedMessageKey(Class<?> annotationType) {
         return "constraints." + annotationType.getSimpleName() + ".message";
+    }
+
+    // ===================================================================================
+    //                                                                      Basic Override
+    //                                                                      ==============
+    @Override
+    public String toString() {
+        return "{" + _cause + "}";
     }
 
     // ===================================================================================
