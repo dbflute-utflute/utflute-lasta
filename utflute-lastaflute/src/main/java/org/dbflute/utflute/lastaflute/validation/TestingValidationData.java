@@ -29,6 +29,7 @@ import org.lastaflute.core.message.UserMessages;
 import org.lastaflute.web.response.ActionResponse;
 import org.lastaflute.web.servlet.request.RequestManager;
 import org.lastaflute.web.validation.exception.ValidationErrorException;
+import org.lastaflute.web.validation.exception.ValidationSuccessAttributeCannotCastException;
 
 /**
  * @author jflute
@@ -147,16 +148,34 @@ public class TestingValidationData {
     //                                                                   =================
     /**
      * Assert the success attribute for the key is required.
+     * @param <ATTRIBUTE> The type of attribute.
      * @param key The key of attribute. (NotNull)
+     * @param attributeType The generic type of attribute to cast. (NotNull)
      * @return The found attribute by the key. (NotNull: if not found, assertion failure)
      */
-    public Object requiredSuccessAttribute(String key) {
+    public <ATTRIBUTE> ATTRIBUTE requiredSuccessAttribute(String key, Class<ATTRIBUTE> attributeType) {
         final Map<String, Object> successAttributeMap = _cause.getMessages().getSuccessAttributeMap();
-        final Object attr = successAttributeMap.get(key);
-        if (attr == null) {
+        final Object original = successAttributeMap.get(key);
+        if (original == null) {
             Assert.fail(buildSuccessAttributeFailureMessage(successAttributeMap, key));
         }
-        return attr;
+        try {
+            return attributeType.cast(original);
+        } catch (ClassCastException e) { // similar to ValidationSuccess
+            final ExceptionMessageBuilder br = new ExceptionMessageBuilder();
+            br.addNotice("Cannot cast the validation success attribute");
+            br.addItem("Attribute Key");
+            br.addElement(key);
+            br.addItem("Specified Type");
+            br.addElement(attributeType);
+            br.addItem("Existing Attribute");
+            br.addElement(original.getClass());
+            br.addElement(original);
+            br.addItem("Attribute Map");
+            br.addElement(successAttributeMap);
+            final String msg = br.buildExceptionMessage();
+            throw new ValidationSuccessAttributeCannotCastException(msg);
+        }
     }
 
     protected String buildSuccessAttributeFailureMessage(Map<String, Object> successAttributeMap, String key) {
