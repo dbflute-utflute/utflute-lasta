@@ -508,25 +508,51 @@ public abstract class PlainTestCase extends TestCase {
     protected <CAUSE extends Throwable> ExceptionExpectationAfter<CAUSE> assertException(Class<CAUSE> exceptionType,
             ExceptionExaminer noArgInLambda) {
         assertNotNull(exceptionType);
+        final String expected = exceptionType.getSimpleName();
         Throwable cause = null;
         try {
             noArgInLambda.examine();
         } catch (Throwable e) {
             cause = e;
             final Class<? extends Throwable> causeClass = cause.getClass();
-            final String msg = cause.getMessage();
-            final String exp = (msg != null && msg.contains(ln()) ? ln() : "") + msg;
+            final String exp = buildExceptionSimpleExp(cause);
             if (!exceptionType.isAssignableFrom(causeClass)) {
-                fail("expected: " + exceptionType.getSimpleName() + " but: " + causeClass.getSimpleName() + " => " + exp);
+                final String actual = causeClass.getSimpleName();
+                log("*Different exception, expected: {} but...", exceptionType.getName(), cause);
+                fail("*Different exception, expected: " + expected + " but: " + actual + " => " + exp);
+            } else {
+                log("expected: " + exp);
             }
-            log("expected: " + exp);
         }
         if (cause == null) {
-            fail("expected: " + exceptionType.getSimpleName() + " but: no exception");
+            fail("*No exception, expected: " + expected);
         }
         @SuppressWarnings("unchecked")
         final CAUSE castCause = (CAUSE) cause;
         return new ExceptionExpectationAfter<CAUSE>(castCause);
+    }
+
+    private String buildExceptionSimpleExp(Throwable cause) {
+        final StringBuilder sb = new StringBuilder();
+        final String firstMsg = cause.getMessage();
+        boolean line = firstMsg != null && firstMsg.contains(ln());
+        sb.append("(").append(cause.getClass().getSimpleName()).append(")").append(firstMsg);
+        final Throwable secondCause = cause.getCause();
+        if (secondCause != null) {
+            final String secondMsg = secondCause.getMessage();
+            line = line || secondMsg != null && secondMsg.contains(ln());
+            sb.append(line ? ln() : " / ");
+            sb.append("(").append(secondCause.getClass().getSimpleName()).append(")").append(secondMsg);
+            final Throwable thirdCause = secondCause.getCause();
+            if (thirdCause != null) {
+                final String thirdMsg = thirdCause.getMessage();
+                line = line || thirdMsg != null && thirdMsg.contains(ln());
+                sb.append(line ? ln() : " / ");
+                sb.append("(").append(thirdCause.getClass().getSimpleName()).append(")").append(thirdMsg);
+            }
+        }
+        final String whole = sb.toString();
+        return (whole.contains(ln()) ? ln() : "") + whole;
     }
 
     // -----------------------------------------------------
