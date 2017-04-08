@@ -58,10 +58,10 @@ public class TestingValidationData {
      * @param annotationType The type of validator annotation to get message. (NotNull)
      */
     public void requiredMessageOf(String property, Class<? extends Annotation> annotationType) {
-        if (property != null) {
+        if (property == null) {
             throw new IllegalArgumentException("The argument 'property' should not be null.");
         }
-        if (annotationType != null) {
+        if (annotationType == null) {
             throw new IllegalArgumentException("The argument 'annotationType' should not be null.");
         }
         final String messageKey = toDefinedMessageKey(annotationType);
@@ -78,10 +78,10 @@ public class TestingValidationData {
      * @param messageKey The key of message as validation error. (NotNull)
      */
     public void requiredMessageOf(String property, String messageKey) {
-        if (property != null) {
+        if (property == null) {
             throw new IllegalArgumentException("The argument 'property' should not be null.");
         }
-        if (messageKey != null) {
+        if (messageKey == null) {
             throw new IllegalArgumentException("The argument 'messageKey' should not be null.");
         }
         final UserMessages messages = _cause.getMessages();
@@ -91,8 +91,12 @@ public class TestingValidationData {
     // ===================================================================================
     //                                                                          Error Hook
     //                                                                          ==========
+    /**
+     * Hook validation error returning action response.
+     * @return The action response for validation error. (NotNull)
+     */
     @SuppressWarnings("unchecked")
-    protected <RESPONSE extends ActionResponse> RESPONSE hookError() {
+    public <RESPONSE extends ActionResponse> RESPONSE hookError() { // basically for HTML response
         return (RESPONSE) _cause.getErrorHook().hook();
     }
 
