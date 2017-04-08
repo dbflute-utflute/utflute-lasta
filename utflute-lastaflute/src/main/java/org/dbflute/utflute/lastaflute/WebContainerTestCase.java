@@ -54,7 +54,6 @@ import org.lastaflute.core.magic.ThreadCacheContext;
 import org.lastaflute.core.magic.TransactionTimeContext;
 import org.lastaflute.core.magic.destructive.BowgunDestructiveAdjuster;
 import org.lastaflute.core.message.MessageManager;
-import org.lastaflute.core.message.UserMessages;
 import org.lastaflute.core.time.TimeManager;
 import org.lastaflute.db.dbflute.accesscontext.PreparedAccessContext;
 import org.lastaflute.di.core.ExternalContext;
@@ -523,28 +522,11 @@ public abstract class WebContainerTestCase extends ContainerTestCase {
      * @param <RESPONSE> The type of action response, e.g. HtmlResponse, JsonResponse.
      * @param cause The exception of validation error. (NotNull)
      * @return The action response from validation error hook.
+     * @deprecated use assertValidationError()
      */
     @SuppressWarnings("unchecked")
     protected <RESPONSE extends ActionResponse> RESPONSE hookValidationError(ValidationErrorException cause) {
         return (RESPONSE) cause.getErrorHook().hook();
-    }
-
-    /**
-     * Do the messages have the property and the message key?
-     * <pre>
-     * assertTrue(<span style="color: #CC4747">hasMessageOf</span>(<span style="color: #553000">messages</span>, "account", HangarMessages.CONSTRAINTS_Required_MESSAGE));
-     * </pre>
-     * @param messages The messages for user as e.g. validation errors. (NotNull)
-     * @param property the name of property, which may have user messages. (NotNull)
-     * @param messageKey The message key defined in your [app]_message.properties. (NotNull)
-     * @return The determination, true or false.
-     */
-    protected boolean hasMessageOf(UserMessages messages, String property, String messageKey) {
-        if (messages.hasMessageOf(property, messageKey)) {
-            return true;
-        }
-        String message = _messageManager.getMessage(_requestManager.getUserLocale(), messageKey);
-        return messages.hasMessageOf(property, message);
     }
 
     // ===================================================================================

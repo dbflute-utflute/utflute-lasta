@@ -16,9 +16,14 @@
 package org.dbflute.utflute.lastaflute.validation;
 
 import java.lang.annotation.Annotation;
+import java.util.Iterator;
+import java.util.Set;
 
+import org.dbflute.helper.message.ExceptionMessageBuilder;
+import org.dbflute.optional.OptionalThing;
 import org.junit.Assert;
 import org.lastaflute.core.message.MessageManager;
+import org.lastaflute.core.message.UserMessage;
 import org.lastaflute.core.message.UserMessages;
 import org.lastaflute.web.response.ActionResponse;
 import org.lastaflute.web.servlet.request.RequestManager;
@@ -64,9 +69,19 @@ public class TestingValidationData {
         if (annotationType == null) {
             throw new IllegalArgumentException("The argument 'annotationType' should not be null.");
         }
-        final String messageKey = toDefinedMessageKey(annotationType);
         final UserMessages messages = _cause.getMessages();
-        Assert.assertTrue("No validation error for the message: " + annotationType, hasMessageOf(messages, property, messageKey));
+        final Iterator<UserMessage> ite = messages.silentAccessByIteratorOf(property);
+        while (ite.hasNext()) {
+            final UserMessage message = ite.next();
+            final OptionalThing<Annotation> optAnno = message.getValidatorAnnotation();
+            if (optAnno.isPresent()) {
+                final Annotation anno = optAnno.get();
+                if (annotationType.isAssignableFrom(anno.annotationType())) { // found
+                    return; // OK
+                }
+            }
+        }
+        Assert.fail(buildNoValidationErrorMessage(messages, property, annotationType));
     }
 
     /**
@@ -75,7 +90,7 @@ public class TestingValidationData {
      * data.requiredMessageOf("sea", DocksideMessages.ERRORS_...);
      * </pre>
      * @param property the name of property, which may have user messages. (NotNull)
-     * @param messageKey The key of message as validation error. (NotNull)
+     * @param messageKey The key of message as validation error, can be found by message manager. (NotNull)
      */
     public void requiredMessageOf(String property, String messageKey) {
         if (property == null) {
@@ -85,14 +100,52 @@ public class TestingValidationData {
             throw new IllegalArgumentException("The argument 'messageKey' should not be null.");
         }
         final UserMessages messages = _cause.getMessages();
-        Assert.assertTrue("No validation error for the message: " + messageKey, hasMessageOf(messages, property, messageKey));
+        if (!messages.hasMessageOf(property, messageKey)) { // can determine annotation message since lastaflute-0.9.4
+            Assert.fail(buildNoValidationErrorMessage(messages, property, messageKey));
+        }
+    }
+
+    protected String buildNoValidationErrorMessage(UserMessages messages, String property, Class<? extends Annotation> annotationType) {
+        final ExceptionMessageBuilder br = new ExceptionMessageBuilder();
+        br.addNotice("No validation error for the validator annotation.");
+        br.addItem("Property");
+        br.addElement(property);
+        br.addItem("Validator Annotation");
+        br.addElement(annotationType);
+        br.addItem("UserMessages");
+        setupUserMessagesDisplay(messages, br);
+        return br.buildExceptionMessage();
+    }
+
+    protected String buildNoValidationErrorMessage(UserMessages messages, String property, String messageKey) {
+        final ExceptionMessageBuilder br = new ExceptionMessageBuilder();
+        br.addNotice("No validation error for the message key.");
+        br.addItem("Property");
+        br.addElement(property);
+        br.addItem("Message Key");
+        br.addElement(messageKey);
+        br.addItem("UserMessages");
+        setupUserMessagesDisplay(messages, br);
+        return br.buildExceptionMessage();
+    }
+
+    protected void setupUserMessagesDisplay(UserMessages messages, final ExceptionMessageBuilder br) {
+        final Set<String> propertySet = messages.toPropertySet();
+        for (String current : propertySet) {
+            br.addElement(current);
+            final Iterator<UserMessage> ite = messages.silentAccessByIteratorOf(current);
+            while (ite.hasNext()) {
+                final UserMessage userMessage = ite.next();
+                br.addElement("  " + userMessage);
+            }
+        }
     }
 
     // ===================================================================================
     //                                                                          Error Hook
     //                                                                          ==========
     /**
-     * Hook validation error returning action response.
+     * Evaluate validation error hook for action response.
      * @param <RESPONSE> The type of action response.
      * @return The action response for validation error. (NotNull)
      */
@@ -106,24 +159,6 @@ public class TestingValidationData {
     //                                                                        ============
     protected String toDefinedMessageKey(Class<?> annotationType) {
         return "constraints." + annotationType.getSimpleName() + ".message";
-    }
-
-    /**
-     * Do the messages have the property and the message key?
-     * <pre>
-     * assertTrue(<span style="color: #CC4747">hasMessageOf</span>(<span style="color: #553000">messages</span>, "account", DocksideMessages.CONSTRAINTS_Required_MESSAGE));
-     * </pre>
-     * @param messages The messages for user as e.g. validation errors. (NotNull)
-     * @param property the name of property, which may have user messages. (NotNull)
-     * @param messageKey The message key defined in your [app]_message.properties. (NotNull)
-     * @return The determination, true or false.
-     */
-    protected boolean hasMessageOf(UserMessages messages, String property, String messageKey) {
-        if (messages.hasMessageOf(property, messageKey)) {
-            return true;
-        }
-        String message = _messageManager.getMessage(_requestManager.getUserLocale(), messageKey);
-        return messages.hasMessageOf(property, message);
     }
 
     // ===================================================================================
