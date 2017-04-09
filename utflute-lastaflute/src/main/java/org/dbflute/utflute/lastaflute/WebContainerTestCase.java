@@ -83,6 +83,9 @@ public abstract class WebContainerTestCase extends ContainerTestCase {
     /** The cached configuration of servlet. (NullAllowed: when no web mock or beginning or ending) */
     private static MockletServletConfig _xcachedServletConfig;
 
+    protected static Boolean _existsLastaJob; // lazy-loaded for performance
+    protected static boolean _jobSchedulingSuppressed;
+
     // -----------------------------------------------------
     //                                              Web Mock
     //                                              --------
@@ -118,10 +121,11 @@ public abstract class WebContainerTestCase extends ContainerTestCase {
     //                                                                            ========
     @Override
     public void setUp() throws Exception {
-        if (isSuppressJobScheduling()) {
-            xsuppressJobScheduling();
-        }
+        xsuppressJobSchedulingIfNeeds();
         super.setUp();
+        if (isUseJobScheduling()) {
+            xrebootJobSchedulingIfNeeds();
+        }
     }
 
     @Override
@@ -136,6 +140,7 @@ public abstract class WebContainerTestCase extends ContainerTestCase {
             BowgunDestructiveAdjuster.unlock();
             BowgunDestructiveAdjuster.restoreBowgunAll();
         }
+        xdestroyJobSchedulingIfNeeds(); // always destroy if scheduled to avoid job trouble
         super.tearDown();
     }
 
@@ -709,11 +714,14 @@ public abstract class WebContainerTestCase extends ContainerTestCase {
     // ===================================================================================
     //                                                                            LastaJob
     //                                                                            ========
-    protected boolean isSuppressJobScheduling() { // you can override, for e.g. heavy scheduling (using e.g. DB)
-        return false; // you can set true only when including LastaJob
-    }
-
-    protected void xsuppressJobScheduling() {
+    protected void xsuppressJobSchedulingIfNeeds() {
+        if (!xexistsLastaJob()) {
+            return;
+        }
+        if (_jobSchedulingSuppressed) { // to avoid duplicate calls when batch execution of unit test
+            return;
+        }
+        _jobSchedulingSuppressed = true;
         try {
             // reflection on parade not to depends on LastaJob library
             final Class<?> jobManagerType = Class.forName("org.lastaflute.job.SimpleJobManager");
@@ -724,6 +732,69 @@ public abstract class WebContainerTestCase extends ContainerTestCase {
         } catch (Exception continued) {
             log("*Failed to suppress job scheduling", continued);
         }
+    }
+
+    protected boolean isUseJobScheduling() { // you can override, for e.g. heavy scheduling (using e.g. DB)
+        return false; // you can set true only when including LastaJob
+    }
+
+    protected void xrebootJobSchedulingIfNeeds() {
+        if (!xexistsLastaJob()) {
+            return;
+        }
+        try {
+            // reflection on parade not to depends on LastaJob library
+            final Class<?> jobManagerType = xforNameJobManager();
+            final Object jobManager = getComponent(jobManagerType);
+            if (!xisJobSchedulingDone(jobManagerType, jobManager)) {
+                xcallNoArgInstanceJobMethod(jobManagerType, jobManager, "reboot");
+            }
+        } catch (Exception continued) {
+            log("*Failed to reboot job scheduling", continued);
+        }
+    }
+
+    protected void xdestroyJobSchedulingIfNeeds() {
+        if (!xexistsLastaJob()) {
+            return;
+        }
+        try {
+            // reflection on parade not to depends on LastaJob library
+            final Class<?> jobManagerType = xforNameJobManager();
+            final Object jobManager = getComponent(jobManagerType);
+            if (xisJobSchedulingDone(jobManagerType, jobManager)) {
+                xcallNoArgInstanceJobMethod(jobManagerType, jobManager, "destroy");
+            }
+        } catch (Exception continued) {
+            log("*Failed to reboot job scheduling", continued);
+        }
+    }
+
+    protected static Class<?> xforNameJobManager() throws ClassNotFoundException {
+        return Class.forName("org.lastaflute.job.JobManager");
+    }
+
+    protected boolean xisJobSchedulingDone(Class<?> jobManagerType, Object jobManager) throws ReflectiveOperationException {
+        return (boolean) xcallNoArgInstanceJobMethod(jobManagerType, jobManager, "isSchedulingDone");
+    }
+
+    private Object xcallNoArgInstanceJobMethod(Class<?> jobManagerType, Object jobManager, String methodName)
+            throws ReflectiveOperationException {
+        final Method rebootMethod = jobManagerType.getMethod(methodName, (Class[]) null);
+        return rebootMethod.invoke(jobManager, (Object[]) null);
+    }
+
+    protected static boolean xexistsLastaJob() {
+        if (_existsLastaJob != null) {
+            return _existsLastaJob;
+        }
+        try {
+            xforNameJobManager();
+            _existsLastaJob = true;
+        } catch (ClassNotFoundException e) {
+            _existsLastaJob = false;
+        }
+        return _existsLastaJob;
     }
 
     // ===================================================================================
