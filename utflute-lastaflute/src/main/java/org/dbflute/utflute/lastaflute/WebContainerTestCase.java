@@ -83,8 +83,8 @@ public abstract class WebContainerTestCase extends ContainerTestCase {
     /** The cached configuration of servlet. (NullAllowed: when no web mock or beginning or ending) */
     private static MockletServletConfig _xcachedServletConfig;
 
-    protected static Boolean _existsLastaJob; // lazy-loaded for performance
-    protected static boolean _jobSchedulingSuppressed;
+    protected static Boolean _xexistsLastaJob; // lazy-loaded for performance
+    protected static boolean _xjobSchedulingSuppressed;
 
     // -----------------------------------------------------
     //                                              Web Mock
@@ -718,10 +718,10 @@ public abstract class WebContainerTestCase extends ContainerTestCase {
         if (!xexistsLastaJob()) {
             return;
         }
-        if (_jobSchedulingSuppressed) { // to avoid duplicate calls when batch execution of unit test
+        if (_xjobSchedulingSuppressed) { // to avoid duplicate calls when batch execution of unit test
             return;
         }
-        _jobSchedulingSuppressed = true;
+        _xjobSchedulingSuppressed = true;
         try {
             // reflection on parade not to depends on LastaJob library
             final Class<?> jobManagerType = Class.forName("org.lastaflute.job.SimpleJobManager");
@@ -784,17 +784,17 @@ public abstract class WebContainerTestCase extends ContainerTestCase {
         return rebootMethod.invoke(jobManager, (Object[]) null);
     }
 
-    protected static boolean xexistsLastaJob() {
-        if (_existsLastaJob != null) {
-            return _existsLastaJob;
+    protected boolean xexistsLastaJob() {
+        if (_xexistsLastaJob != null) {
+            return _xexistsLastaJob;
         }
         try {
-            xforNameJobManager();
-            _existsLastaJob = true;
+            final Class<?> jobManagerType = xforNameJobManager();
+            _xexistsLastaJob = hasComponent(jobManagerType);
         } catch (ClassNotFoundException e) {
-            _existsLastaJob = false;
+            _xexistsLastaJob = false;
         }
-        return _existsLastaJob;
+        return _xexistsLastaJob;
     }
 
     // ===================================================================================
