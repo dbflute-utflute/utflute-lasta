@@ -738,7 +738,7 @@ public abstract class WebContainerTestCase extends ContainerTestCase {
         return false; // you can set true only when including LastaJob
     }
 
-    protected void xrebootJobSchedulingIfNeeds() {
+    protected void xrebootJobSchedulingIfNeeds() { // called when isUseJobScheduling()
         if (!xexistsLastaJob()) {
             return;
         }
@@ -754,19 +754,21 @@ public abstract class WebContainerTestCase extends ContainerTestCase {
         }
     }
 
-    protected void xdestroyJobSchedulingIfNeeds() {
+    protected void xdestroyJobSchedulingIfNeeds() { // always called from tearDown()
         if (!xexistsLastaJob()) {
             return;
         }
         try {
             // reflection on parade not to depends on LastaJob library
             final Class<?> jobManagerType = xforNameJobManager();
-            final Object jobManager = getComponent(jobManagerType);
-            if (xisJobSchedulingDone(jobManagerType, jobManager)) {
-                xcallNoArgInstanceJobMethod(jobManagerType, jobManager, "destroy");
+            if (hasComponent(jobManagerType)) { // e.g. in classpath and include lasta_job.xml
+                final Object jobManager = getComponent(jobManagerType);
+                if (xisJobSchedulingDone(jobManagerType, jobManager)) {
+                    xcallNoArgInstanceJobMethod(jobManagerType, jobManager, "destroy");
+                }
             }
         } catch (Exception continued) {
-            log("*Failed to reboot job scheduling", continued);
+            log("*Failed to destroy job scheduling", continued);
         }
     }
 
@@ -789,8 +791,10 @@ public abstract class WebContainerTestCase extends ContainerTestCase {
             return _xexistsLastaJob;
         }
         try {
-            final Class<?> jobManagerType = xforNameJobManager();
-            _xexistsLastaJob = hasComponent(jobManagerType);
+            xforNameJobManager();
+            _xexistsLastaJob = true;
+            // this method is called outside container so cannot determine it
+            //_xexistsLastaJob = hasComponent(jobManagerType);
         } catch (ClassNotFoundException e) {
             _xexistsLastaJob = false;
         }
