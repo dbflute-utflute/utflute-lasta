@@ -18,6 +18,8 @@ package org.dbflute.utflute.lastaflute;
 import java.lang.reflect.Method;
 import java.util.Date;
 import java.util.Enumeration;
+import java.util.HashSet;
+import java.util.Set;
 import java.util.function.Consumer;
 
 import javax.annotation.Resource;
@@ -28,6 +30,7 @@ import javax.servlet.ServletException;
 import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpServletRequest;
 
+import org.dbflute.helper.function.IndependentProcessor;
 import org.dbflute.utflute.lastadi.ContainerTestCase;
 import org.dbflute.utflute.lastaflute.mail.MailMessageAssertion;
 import org.dbflute.utflute.lastaflute.mail.TestingMailData;
@@ -35,6 +38,7 @@ import org.dbflute.utflute.lastaflute.mock.MockResopnseBeanValidator;
 import org.dbflute.utflute.lastaflute.mock.MockRuntimeFactory;
 import org.dbflute.utflute.lastaflute.mock.TestingHtmlData;
 import org.dbflute.utflute.lastaflute.mock.TestingJsonData;
+import org.dbflute.utflute.lastaflute.validation.TestingValidationErrorAfter;
 import org.dbflute.utflute.mocklet.MockletHttpServletRequest;
 import org.dbflute.utflute.mocklet.MockletHttpServletRequestImpl;
 import org.dbflute.utflute.mocklet.MockletHttpServletResponse;
@@ -49,6 +53,7 @@ import org.lastaflute.core.json.JsonManager;
 import org.lastaflute.core.magic.ThreadCacheContext;
 import org.lastaflute.core.magic.TransactionTimeContext;
 import org.lastaflute.core.magic.destructive.BowgunDestructiveAdjuster;
+import org.lastaflute.core.message.MessageManager;
 import org.lastaflute.core.time.TimeManager;
 import org.lastaflute.db.dbflute.accesscontext.PreparedAccessContext;
 import org.lastaflute.di.core.ExternalContext;
@@ -78,6 +83,9 @@ public abstract class WebContainerTestCase extends ContainerTestCase {
     /** The cached configuration of servlet. (NullAllowed: when no web mock or beginning or ending) */
     private static MockletServletConfig _xcachedServletConfig;
 
+    protected static Boolean _xexistsLastaJob; // lazy-loaded for performance
+    protected static boolean _xjobSchedulingSuppressed;
+
     // -----------------------------------------------------
     //                                              Web Mock
     //                                              --------
@@ -98,6 +106,8 @@ public abstract class WebContainerTestCase extends ContainerTestCase {
     @Resource
     private FwAssistantDirector _assistantDirector;
     @Resource
+    private MessageManager _messageManager;
+    @Resource
     private TimeManager _timeManager;
     @Resource
     private JsonManager _jsonManager;
@@ -111,10 +121,11 @@ public abstract class WebContainerTestCase extends ContainerTestCase {
     //                                                                            ========
     @Override
     public void setUp() throws Exception {
-        if (isSuppressJobScheduling()) {
-            xsuppressJobScheduling();
-        }
+        xsuppressJobSchedulingIfNeeds();
         super.setUp();
+        if (isUseJobScheduling()) {
+            xrebootJobSchedulingIfNeeds();
+        }
     }
 
     @Override
@@ -129,6 +140,7 @@ public abstract class WebContainerTestCase extends ContainerTestCase {
             BowgunDestructiveAdjuster.unlock();
             BowgunDestructiveAdjuster.restoreBowgunAll();
         }
+        xdestroyJobSchedulingIfNeeds(); // always destroy if scheduled to avoid job trouble
         super.tearDown();
     }
 
@@ -476,6 +488,32 @@ public abstract class WebContainerTestCase extends ContainerTestCase {
         return new MockResopnseBeanValidator(_requestManager).validateJsonData(response);
     }
 
+    // ===================================================================================
+    //                                                                    Validation Error
+    //                                                                    ================
+    /**
+     * Assert validation error of action.
+     * <pre>
+     * <span style="color: #3F7E5E">// ## Arrange ##</span>
+     * SignupAction <span style="color: #553000">action</span> = <span style="color: #70226C">new</span> SignupAction();
+     * inject(<span style="color: #553000">action</span>);
+     * SignupForm <span style="color: #553000">form</span> = <span style="color: #70226C">new</span> SignupForm();
+    
+     * <span style="color: #3F7E5E">// ## Act ##</span>
+     * <span style="color: #CC4747">assertValidationError</span>(() -&gt; <span style="color: #553000">action</span>.index(<span style="color: #553000">form</span>)).handle(<span style="color: #553000">data</span> <span style="color: #90226C; font-weight: bold"><span style="font-size: 120%">-</span>&gt;</span> {
+     *     <span style="color: #3F7E5E">// ## Assert ##</span>
+     *     <span style="color: #553000">data</span>.requiredMessageOf("sea", Required.class);
+     * });
+     * </pre>
+     * @param noArgInLambda The callback for calling methods that should throw the validation error exception. (NotNull)
+     * @return The after object that has handler of expected cause for chain call. (NotNull) 
+     */
+    protected TestingValidationErrorAfter assertValidationError(IndependentProcessor noArgInLambda) {
+        final Set<ValidationErrorException> causeSet = new HashSet<ValidationErrorException>();
+        assertException(ValidationErrorException.class, () -> noArgInLambda.process()).handle(cause -> causeSet.add(cause));
+        return new TestingValidationErrorAfter(causeSet.iterator().next(), _messageManager, _requestManager);
+    }
+
     /**
      * Evaluate validation error hook for action response.
      * <pre>
@@ -489,6 +527,7 @@ public abstract class WebContainerTestCase extends ContainerTestCase {
      * @param <RESPONSE> The type of action response, e.g. HtmlResponse, JsonResponse.
      * @param cause The exception of validation error. (NotNull)
      * @return The action response from validation error hook.
+     * @deprecated use assertValidationError()
      */
     @SuppressWarnings("unchecked")
     protected <RESPONSE extends ActionResponse> RESPONSE hookValidationError(ValidationErrorException cause) {
@@ -505,8 +544,8 @@ public abstract class WebContainerTestCase extends ContainerTestCase {
      * SignupAction <span style="color: #553000">action</span> = <span style="color: #70226C">new</span> SignupAction();
      * inject(<span style="color: #553000">action</span>);
      * SignupForm <span style="color: #553000">form</span> = <span style="color: #70226C">new</span> SignupForm();
-     * <span style="color: #CC4747">reserveMailAssertion</span>(<span style="color: #553000">mailData</span> <span style="color: #90226C; font-weight: bold"><span style="font-size: 120%">-</span>&gt;</span> {
-     *     <span style="color: #553000">mailData</span>.required(<span style="color: #994747">WelcomeMemberPostcard</span>.<span style="color: #70226C">class</span>).forEach(<span style="color: #553000">message</span> <span style="color: #90226C; font-weight: bold"><span style="font-size: 120%">-</span>&gt;</span> {
+     * <span style="color: #CC4747">reserveMailAssertion</span>(<span style="color: #553000">data</span> <span style="color: #90226C; font-weight: bold"><span style="font-size: 120%">-</span>&gt;</span> {
+     *     <span style="color: #553000">data</span>.required(<span style="color: #994747">WelcomeMemberPostcard</span>.<span style="color: #70226C">class</span>).forEach(<span style="color: #553000">message</span> <span style="color: #90226C; font-weight: bold"><span style="font-size: 120%">-</span>&gt;</span> {
      *        <span style="color: #553000">message</span>.requiredToList().forEach(<span style="color: #553000">addr</span> <span style="color: #90226C; font-weight: bold"><span style="font-size: 120%">-</span>&gt;</span> {
      *            assertContains(<span style="color: #553000">addr</span>.getAddress(), <span style="color: #553000">form</span>.memberAccount); <span style="color: #3F7E5E">// e.g. land@docksidestage.org</span>
      *        });
@@ -519,10 +558,10 @@ public abstract class WebContainerTestCase extends ContainerTestCase {
      * HtmlResponse <span style="color: #553000">response</span> = <span style="color: #553000">action</span>.signup(<span style="color: #553000">form</span>);
      * ...
      * </pre>
-     * @param oneArgLambda The callback for mail data. (NotNull)
+     * @param dataLambda The callback for mail data. (NotNull)
      */
-    protected void reserveMailAssertion(Consumer<TestingMailData> oneArgLambda) {
-        _xmailMessageAssertion = new MailMessageAssertion(oneArgLambda);
+    protected void reserveMailAssertion(Consumer<TestingMailData> dataLambda) {
+        _xmailMessageAssertion = new MailMessageAssertion(dataLambda);
     }
 
     protected void xprocessMailAssertion() {
@@ -675,11 +714,14 @@ public abstract class WebContainerTestCase extends ContainerTestCase {
     // ===================================================================================
     //                                                                            LastaJob
     //                                                                            ========
-    protected boolean isSuppressJobScheduling() { // you can override, for e.g. heavy scheduling (using e.g. DB)
-        return false; // you can set true only when including LastaJob
-    }
-
-    protected void xsuppressJobScheduling() {
+    protected void xsuppressJobSchedulingIfNeeds() {
+        if (!xexistsLastaJob()) {
+            return;
+        }
+        if (_xjobSchedulingSuppressed) { // to avoid duplicate calls when batch execution of unit test
+            return;
+        }
+        _xjobSchedulingSuppressed = true;
         try {
             // reflection on parade not to depends on LastaJob library
             final Class<?> jobManagerType = Class.forName("org.lastaflute.job.SimpleJobManager");
@@ -690,6 +732,73 @@ public abstract class WebContainerTestCase extends ContainerTestCase {
         } catch (Exception continued) {
             log("*Failed to suppress job scheduling", continued);
         }
+    }
+
+    protected boolean isUseJobScheduling() { // you can override, for e.g. heavy scheduling (using e.g. DB)
+        return false; // you can set true only when including LastaJob
+    }
+
+    protected void xrebootJobSchedulingIfNeeds() { // called when isUseJobScheduling()
+        if (!xexistsLastaJob()) {
+            return;
+        }
+        try {
+            // reflection on parade not to depends on LastaJob library
+            final Class<?> jobManagerType = xforNameJobManager();
+            final Object jobManager = getComponent(jobManagerType);
+            if (!xisJobSchedulingDone(jobManagerType, jobManager)) {
+                xcallNoArgInstanceJobMethod(jobManagerType, jobManager, "reboot");
+            }
+        } catch (Exception continued) {
+            log("*Failed to reboot job scheduling", continued);
+        }
+    }
+
+    protected void xdestroyJobSchedulingIfNeeds() { // always called from tearDown()
+        if (!xexistsLastaJob()) {
+            return;
+        }
+        try {
+            // reflection on parade not to depends on LastaJob library
+            final Class<?> jobManagerType = xforNameJobManager();
+            if (hasComponent(jobManagerType)) { // e.g. in classpath and include lasta_job.xml
+                final Object jobManager = getComponent(jobManagerType);
+                if (xisJobSchedulingDone(jobManagerType, jobManager)) {
+                    xcallNoArgInstanceJobMethod(jobManagerType, jobManager, "destroy");
+                }
+            }
+        } catch (Exception continued) {
+            log("*Failed to destroy job scheduling", continued);
+        }
+    }
+
+    protected static Class<?> xforNameJobManager() throws ClassNotFoundException {
+        return Class.forName("org.lastaflute.job.JobManager");
+    }
+
+    protected boolean xisJobSchedulingDone(Class<?> jobManagerType, Object jobManager) throws ReflectiveOperationException {
+        return (boolean) xcallNoArgInstanceJobMethod(jobManagerType, jobManager, "isSchedulingDone");
+    }
+
+    private Object xcallNoArgInstanceJobMethod(Class<?> jobManagerType, Object jobManager, String methodName)
+            throws ReflectiveOperationException {
+        final Method rebootMethod = jobManagerType.getMethod(methodName, (Class[]) null);
+        return rebootMethod.invoke(jobManager, (Object[]) null);
+    }
+
+    protected boolean xexistsLastaJob() {
+        if (_xexistsLastaJob != null) {
+            return _xexistsLastaJob;
+        }
+        try {
+            xforNameJobManager();
+            _xexistsLastaJob = true;
+            // this method is called outside container so cannot determine it
+            //_xexistsLastaJob = hasComponent(jobManagerType);
+        } catch (ClassNotFoundException e) {
+            _xexistsLastaJob = false;
+        }
+        return _xexistsLastaJob;
     }
 
     // ===================================================================================

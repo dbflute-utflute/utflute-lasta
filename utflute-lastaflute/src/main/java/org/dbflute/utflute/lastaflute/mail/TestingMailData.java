@@ -22,6 +22,7 @@ import java.util.concurrent.ConcurrentHashMap;
 
 import org.dbflute.helper.message.ExceptionMessageBuilder;
 import org.junit.Assert;
+import org.lastaflute.core.mail.LaMailPostcard;
 
 /**
  * @author jflute
@@ -35,7 +36,7 @@ public class TestingMailData {
      * @param postcardType The postcard type of MailFlute. (NotNull)
      * @return The list of prepared message for testing. (NotNull, NotEmpty)
      */
-    public List<TestingPreparedMessage> required(Class<?> postcardType) {
+    public List<TestingPreparedMessage> required(Class<? extends LaMailPostcard> postcardType) {
         final List<TestingPreparedMessage> messageList = _messageMap.get(postcardType);
         if (messageList == null) {
             final ExceptionMessageBuilder br = new ExceptionMessageBuilder();
@@ -54,7 +55,7 @@ public class TestingMailData {
         return messageList;
     }
 
-    public void saveMessage(Class<?> postcardType, TestingPreparedMessage message) {
+    public void saveMessage(Class<?> postcardType, TestingPreparedMessage message) { // for framework
         List<TestingPreparedMessage> messageList = _messageMap.get(postcardType);
         if (messageList == null) {
             messageList = new ArrayList<>();
