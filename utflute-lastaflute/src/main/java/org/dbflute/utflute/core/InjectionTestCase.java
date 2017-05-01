@@ -64,6 +64,9 @@ public abstract class InjectionTestCase extends PlainTestCase {
     // ===================================================================================
     //                                                                            Settings
     //                                                                            ========
+    // -----------------------------------------------------
+    //                                                Set up
+    //                                                ------
     @Override
     public void setUp() throws Exception {
         super.setUp();
@@ -82,7 +85,7 @@ public abstract class InjectionTestCase extends PlainTestCase {
      * Does it use one-time container? (re-initialize container per one test case?)
      * @return The determination, true or false.
      */
-    protected boolean isUseOneTimeContainer() { // customize point #extPoint
+    protected boolean isUseOneTimeContainer() { // you can override
         return false;
     }
 
@@ -101,10 +104,13 @@ public abstract class InjectionTestCase extends PlainTestCase {
      * Does it suppress transaction for the test case? (non-transaction as default?)
      * @return The determination, true or false.
      */
-    protected boolean isSuppressTestCaseTransaction() { // customize point #extPoint
+    protected boolean isSuppressTestCaseTransaction() { // you can override
         return false; // default is to use the transaction
     }
 
+    // -----------------------------------------------------
+    //                                             Tear Down
+    //                                             ---------
     @Override
     public void tearDown() throws Exception {
         xrollbackTestCaseTransaction();
@@ -134,13 +140,10 @@ public abstract class InjectionTestCase extends PlainTestCase {
      * Does it commit transaction for the test case? (commit updated data?)
      * @return The determination, true or false.
      */
-    protected boolean isCommitTestCaseTransaction() { // customize point #extPoint
+    protected boolean isCommitTestCaseTransaction() { // you can override
         return false; // default is to roll-back always
     }
 
-    /**
-     * {@inheritDoc}
-     */
     @Override
     protected void commitTransaction(TransactionResource resource) { // user method
         xassertTransactionResourceNotNull(resource);
@@ -152,9 +155,6 @@ public abstract class InjectionTestCase extends PlainTestCase {
         }
     }
 
-    /**
-     * {@inheritDoc}
-     */
     @Override
     protected void rollbackTransaction(TransactionResource resource) { // user method
         xassertTransactionResourceNotNull(resource);
@@ -188,7 +188,7 @@ public abstract class InjectionTestCase extends PlainTestCase {
      * Does it destroy container instance at tear-down? (next test uses new-created container?)
      * @return The determination, true or false.
      */
-    protected boolean isDestroyContainerAtTearDown() { // customize point #extPoint
+    protected boolean isDestroyContainerAtTearDown() { // you can override
         return false; // default is to cache the instance
     }
 
@@ -226,7 +226,7 @@ public abstract class InjectionTestCase extends PlainTestCase {
         };
     }
 
-    protected ComponentBinder createTestCaseComponentBinder() { // customize point #extPoint
+    protected ComponentBinder createTestCaseComponentBinder() { // you can override
         final ComponentBinder binder = xcreateBasicComponentBinder();
         binder.stopBindingAtSuper(InjectionTestCase.class);
         if (isUseTestCaseLooseBinding()) {
@@ -235,48 +235,58 @@ public abstract class InjectionTestCase extends PlainTestCase {
         return binder;
     }
 
-    protected boolean isUseTestCaseLooseBinding() {
+    protected boolean isUseTestCaseLooseBinding() { // you can override
         return false;
     }
 
+    // -----------------------------------------------------
+    //                                         Register Mock
+    //                                         -------------
     /**
-     * Register the mock instance for injection.
+     * Register the mock instance for injection. <br>
+     * You can use new-created instance as DI component like this:
      * <pre>
-     * FooAction action = new FooAction();
-     * <span style="color: #FD4747">registerMockInstance</span>(new FooBhv());
-     * inject(action); <span style="color: #3F7E5E">// the new-created behavior is injected</span>
+     * FooAction <span style="color: #553000">action</span> = <span style="color: #70226C">new</span> FooAction();
+     * <span style="color: #FD4747">registerMock</span>(<span style="color: #70226C">new</span> MockFooLogic());
+     * inject(<span style="color: #553000">action</span>); <span style="color: #3F7E5E">// the new-created mock logic is injected</span>
+     * </pre>
+     * You can inject DI components for mock instance like this:
+     * <pre>
+     * FooAction <span style="color: #553000">action</span> = <span style="color: #70226C">new</span> FooAction();
+     * registerMock(<span style="color: #FD4747">inject</span>(<span style="color: #70226C">new</span> MockFooLogic()));
+     * inject(<span style="color: #553000">action</span>); <span style="color: #3F7E5E">// the new-created mock logic is injected</span>
      * </pre>
      * @param mock The mock instance injected to component. (NotNull)
      */
-    public void registerMockInstance(Object mock) { // user method
+    public void registerMock(Object mock) { // user method
         assertNotNull(mock);
         if (_xmockInstanceList == null) {
             _xmockInstanceList = new ArrayList<Object>();
         }
-        _xmockInstanceList.add(mock);
+        final Object filtered;
+        if (mock instanceof BoundResult) {
+            filtered = ((BoundResult) mock).getTargetBean(); // for registerMock(inject(bean))
+        } else {
+            filtered = mock;
+        }
+        _xmockInstanceList.add(filtered);
     }
 
     /**
-     * Register the mock instance for injection, injecting components of the mock.
-     * <pre>
-     * FooAction action = new FooAction();
-     * <span style="color: #FD4747">registerMockInstanceInjecting</span>(new FooBhv());
-     * inject(action); <span style="color: #3F7E5E">// the new-created behavior is injected</span>
-     * </pre>
+     * <span style="color: #FD4747; font-size: 120%">old method so use registerMock().</span> <br>
      * @param mock The mock instance injected to component. (NotNull)
      */
-    public void registerMockInstanceInjecting(Object mock) { // user method
+    public void registerMockInstance(Object mock) { // user method
         assertNotNull(mock);
-        inject(mock);
-        registerMockInstance(mock);
+        registerMock(mock);
     }
 
     /**
      * Suppress the binding of the type for injection.
      * <pre>
-     * FooAction action = new FooAction();
-     * <span style="color: #FD4747">suppressBindingOf</span>(FooBhv.class);
-     * inject(action); <span style="color: #3F7E5E">// not injected about the behavior type</span>
+     * FooAction <span style="color: #553000">action</span> = <span style="color: #70226C">new</span> FooAction();
+     * <span style="color: #FD4747">suppressBindingOf</span>(FooBhv.<span style="color: #70226C">class</span>);
+     * inject(<span style="color: #553000">action</span>); <span style="color: #3F7E5E">// not injected about the behavior type</span>
      * </pre>
      * @param nonBindingType The non-binding type NOT injected to component. (NotNull)
      */
@@ -310,13 +320,17 @@ public abstract class InjectionTestCase extends PlainTestCase {
     //                                                Inject
     //                                                ------
     /**
-     * Inject dependencies for the bean.
+     * Inject dependencies for the bean. <br>
+     * You can use DI component in self-new instance like this:
      * <pre>
-     * FooAction action = new FooAction();
-     * <span style="color: #FD4747">inject</span>(action);
+     * FooAction <span style="color: #553000">action</span> = <span style="color: #70226C">new</span> FooAction();
+     * <span style="color: #FD4747">inject</span>(<span style="color: #553000">action</span>);
      * 
-     * action.submit();
-     * ...
+     * <span style="color: #553000">action</span>.index(); <span style="color: #3F7E5E">// can use DI component</span>
+     * </pre>
+     * Also you can inject components to mock instance like this:
+     * <pre>
+     * registerMock(<span style="color: #FD4747">inject</span>(new MockFooLogic()));
      * </pre>
      * @param bean The instance of bean. (NotNull)
      * @return The information of bound result. (NotNull)
@@ -331,7 +345,7 @@ public abstract class InjectionTestCase extends PlainTestCase {
         return boundResult;
     }
 
-    protected ComponentBinder createOuterComponentBinder(Object bean) { // customize point #extPoint
+    protected ComponentBinder createOuterComponentBinder(Object bean) { // you can override
         final ComponentBinder binder = xcreateBasicComponentBinder();
         xadjustOuterComponentBinder(bean, binder);
         return binder;

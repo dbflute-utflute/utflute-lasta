@@ -584,12 +584,10 @@ public abstract class PlainTestCase extends TestCase {
     /**
      * Mark here to assert that it goes through the road.
      * <pre>
-     * final String mark = "cursor";
-     * MemberCB cb = new MemberCB();
-     * memberBhv.selectCursor(cb, entity -&gt; {
-     *     <span style="color: #FD4747">markHere</span>(mark);
+     * memberBhv.selectCursor(<span style="color: #553000">cb</span> -&gt; ..., entity -&gt; {
+     *     <span style="color: #FD4747">markHere</span>("cursor");
      * });
-     * assertMarked(mark); <span style="color: #3F7E5E">// the callback called</span>
+     * <span style="color: #994747">assertMarked</span>("cursor"); <span style="color: #3F7E5E">// the callback called</span>
      * </pre>
      * @param mark The your original mark expression as string. (NotNull)
      */
@@ -601,12 +599,10 @@ public abstract class PlainTestCase extends TestCase {
     /**
      * Assert the mark is marked. (found in existing marks)
      * <pre>
-     * final String mark = "cursor";
-     * MemberCB cb = new MemberCB();
-     * memberBhv.selectCursor(cb, entity -&gt; {
-     *     markHere(mark);
+     * memberBhv.selectCursor(<span style="color: #553000">cb</span> -&gt; ..., entity -&gt; {
+     *     <span style="color: #994747">markHere</span>("cursor");
      * });
-     * <span style="color: #FD4747">assertMarked</span>(mark); <span style="color: #3F7E5E">// the callback called</span>
+     * <span style="color: #FD4747">assertMarked</span>("cursor"); <span style="color: #3F7E5E">// the callback called</span>
      * </pre>
      * @param mark The your original mark expression as string. (NotNull)
      */
@@ -1063,7 +1059,7 @@ public abstract class PlainTestCase extends TestCase {
      * @param cannonballStaff The staff for cannon-ball. (NotNull)
      * @return The new-created instance of the director. (NotNull)
      */
-    protected CannonballDirector newCannonballDirector(CannonballStaff cannonballStaff) { // customize point #extPoint
+    protected CannonballDirector newCannonballDirector(CannonballStaff cannonballStaff) { // you can override
         return new CannonballDirector(cannonballStaff);
     }
 
@@ -1220,7 +1216,7 @@ public abstract class PlainTestCase extends TestCase {
      * @param projectDir The root directory of project. (NotNull)
      * @return The new-created instance of the police story. (NotNull)
      */
-    protected PoliceStory newPoliceStory(Object testCase, File projectDir) { // customize point #extPoint
+    protected PoliceStory newPoliceStory(Object testCase, File projectDir) { // you can override
         return new PoliceStory(testCase, projectDir);
     }
 
@@ -1246,7 +1242,7 @@ public abstract class PlainTestCase extends TestCase {
      * Create the filesystem player for e.g. reading line.
      * @return The new-created instance of the player. (NotNull)
      */
-    protected FilesystemPlayer createFilesystemPlayer() { // customize point #extPoint
+    protected FilesystemPlayer createFilesystemPlayer() { // you can override
         return new FilesystemPlayer();
     }
 
@@ -1254,7 +1250,7 @@ public abstract class PlainTestCase extends TestCase {
      * Get the directory object of the (application or Eclipse) project.
      * @return The file object of the directory. (NotNull)
      */
-    protected File getProjectDir() { // customize point #extPoint
+    protected File getProjectDir() { // you can override
         final Set<String> markSet = defineProjectDirMarkSet();
         for (File dir = getTestCaseBuildDir(); dir != null; dir = dir.getParentFile()) {
             if (dir.isDirectory()) {
