@@ -273,11 +273,21 @@ public abstract class InjectionTestCase extends PlainTestCase {
     }
 
     /**
-     * <span style="color: #FD4747; font-size: 120%">old method so use registerMock().</span> <br>
+     * <span style="color: #FD4747; font-size: 120%">old method so use registerMock().</span>
      * @param mock The mock instance injected to component. (NotNull)
      */
     public void registerMockInstance(Object mock) { // user method
         assertNotNull(mock);
+        registerMock(mock);
+    }
+
+    /**
+     * <span style="color: #FD4747; font-size: 120%">old method so use registerMock() with inject().</span>
+     * @param mock The mock instance injected to component. (NotNull)
+     */
+    public void registerMockInstanceInjecting(Object mock) { // user method
+        assertNotNull(mock);
+        inject(mock);
         registerMock(mock);
     }
 
