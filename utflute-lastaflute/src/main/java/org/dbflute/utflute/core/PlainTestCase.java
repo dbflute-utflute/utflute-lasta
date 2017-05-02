@@ -127,8 +127,13 @@ public abstract class PlainTestCase extends TestCase {
 
     @Override
     protected void runTest() throws Throwable {
-        super.runTest();
-        postTest();
+        try {
+            super.runTest();
+            postTest();
+        } catch (Throwable e) { // to record in application log
+            log("Failed to finish the test: " + xgetCaseDisp(), e);
+            throw e;
+        }
     }
 
     protected void postTest() {
