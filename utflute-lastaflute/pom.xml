@@ -5,7 +5,7 @@
 	<parent>
 		<groupId>org.dbflute.utflute</groupId>
 		<artifactId>utflute-base</artifactId>
-		<version>0.7.3</version>
+		<version>0.7.4</version>
 	</parent>
 	<artifactId>utflute-lastaflute</artifactId>
 	<packaging>jar</packaging>
@@ -21,13 +21,13 @@
 		<dependency>
 			<groupId>org.lastaflute</groupId>
 			<artifactId>lastaflute</artifactId>
-			<version>0.9.4</version>
+			<version>0.9.6</version>
 		</dependency>
 		<!-- lasta-doc -->
 		<dependency>
 			<groupId>org.lastaflute.doc</groupId>
 			<artifactId>lasta-doc</artifactId>
-			<version>0.2.2</version>
+			<version>0.2.3</version>
 		</dependency>
 		<!-- javaparser -->
 		<dependency>

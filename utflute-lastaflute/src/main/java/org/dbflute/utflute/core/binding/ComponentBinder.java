@@ -233,6 +233,8 @@ public class ComponentBinder {
         }
         final Object component = findInjectedComponent(propertyName, propertyType, bindingAnno, boundResult);
         if (component == null) {
+            // binder does not throw injection failure because it cannot check correctly
+            // (you can test component building getComponent() easily instead, and also use police-story)
             return;
         }
         propertyDesc.setValue(bean, component);
@@ -373,8 +375,8 @@ public class ComponentBinder {
     // -----------------------------------------------------
     //                                        Nested Binding
     //                                        --------------
-    protected void bindNestedBinding(Object bean, BoundResult boundResult) {
-        if (bean == null || _nestedBindingMap.isEmpty()) {
+    protected void bindNestedBinding(Object bean, BoundResult boundResult) { // also mock instance handling
+        if (bean == null || (_nestedBindingMap.isEmpty() && _mockInstanceList.isEmpty())) {
             return;
         }
         final ComponentBinder binder = new ComponentBinder(new ComponentProvider() {
@@ -384,7 +386,11 @@ public class ComponentBinder {
 
             @SuppressWarnings("unchecked")
             public <COMPONENT> COMPONENT provideComponent(Class<COMPONENT> type) {
-                return (COMPONENT) _nestedBindingMap.get(type);
+                final COMPONENT specified = (COMPONENT) _nestedBindingMap.get(type);
+                if (specified != null) {
+                    return specified;
+                }
+                return (COMPONENT) findMockInstance(type); // for nested mock
             }
 
             public boolean existsComponent(String name) {
