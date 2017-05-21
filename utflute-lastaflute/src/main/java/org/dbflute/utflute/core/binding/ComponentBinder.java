@@ -28,14 +28,24 @@ import org.dbflute.helper.beans.DfBeanDesc;
 import org.dbflute.helper.beans.DfPropertyDesc;
 import org.dbflute.helper.beans.factory.DfBeanDescFactory;
 import org.dbflute.helper.message.ExceptionMessageBuilder;
+import org.dbflute.utflute.core.binding.BoundResult.BoundField;
+import org.dbflute.utflute.core.binding.BoundResult.BoundProperty;
 import org.dbflute.util.DfCollectionUtil;
+import org.dbflute.util.DfReflectionUtil;
 import org.dbflute.util.Srl;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * @author jflute
  * @since 0.1.0 (2011/07/24 Sunday)
  */
 public class ComponentBinder {
+
+    // ===================================================================================
+    //                                                                          Definition
+    //                                                                          ==========
+    private static final Logger _logger = LoggerFactory.getLogger(ComponentBinder.class);
 
     // ===================================================================================
     //                                                                           Attribute
@@ -183,8 +193,9 @@ public class ComponentBinder {
             }
             final Object component = findInjectedComponent(field.getName(), fieldType, bindingAnno, boundResult);
             if (component != null) {
+                final Object existing = extractExistingFieldValue(bean, field);
                 setFieldValue(field, bean, component);
-                boundResult.addBoundField(field);
+                boundResult.addBoundField(field, existing);
             }
         }
     }
@@ -192,6 +203,10 @@ public class ComponentBinder {
     protected boolean isModifiersAutoBindable(Field field) {
         final int modifiers = field.getModifiers();
         return !Modifier.isStatic(modifiers) && !Modifier.isFinal(modifiers) && !field.getType().isPrimitive();
+    }
+
+    protected Object extractExistingFieldValue(Object bean, Field field) {
+        return DfReflectionUtil.getValueForcedly(field, bean);
     }
 
     // -----------------------------------------------------
@@ -237,31 +252,64 @@ public class ComponentBinder {
             // (you can test component building getComponent() easily instead, and also use police-story)
             return;
         }
+        final Object existing = extractExistingPropertyValue(bean, propertyDesc);
         propertyDesc.setValue(bean, component);
-        boundResult.addBoundProperty(propertyDesc);
+        boundResult.addBoundProperty(propertyDesc, existing);
     }
 
-    // -----------------------------------------------------
-    //                                        Find Component
-    //                                        --------------
+    protected Object extractExistingPropertyValue(Object bean, DfPropertyDesc propertyDesc) {
+        return propertyDesc.isReadable() ? propertyDesc.getValue(bean) : null;
+    }
+
+    // ===================================================================================
+    //                                                                      Find Component
+    //                                                                      ==============
     protected Object findInjectedComponent(String propertyName, Class<?> propertyType, Annotation bindingAnno, BoundResult boundResult) {
-        final Object component = doFindInjectedComponent(propertyName, propertyType, bindingAnno);
-        bindNestedBinding(component, boundResult);
-        return component;
+        final InjectedComponentContainer container = doFindInjectedComponent(propertyName, propertyType, bindingAnno);
+        bindNestedBinding(container, boundResult);
+        bindNestedMock(container, boundResult);
+        return container.getInjected(); // null allowed
     }
 
-    protected Object doFindInjectedComponent(String propertyName, Class<?> propertyType, Annotation bindingAnno) {
+    protected InjectedComponentContainer doFindInjectedComponent(String propertyName, Class<?> propertyType, Annotation bindingAnno) {
         final Object mock = findMockInstance(propertyType);
         if (mock != null) {
-            return mock;
+            return InjectedComponentContainer.ofMock(mock);
         }
         if (isFindingByNameOnlyProperty(propertyName, propertyType, bindingAnno)) {
-            return doFindInjectedComponentByName(propertyName, propertyType, bindingAnno);
+            return InjectedComponentContainer.of(doFindInjectedComponentByName(propertyName, propertyType, bindingAnno));
         } else if (isFindingByTypeOnlyProperty(propertyName, propertyType, bindingAnno)) {
-            return doFindInjectedComponentByType(propertyType);
+            return InjectedComponentContainer.of(doFindInjectedComponentByType(propertyType));
         }
         final Object byName = doFindInjectedComponentByName(propertyName, propertyType, bindingAnno);
-        return byName != null ? byName : doFindInjectedComponentByType(propertyType);
+        return InjectedComponentContainer.of(byName != null ? byName : doFindInjectedComponentByType(propertyType));
+    }
+
+    protected static class InjectedComponentContainer {
+
+        protected final Object injected; // null allowed
+        protected final boolean mocked;
+
+        protected InjectedComponentContainer(Object injected, boolean mocked) {
+            this.injected = injected;
+            this.mocked = mocked;
+        }
+
+        public static InjectedComponentContainer of(Object injected) {
+            return new InjectedComponentContainer(injected, false);
+        }
+
+        public static InjectedComponentContainer ofMock(Object mock) {
+            return new InjectedComponentContainer(mock, true);
+        }
+
+        public Object getInjected() {
+            return injected;
+        }
+
+        public boolean isMocked() {
+            return mocked;
+        }
     }
 
     protected Object findMockInstance(Class<?> type) {
@@ -326,9 +374,9 @@ public class ComponentBinder {
         return name;
     }
 
-    // -----------------------------------------------------
-    //                                  Injection Annotation
-    //                                  --------------------
+    // ===================================================================================
+    //                                                                Injection Annotation
+    //                                                                ====================
     protected Annotation findBindingAnnotation(Field field) {
         return doFindBindingAnnotation(field.getAnnotations());
     }
@@ -372,11 +420,12 @@ public class ComponentBinder {
         return bindingAnno != null ? _bindingAnnotationRuleMap.get(bindingAnno.annotationType()) : null;
     }
 
-    // -----------------------------------------------------
-    //                                        Nested Binding
-    //                                        --------------
-    protected void bindNestedBinding(Object bean, BoundResult boundResult) { // also mock instance handling
-        if (bean == null || (_nestedBindingMap.isEmpty() && _mockInstanceList.isEmpty())) {
+    // ===================================================================================
+    //                                                                      Nested Binding
+    //                                                                      ==============
+    protected void bindNestedBinding(InjectedComponentContainer container, BoundResult boundResult) {
+        final Object injected = container.getInjected();
+        if (injected == null || _nestedBindingMap.isEmpty()) {
             return;
         }
         final ComponentBinder binder = new ComponentBinder(new ComponentProvider() {
@@ -387,10 +436,7 @@ public class ComponentBinder {
             @SuppressWarnings("unchecked")
             public <COMPONENT> COMPONENT provideComponent(Class<COMPONENT> type) {
                 final COMPONENT specified = (COMPONENT) _nestedBindingMap.get(type);
-                if (specified != null) {
-                    return specified;
-                }
-                return (COMPONENT) findMockInstance(type); // for nested mock
+                return specified != null ? specified : null;
             }
 
             public boolean existsComponent(String name) {
@@ -403,14 +449,77 @@ public class ComponentBinder {
         }, _bindingAnnotationProvider);
         inheritParentBinderOption(binder);
         binder._looseBinding = false; // because of container-managed component
-        binder._overridingBinding = true; // because of cannot remove reference
-        final BoundResult nestedResult = binder.bindComponent(bean);
+        binder._overridingBinding = true; // because cannot remove reference
+        final BoundResult nestedResult = binder.bindComponent(injected); // e.g. HttpServletRequest
         boundResult.addNestedBoundResult(nestedResult);
     }
 
-    // -----------------------------------------------------
-    //                                         Assist Helper
-    //                                         -------------
+    // ===================================================================================
+    //                                                                         Nested Mock
+    //                                                                         ===========
+    protected void bindNestedMock(InjectedComponentContainer container, BoundResult boundResult) {
+        final Object injected = container.getInjected();
+        if (injected == null || _mockInstanceList.isEmpty()) {
+            return;
+        }
+        final ComponentBinder binder = new ComponentBinder(new ComponentProvider() {
+            public <COMPONENT> COMPONENT provideComponent(String name) {
+                return null;
+            }
+
+            @SuppressWarnings("unchecked")
+            public <COMPONENT> COMPONENT provideComponent(Class<COMPONENT> type) {
+                return (COMPONENT) findMockInstance(type); // for nested mock
+            }
+
+            public boolean existsComponent(String name) {
+                return false;
+            }
+
+            public boolean existsComponent(Class<?> type) {
+                return provideComponent(type) != null;
+            }
+        }, _bindingAnnotationProvider);
+        inheritParentBinderOption(binder);
+        binder._looseBinding = false; // because may be container-managed component
+        binder._overridingBinding = true; // for container-managed component's field
+        final BoundResult nestedResult = binder.bindComponent(injected);
+        boundResult.addNestedBoundResult(nestedResult);
+    }
+
+    // ===================================================================================
+    //                                                                      Revert Binding
+    //                                                                      ==============
+    public void revertBoundComponent(BoundResult boundResult) {
+        // needs to revert because it may be container-managed bean
+        final Object bean = boundResult.getTargetBean();
+        final List<BoundField> boundFieldList = boundResult.getBoundFieldList();
+        for (BoundField boundField : boundFieldList) {
+            try {
+                boundField.getField().set(bean, boundField.getExisting());
+            } catch (Exception continued) { // because of not important but may need to debug so logging
+                _logger.debug("*Cannot release bound field: target=" + bean + ", field=" + boundField, continued);
+            }
+        }
+        boundFieldList.clear();
+        final List<BoundProperty> boundPropertyList = boundResult.getBoundPropertyList();
+        for (BoundProperty boundProperty : boundPropertyList) {
+            try {
+                boundProperty.getPropertyDesc().setValue(bean, boundProperty.getExisting());
+            } catch (Exception continued) { // because of not important but may need to debug so logging
+                _logger.debug("*Cannot release bound property: target=" + bean + ", property=" + boundProperty, continued);
+            }
+        }
+        boundPropertyList.clear();
+        final List<BoundResult> nestedBoundResultList = boundResult.getNestedBoundResultList();
+        for (BoundResult nestedBoundResult : nestedBoundResultList) {
+            revertBoundComponent(nestedBoundResult);
+        }
+    }
+
+    // ===================================================================================
+    //                                                                        Assist Logic
+    //                                                                        ============
     protected boolean isBindTargetClass(Class<?> clazz) {
         return _terminalSuperClass == null || !clazz.isAssignableFrom(_terminalSuperClass);
     }
@@ -431,31 +540,6 @@ public class ComponentBinder {
             specifiedName = ((Resource) bindingAnnotation).name(); // might be empty string
         }
         return Srl.is_NotNull_and_NotTrimmedEmpty(specifiedName) ? specifiedName : null;
-    }
-
-    // -----------------------------------------------------
-    //                                       Release Binding
-    //                                       ---------------
-    public void releaseBoundComponent(BoundResult boundResult) {
-        final Object bean = boundResult.getTargetBean();
-        final List<Field> boundFieldList = boundResult.getBoundFieldList();
-        for (Field field : boundFieldList) {
-            try {
-                field.set(bean, null);
-            } catch (Exception ignored) {}
-        }
-        boundFieldList.clear();
-        final List<DfPropertyDesc> boundPropertyList = boundResult.getBoundPropertyList();
-        for (DfPropertyDesc propertyDesc : boundPropertyList) {
-            try {
-                propertyDesc.setValue(bean, null);
-            } catch (Exception ignored) {}
-        }
-        boundPropertyList.clear();
-        final List<BoundResult> nestedBoundResultList = boundResult.getNestedBoundResultList();
-        for (BoundResult nestedBoundResult : nestedBoundResultList) {
-            releaseBoundComponent(nestedBoundResult);
-        }
     }
 
     // ===================================================================================

@@ -167,11 +167,11 @@ public abstract class InjectionTestCase extends PlainTestCase {
     }
 
     protected void xdestroyTestCaseComponent() {
-        _xtestCaseComponentBinder.releaseBoundComponent(_xtestCaseBoundResult);
+        _xtestCaseComponentBinder.revertBoundComponent(_xtestCaseBoundResult);
         _xtestCaseBoundResult = null;
         if (_xinjectedBoundResultList != null) {
             for (BoundResult injectedBoundResult : _xinjectedBoundResultList) {
-                _xtestCaseComponentBinder.releaseBoundComponent(injectedBoundResult);
+                _xtestCaseComponentBinder.revertBoundComponent(injectedBoundResult);
             }
         }
         _xinjectedBoundResultList = null;
