@@ -21,7 +21,7 @@ import org.lastaflute.di.core.meta.impl.ComponentDefImpl;
 import org.lastaflute.web.ruts.config.ActionExecute;
 import org.lastaflute.web.ruts.config.ActionMapping;
 import org.lastaflute.web.ruts.process.ActionRuntime;
-import org.lastaflute.web.ruts.process.urlparam.RequestUrlParam;
+import org.lastaflute.web.ruts.process.pathparam.RequestPathParam;
 
 /**
  * @author jflute
@@ -54,16 +54,16 @@ public class MockRuntimeFactory {
     //                                                                             =======
     public ActionRuntime createHtmlRuntime() {
         final ActionExecute execute = _mapping.getExecuteMap().get("sea");
-        return new ActionRuntime("/mock/sea/", execute, createRequestUrlParam());
+        return new ActionRuntime("/mock/sea/", execute, createRequestPathParam());
     }
 
     public ActionRuntime createJsonRuntime() {
         final ActionExecute execute = _mapping.getExecuteMap().get("land");
-        return new ActionRuntime("/mock/land/", execute, createRequestUrlParam());
+        return new ActionRuntime("/mock/land/", execute, createRequestPathParam());
     }
 
-    protected RequestUrlParam createRequestUrlParam() {
-        return new RequestUrlParam(Collections.emptyList(), Collections.emptyMap());
+    protected RequestPathParam createRequestPathParam() {
+        return new RequestPathParam(Collections.emptyList(), Collections.emptyMap());
     }
 
     // ===================================================================================

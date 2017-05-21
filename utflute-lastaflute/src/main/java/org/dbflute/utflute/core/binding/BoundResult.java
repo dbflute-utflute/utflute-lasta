@@ -31,8 +31,8 @@ public class BoundResult {
     //                                                                           Attribute
     //                                                                           =========
     protected final Object _targetBean;
-    protected final List<Field> _boundFieldList = new ArrayList<Field>();
-    protected final List<DfPropertyDesc> _boundPropertyList = new ArrayList<DfPropertyDesc>();
+    protected final List<BoundField> _boundFieldList = new ArrayList<BoundField>();
+    protected final List<BoundProperty> _boundPropertyList = new ArrayList<BoundProperty>();
     protected final List<BoundResult> _nestedBoundResultList = new ArrayList<BoundResult>();
 
     // ===================================================================================
@@ -42,6 +42,62 @@ public class BoundResult {
         _targetBean = targetBean;
     }
 
+    public static class BoundField {
+
+        protected final Field field;
+        protected final Object existing; // null allowed
+
+        public BoundField(Field field, Object existing) {
+            this.field = field;
+            this.existing = existing;
+        }
+
+        @Override
+        public String toString() {
+            return "boundField:{" + field + ", " + existing + "}";
+        }
+
+        public Field getField() {
+            return field;
+        }
+
+        public Object getExisting() {
+            return existing;
+        }
+    }
+
+    public static class BoundProperty {
+
+        protected final DfPropertyDesc propertyDesc;
+        protected final Object existing; // null allowed
+
+        public BoundProperty(DfPropertyDesc propertyDesc, Object existing) {
+            this.propertyDesc = propertyDesc;
+            this.existing = existing;
+        }
+
+        @Override
+        public String toString() {
+            return "boundProperty:{" + propertyDesc + ", " + existing + "}";
+        }
+
+        public DfPropertyDesc getPropertyDesc() {
+            return propertyDesc;
+        }
+
+        public Object getExisting() {
+            return existing;
+        }
+    }
+
+    // ===================================================================================
+    //                                                                      Basic Override
+    //                                                                      ==============
+    @Override
+    public String toString() {
+        return "boundResult:{" + _targetBean + ", " + _boundFieldList + ", " + _boundPropertyList + ", " + _nestedBoundResultList + "}";
+    }
+
     // ===================================================================================
     //                                                                            Accessor
     //                                                                            ========
@@ -49,27 +105,27 @@ public class BoundResult {
         return _targetBean;
     }
 
-    public List<Field> getBoundFieldList() {
+    public List<BoundField> getBoundFieldList() {
         return _boundFieldList;
     }
 
-    public void addBoundField(Field boundField) {
-        _boundFieldList.add(boundField);
+    public void addBoundField(Field field, Object existing) {
+        _boundFieldList.add(new BoundField(field, existing));
     }
 
-    public void addBoundFieldAll(List<Field> boundFieldList) {
+    public void addBoundFieldAll(List<BoundField> boundFieldList) {
         _boundFieldList.addAll(boundFieldList);
     }
 
-    public List<DfPropertyDesc> getBoundPropertyList() {
+    public List<BoundProperty> getBoundPropertyList() {
         return _boundPropertyList;
     }
 
-    public void addBoundProperty(DfPropertyDesc boundProperty) {
-        _boundPropertyList.add(boundProperty);
+    public void addBoundProperty(DfPropertyDesc boundProperty, Object existing) {
+        _boundPropertyList.add(new BoundProperty(boundProperty, existing));
     }
 
-    public void addBoundPropertyAll(List<DfPropertyDesc> boundPropertyList) {
+    public void addBoundPropertyAll(List<BoundProperty> boundPropertyList) {
         _boundPropertyList.addAll(boundPropertyList);
     }
 
