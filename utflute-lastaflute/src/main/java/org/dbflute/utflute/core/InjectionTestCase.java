@@ -73,9 +73,7 @@ public abstract class InjectionTestCase extends PlainTestCase {
         xsetupBeforeContainer();
         xprepareTestCaseContainer();
         xprepareTestCaseComponent();
-        if (!isSuppressTestCaseTransaction()) {
-            xbeginTestCaseTransaction();
-        }
+        xbeginTestCaseTransaction();
     }
 
     protected void xsetupBeforeContainer() {
@@ -95,6 +93,13 @@ public abstract class InjectionTestCase extends PlainTestCase {
         _xtestCaseBoundResult = _xtestCaseComponentBinder.bindComponent(this);
     }
 
+    protected void xbeginTestCaseTransaction() {
+        if (isSuppressTestCaseTransaction()) {
+            return;
+        }
+        _xtestCaseTransactionResource = beginNewTransaction();
+    }
+
     /**
      * Does it suppress transaction for the test case? (non-transaction as default?)
      * @return The determination, true or false.
@@ -103,18 +108,12 @@ public abstract class InjectionTestCase extends PlainTestCase {
         return false; // default is to use the transaction
     }
 
-    protected void xbeginTestCaseTransaction() {
-        _xtestCaseTransactionResource = beginNewTransaction();
-    }
-
     // -----------------------------------------------------
     //                                             Tear Down
     //                                             ---------
     @Override
     public void tearDown() throws Exception {
-        if (!isSuppressTestCaseTransaction()) {
-            xrollbackTestCaseTransaction();
-        }
+        xrollbackTestCaseTransaction();
         xdestroyTestCaseComponent();
         xdestroyTestCaseContainer();
         _xmockInstanceList = null;
@@ -123,6 +122,9 @@ public abstract class InjectionTestCase extends PlainTestCase {
     }
 
     protected void xrollbackTestCaseTransaction() {
+        if (isSuppressTestCaseTransaction()) {
+            return;
+        }
         if (_xtestCaseTransactionResource == null) { // just in case
             return;
         }
