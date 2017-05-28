@@ -123,9 +123,6 @@ public abstract class InjectionTestCase extends PlainTestCase {
     }
 
     protected void xrollbackTestCaseTransaction() {
-        if (isSuppressTestCaseTransaction()) {
-            return;
-        }
         if (_xtestCaseTransactionResource == null) { // just in case
             return;
         }
