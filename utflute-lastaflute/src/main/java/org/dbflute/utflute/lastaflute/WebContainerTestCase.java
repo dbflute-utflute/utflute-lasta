@@ -203,19 +203,23 @@ public abstract class WebContainerTestCase extends ContainerTestCase {
     }
 
     protected MockletServletContext createMockletServletContext() {
-        return new MockletServletContextImpl("utservlet");
+        return new MockletServletContextImpl(prepareMockContextPath());
+    }
+
+    protected String prepareMockContextPath() { // you can override
+        return "/utcontext";
     }
 
     protected MockletHttpServletRequest createMockletHttpServletRequest(ServletContext servletContext) {
-        return new MockletHttpServletRequestImpl(servletContext, prepareServletPath());
+        return new MockletHttpServletRequestImpl(servletContext, prepareMockServletPath());
     }
 
     protected MockletHttpServletResponse createMockletHttpServletResponse(HttpServletRequest request) {
         return new MockletHttpServletResponseImpl(request);
     }
 
-    protected String prepareServletPath() { // customize point
-        return "/utflute";
+    protected String prepareMockServletPath() { // you can override
+        return "/utservlet";
     }
 
     protected void xkeepMockRequestInstance(MockletHttpServletRequest request, MockletHttpServletResponse response) {

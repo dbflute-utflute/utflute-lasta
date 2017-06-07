@@ -33,5 +33,7 @@ public interface MockletServletContext extends ServletContext, Mocklet {
 
     void setServletContextName(String servletContextName);
 
+    void setContextPath(String contextPath);
+
     Map<String, String> getInitParameterMap();
 }
