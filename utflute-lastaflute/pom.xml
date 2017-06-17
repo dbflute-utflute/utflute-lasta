@@ -29,12 +29,6 @@
 			<artifactId>lasta-doc</artifactId>
 			<version>0.2.6</version>
 		</dependency>
-		<!-- javaparser -->
-		<dependency>
-			<groupId>com.github.javaparser</groupId>
-			<artifactId>javaparser-core</artifactId>
-			<version>3.2.6</version> <!-- same as version of doc.jar's one -->
-		</dependency>
 
 		<!-- ================ -->
 		<!-- |   provided   | -->
