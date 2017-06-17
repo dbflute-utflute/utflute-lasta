@@ -49,6 +49,8 @@ import org.lastaflute.di.core.ExternalContext;
 import org.lastaflute.di.core.LaContainer;
 import org.lastaflute.di.core.factory.SingletonLaContainerFactory;
 import org.lastaflute.doc.DocumentGenerator;
+import org.lastaflute.doc.SwaggerGenerator;
+import org.lastaflute.doc.web.LaActionSwaggerable;
 import org.lastaflute.web.LastaFilter;
 import org.lastaflute.web.LastaWebKey;
 import org.lastaflute.web.response.ActionResponse;
@@ -203,19 +205,23 @@ public abstract class WebContainerTestCase extends ContainerTestCase {
     }
 
     protected MockletServletContext createMockletServletContext() {
-        return new MockletServletContextImpl("utservlet");
+        return new MockletServletContextImpl(prepareMockContextPath());
+    }
+
+    protected String prepareMockContextPath() { // you can override
+        return "/utcontext";
     }
 
     protected MockletHttpServletRequest createMockletHttpServletRequest(ServletContext servletContext) {
-        return new MockletHttpServletRequestImpl(servletContext, prepareServletPath());
+        return new MockletHttpServletRequestImpl(servletContext, prepareMockServletPath());
     }
 
     protected MockletHttpServletResponse createMockletHttpServletResponse(HttpServletRequest request) {
         return new MockletHttpServletResponseImpl(request);
     }
 
-    protected String prepareServletPath() { // customize point
-        return "/utflute";
+    protected String prepareMockServletPath() { // you can override
+        return "/utservlet";
     }
 
     protected void xkeepMockRequestInstance(MockletHttpServletRequest request, MockletHttpServletResponse response) {
@@ -532,6 +538,32 @@ public abstract class WebContainerTestCase extends ContainerTestCase {
      */
     protected DocumentGenerator createDocumentGenerator() {
         return new DocumentGenerator();
+    }
+
+    // ===================================================================================
+    //                                                                             Swagger
+    //                                                                             =======
+    /**
+     * Save meta data to use rich swagger in war deployment. <br>
+     * <pre>
+     * public void test_swaggerJson() {
+     *     saveSwaggerMeta(new SwaggerAction());
+     * }
+     * </pre>
+     * @param swaggerable The new-created swagger-able action to get swagger JSON. (NotNull)
+     */
+    protected void saveSwaggerMeta(LaActionSwaggerable swaggerable) {
+        assertNotNull(swaggerable);
+        inject(swaggerable);
+        createSwaggerGenerator().saveSwaggerMeta(swaggerable);
+    }
+
+    /**
+     * Create swagger generator for rich swagger.
+     * @return The new-created swagger generator. (NotNull)
+     */
+    protected SwaggerGenerator createSwaggerGenerator() {
+        return new SwaggerGenerator();
     }
 
     // ===================================================================================

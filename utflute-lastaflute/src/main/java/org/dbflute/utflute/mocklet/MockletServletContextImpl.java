@@ -40,22 +40,43 @@ import org.dbflute.util.DfResourceUtil;
  */
 public class MockletServletContextImpl implements MockletServletContext, Serializable {
 
+    // ===================================================================================
+    //                                                                          Definition
+    //                                                                          ==========
     private static final long serialVersionUID = -5626752218858278823L;
 
     public static final int MAJOR_VERSION = 2;
     public static final int MINOR_VERSION = 4;
     public static final String SERVER_INFO = "utflute";
 
-    protected String servletContextName;
+    // ===================================================================================
+    //                                                                           Attribute
+    //                                                                           =========
+    protected String servletContextName; // mutable
+    protected String contextPath; // mutable
     protected final Map<String, String> mimeTypes = new HashMap<String, String>();
     protected final Map<String, String> initParameters = new HashMap<String, String>();
     protected final Map<String, Object> attributes = new HashMap<String, Object>();
 
+    // ===================================================================================
+    //                                                                         Constructor
+    //                                                                         ===========
     public MockletServletContextImpl(String path) {
-        if (path == null || path.isEmpty() || path.charAt(0) != '/') {
-            path = "";
+        if (path == null) {
+            throw new IllegalArgumentException("The argument 'path' should not be null.");
         }
-        this.servletContextName = path;
+        this.contextPath = path;
+    }
+
+    // ===================================================================================
+    //                                                                             Servlet
+    //                                                                             =======
+    public String getServletContextName() {
+        return servletContextName;
+    }
+
+    public String getContextPath() {
+        return contextPath;
     }
 
     public ServletContext getContext(String path) {
@@ -72,10 +93,6 @@ public class MockletServletContextImpl implements MockletServletContext, Seriali
 
     public String getMimeType(String file) {
         return mimeTypes.get(file);
-    }
-
-    public void addMimeType(String file, String type) {
-        mimeTypes.put(file, type);
     }
 
     public Set<String> getResourcePaths(String path) {
@@ -229,10 +246,6 @@ public class MockletServletContextImpl implements MockletServletContext, Seriali
         return new MockletEnumerationAdapter<String>(initParameters.keySet().iterator());
     }
 
-    public void setInitParameter(String name, String value) {
-        initParameters.put(name, value);
-    }
-
     public Object getAttribute(String name) {
         return attributes.get(name);
     }
@@ -249,12 +262,15 @@ public class MockletServletContextImpl implements MockletServletContext, Seriali
         attributes.remove(name);
     }
 
-    public String getServletContextName() {
-        return servletContextName;
+    // ===================================================================================
+    //                                                                       Mock Handling
+    //                                                                       =============
+    public void addMimeType(String file, String type) {
+        mimeTypes.put(file, type);
     }
 
-    public void setServletContextName(String servletContextName) {
-        this.servletContextName = servletContextName;
+    public void setInitParameter(String name, String value) {
+        initParameters.put(name, value);
     }
 
     public MockletHttpServletRequest createRequest(String path) {
@@ -267,6 +283,14 @@ public class MockletServletContextImpl implements MockletServletContext, Seriali
         MockletHttpServletRequestImpl request = new MockletHttpServletRequestImpl(this, path);
         request.setQueryString(queryString);
         return request;
+    }
+
+    public void setServletContextName(String servletContextName) {
+        this.servletContextName = servletContextName;
+    }
+
+    public void setContextPath(String contextPath) {
+        this.contextPath = contextPath;
     }
 
     public Map<String, String> getInitParameterMap() {
