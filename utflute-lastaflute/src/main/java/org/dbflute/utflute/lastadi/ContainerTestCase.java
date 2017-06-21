@@ -265,6 +265,7 @@ public abstract class ContainerTestCase extends LastaDiTestCase {
     @Override
     protected void switchCurrentDate(Supplier<LocalDateTime> dateTimeSupplier) {
         super.switchCurrentDate(dateTimeSupplier);
+        SimpleTimeManager.unlock();
         SimpleTimeManager.shootBowgunCurrentTimeProvider(() -> {
             return DfTypeUtil.toDate(dateTimeSupplier.get()).getTime();
         });
@@ -273,6 +274,7 @@ public abstract class ContainerTestCase extends LastaDiTestCase {
     @Override
     protected void xclearSwitchedCurrentDate() {
         if (xisUseSwitchedCurrentDate()) {
+            SimpleTimeManager.unlock();
             SimpleTimeManager.shootBowgunCurrentTimeProvider(null);
         }
         super.xclearSwitchedCurrentDate();
