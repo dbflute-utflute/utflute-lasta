@@ -1374,4 +1374,8 @@ public abstract class PlainTestCase extends TestCase {
     protected void xsetReservedTitle(String reservedTitle) {
         _xreservedTitle = reservedTitle;
     }
+
+    public boolean xisUseSwitchedCurrentDate() {
+        return _xuseSwitchedCurrentDate;
+    }
 }

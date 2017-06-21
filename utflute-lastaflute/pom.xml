@@ -21,7 +21,7 @@
 		<dependency>
 			<groupId>org.lastaflute</groupId>
 			<artifactId>lastaflute</artifactId>
-			<version>0.9.8</version>
+			<version>0.9.9-RC5</version>
 		</dependency>
 		<!-- lasta-doc -->
 		<dependency>
