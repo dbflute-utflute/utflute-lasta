@@ -168,9 +168,7 @@ public abstract class InjectionTestCase extends PlainTestCase {
         _xtestCaseComponentBinder.revertBoundComponent(_xtestCaseBoundResult);
         _xtestCaseBoundResult = null;
         if (_xinjectedBoundResultList != null) {
-            for (BoundResult injectedBoundResult : _xinjectedBoundResultList) {
-                _xtestCaseComponentBinder.revertBoundComponent(injectedBoundResult);
-            }
+            _xtestCaseComponentBinder.revertBoundComponent(_xinjectedBoundResultList);
         }
         _xinjectedBoundResultList = null;
     }
