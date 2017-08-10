@@ -19,6 +19,7 @@ import java.io.File;
 import java.lang.reflect.Modifier;
 
 import org.dbflute.helper.message.ExceptionMessageBuilder;
+import org.dbflute.utflute.core.filesystem.FileLineHandler;
 import org.dbflute.utflute.core.filesystem.FilesystemPlayer;
 import org.dbflute.utflute.core.policestory.javaclass.PoliceStoryJavaClassHandler;
 import org.dbflute.util.Srl;
@@ -49,11 +50,21 @@ public class LastaPresentsSomethingPolice implements PoliceStoryJavaClassHandler
             return;
         }
         if (isFormImmutableTargetClass(clazz)) {
-            new FilesystemPlayer().readLine(srcFile, "UTF-8", line -> {
-                if (_formImmutable) {
-                    checkFormImmutableLine(clazz, line, "Form", "form."); // option
+            new FilesystemPlayer().readLine(srcFile, "UTF-8", new FileLineHandler() {
+                private boolean hasFormSetup;
+
+                @Override
+                public void handle(String line) {
+                    if (_formImmutable) {
+                        if (!hasFormSetup && hasFormSetupMethodCall(line)) {
+                            hasFormSetup = true;
+                        }
+                        if (!hasFormSetup) {
+                            checkFormImmutableLine(clazz, line, "Form", "form."); // option
+                        }
+                    }
+                    checkFormImmutableLine(clazz, line, "Body", "body."); // as default
                 }
-                checkFormImmutableLine(clazz, line, "Body", "body."); // as default
             });
         }
     }
@@ -61,6 +72,10 @@ public class LastaPresentsSomethingPolice implements PoliceStoryJavaClassHandler
     protected boolean isFormImmutableTargetClass(Class<?> clazz) {
         final String name = clazz.getName();
         return name.contains(getWebPackageKeyword()) && (name.endsWith(getActionSuffix()) || name.endsWith(getAssistSuffix()));
+    }
+
+    protected boolean hasFormSetupMethodCall(String line) {
+        return line.contains("setup(form ->");
     }
 
     protected void checkFormImmutableLine(Class<?> clazz, String line, String title, String formPrefix) {
