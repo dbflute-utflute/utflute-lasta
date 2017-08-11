@@ -15,9 +15,9 @@
  */
 package org.dbflute.utflute.core.cannonball;
 
-import junit.framework.AssertionFailedError;
-
 import org.dbflute.helper.message.ExceptionMessageBuilder;
+
+import junit.framework.AssertionFailedError;
 
 /**
  * @author jflute
@@ -128,13 +128,13 @@ public class CannonballCar {
             if (isEntryNumber(entryNumber)) {
                 if (dragon.isExpectedNormallyDone()) {
                     if (forcedly) {
-                        String msg = "expected: normally done but was: the plan overtime: " + entryNumber;
+                        String msg = "expected: normally done, but was: the plan overtime: entryNumber=" + entryNumber;
                         throw new AssertionFailedError(msg);
                     }
                 }
                 if (dragon.isExpectedOvertime()) {
                     if (!forcedly) {
-                        String msg = "expected: overtime but was: the plan normally done: " + entryNumber;
+                        String msg = "expected: overtime, but was: the plan normally done: entryNumber=" + entryNumber;
                         throw new AssertionFailedError(msg);
                     }
                 }

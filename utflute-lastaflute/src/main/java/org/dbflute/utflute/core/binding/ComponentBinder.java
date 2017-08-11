@@ -19,6 +19,8 @@ import java.lang.annotation.Annotation;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
@@ -491,10 +493,20 @@ public class ComponentBinder {
     //                                                                      Revert Binding
     //                                                                      ==============
     public void revertBoundComponent(BoundResult boundResult) {
+        doRevertBoundComponent(boundResult);
+    }
+
+    public void revertBoundComponent(List<BoundResult> boundResultList) {
+        for (BoundResult boundResult : orderRevertedList(boundResultList)) {
+            doRevertBoundComponent(boundResult);
+        }
+    }
+
+    protected void doRevertBoundComponent(BoundResult boundResult) {
         // needs to revert because it may be container-managed bean
         final Object bean = boundResult.getTargetBean();
         final List<BoundField> boundFieldList = boundResult.getBoundFieldList();
-        for (BoundField boundField : boundFieldList) {
+        for (BoundField boundField : orderRevertedList(boundFieldList)) {
             try {
                 boundField.getField().set(bean, boundField.getExisting());
             } catch (Exception continued) { // because of not important but may need to debug so logging
@@ -503,7 +515,7 @@ public class ComponentBinder {
         }
         boundFieldList.clear();
         final List<BoundProperty> boundPropertyList = boundResult.getBoundPropertyList();
-        for (BoundProperty boundProperty : boundPropertyList) {
+        for (BoundProperty boundProperty : orderRevertedList(boundPropertyList)) {
             try {
                 boundProperty.getPropertyDesc().setValue(bean, boundProperty.getExisting());
             } catch (Exception continued) { // because of not important but may need to debug so logging
@@ -512,9 +524,15 @@ public class ComponentBinder {
         }
         boundPropertyList.clear();
         final List<BoundResult> nestedBoundResultList = boundResult.getNestedBoundResultList();
-        for (BoundResult nestedBoundResult : nestedBoundResultList) {
-            revertBoundComponent(nestedBoundResult);
+        for (BoundResult nestedBoundResult : orderRevertedList(nestedBoundResultList)) {
+            doRevertBoundComponent(nestedBoundResult);
         }
+    }
+
+    protected <ELEMENT> List<ELEMENT> orderRevertedList(List<ELEMENT> originalList) {
+        final List<ELEMENT> reversedList = new ArrayList<ELEMENT>(originalList);
+        Collections.reverse(reversedList); // to avoid real component loss
+        return reversedList;
     }
 
     // ===================================================================================

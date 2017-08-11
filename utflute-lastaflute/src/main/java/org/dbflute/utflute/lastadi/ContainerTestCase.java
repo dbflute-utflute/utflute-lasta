@@ -16,20 +16,24 @@
 package org.dbflute.utflute.lastadi;
 
 import java.lang.reflect.Method;
+import java.time.LocalDateTime;
 import java.util.Date;
 import java.util.function.Consumer;
+import java.util.function.Supplier;
 
 import javax.annotation.Resource;
 import javax.sql.DataSource;
 
 import org.dbflute.utflute.lastaflute.mail.MailMessageAssertion;
 import org.dbflute.utflute.lastaflute.mail.TestingMailData;
+import org.dbflute.util.DfTypeUtil;
 import org.lastaflute.core.direction.FwAssistantDirector;
 import org.lastaflute.core.direction.FwCoreDirection;
 import org.lastaflute.core.json.JsonManager;
 import org.lastaflute.core.magic.ThreadCacheContext;
 import org.lastaflute.core.magic.TransactionTimeContext;
 import org.lastaflute.core.magic.destructive.BowgunDestructiveAdjuster;
+import org.lastaflute.core.time.SimpleTimeManager;
 import org.lastaflute.core.time.TimeManager;
 import org.lastaflute.db.dbflute.accesscontext.PreparedAccessContext;
 import org.lastaflute.web.response.JsonResponse;
@@ -202,6 +206,9 @@ public abstract class ContainerTestCase extends LastaDiTestCase {
     // ===================================================================================
     //                                                                         Destructive
     //                                                                         ===========
+    // -----------------------------------------------------
+    //                                          Asynchronous
+    //                                          ------------
     /**
      * Change asynchronous process to normal synchronous, to be easy to assert. <br>
      * (Invalidate AsyncManager)
@@ -225,6 +232,9 @@ public abstract class ContainerTestCase extends LastaDiTestCase {
         BowgunDestructiveAdjuster.restoreBowgunAsyncToNormalSync();
     }
 
+    // -----------------------------------------------------
+    //                                           Transaction
+    //                                           -----------
     /**
      * Change requires-new transaction to required transaction, to be easy to assert. <br>
      * (All transactions can be in test transaction)
@@ -246,6 +256,28 @@ public abstract class ContainerTestCase extends LastaDiTestCase {
     protected void restoreRequiresNewToRequired() {
         BowgunDestructiveAdjuster.unlock();
         BowgunDestructiveAdjuster.restoreBowgunRequiresNewToRequired();
+    }
+
+    // -----------------------------------------------------
+    //                                          Current Date
+    //                                          ------------
+    // to be geared with LastaFlute
+    @Override
+    protected void switchCurrentDate(Supplier<LocalDateTime> dateTimeSupplier) {
+        super.switchCurrentDate(dateTimeSupplier);
+        SimpleTimeManager.unlock();
+        SimpleTimeManager.shootBowgunCurrentTimeProvider(() -> {
+            return DfTypeUtil.toDate(dateTimeSupplier.get()).getTime();
+        });
+    }
+
+    @Override
+    protected void xclearSwitchedCurrentDate() {
+        if (xisUseSwitchedCurrentDate()) {
+            SimpleTimeManager.unlock();
+            SimpleTimeManager.shootBowgunCurrentTimeProvider(null);
+        }
+        super.xclearSwitchedCurrentDate();
     }
 
     // ===================================================================================
