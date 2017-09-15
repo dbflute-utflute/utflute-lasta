@@ -34,12 +34,13 @@ public class LastaPresentsSomethingPolice implements PoliceStoryJavaClassHandler
     //                                                                           Attribute
     //                                                                           =========
     protected boolean _formImmutable;
+    protected boolean _bodyImmutable;
 
     // ===================================================================================
     //                                                                              Handle
     //                                                                              ======
     public void handle(File srcFile, Class<?> clazz) {
-        handleFormImmutable(srcFile, clazz);
+        handleFormImmutable(srcFile, clazz); // contains body
     }
 
     // ===================================================================================
@@ -51,33 +52,77 @@ public class LastaPresentsSomethingPolice implements PoliceStoryJavaClassHandler
         }
         if (isFormImmutableTargetClass(clazz)) {
             new FilesystemPlayer().readLine(srcFile, "UTF-8", new FileLineHandler() {
+                private boolean hasFormParameter;
                 private boolean hasFormSetup;
+                private boolean hasBodyParameter;
 
                 @Override
                 public void handle(String line) {
-                    if (_formImmutable) {
-                        if (!hasFormSetup && hasFormSetupMethodCall(line)) {
+                    if (_formImmutable) { // option
+                        if (!hasFormParameter && containsFormParameterDefinition(line)) {
+                            hasFormParameter = true;
+                        }
+                        if (!hasFormSetup && containsFormSetupMethodCall(line)) {
                             hasFormSetup = true;
                         }
-                        if (!hasFormSetup) {
-                            checkFormImmutableLine(clazz, line, "Form", "form."); // option
+                        if (hasFormParameter && !hasFormSetup) {
+                            checkFormImmutableLine(clazz, line, "Form", "form.");
                         }
                     }
-                    checkFormImmutableLine(clazz, line, "Body", "body."); // as default
+                    if (_bodyImmutable) { // option
+                        if (!hasBodyParameter && containsBodyParameterDefinition(line)) {
+                            hasBodyParameter = true;
+                        }
+                        if (hasBodyParameter) {
+                            checkFormImmutableLine(clazz, line, "Body", "body.");
+                        }
+                    }
                 }
             });
         }
     }
 
+    // ===================================================================================
+    //                                                                    Immutable Target
+    //                                                                    ================
     protected boolean isFormImmutableTargetClass(Class<?> clazz) {
         final String name = clazz.getName();
         return name.contains(getWebPackageKeyword()) && (name.endsWith(getActionSuffix()) || name.endsWith(getAssistSuffix()));
     }
 
-    protected boolean hasFormSetupMethodCall(String line) {
+    protected String getWebPackageKeyword() {
+        return ".app.web.";
+    }
+
+    protected String getActionSuffix() {
+        return "Action";
+    }
+
+    protected String getAssistSuffix() {
+        return "Assist";
+    }
+
+    // ===================================================================================
+    //                                                                          Form Logic
+    //                                                                          ==========
+    protected boolean containsFormParameterDefinition(String line) {
+        return Srl.containsAll(line, "public", "Response", "Form form)");
+    }
+
+    protected boolean containsFormSetupMethodCall(String line) {
         return line.contains("setup(form ->");
     }
 
+    // ===================================================================================
+    //                                                                          Body Logic
+    //                                                                          ==========
+    protected boolean containsBodyParameterDefinition(String line) {
+        return Srl.containsAll(line, "public", "Response", "Body body)");
+    }
+
+    // ===================================================================================
+    //                                                                               Check
+    //                                                                               =====
     protected void checkFormImmutableLine(Class<?> clazz, String line, String title, String formPrefix) {
         if (line.contains(formPrefix)) { // simple determination for performance
             final String ltrimmedLine = Srl.ltrim(line);
@@ -120,25 +165,15 @@ public class LastaPresentsSomethingPolice implements PoliceStoryJavaClassHandler
     }
 
     // ===================================================================================
-    //                                                                              Naming
-    //                                                                              ======
-    protected String getWebPackageKeyword() {
-        return ".app.web.";
-    }
-
-    protected String getActionSuffix() {
-        return "Action";
-    }
-
-    protected String getAssistSuffix() {
-        return "Assist";
-    }
-
-    // ===================================================================================
     //                                                                              Option
     //                                                                              ======
     public LastaPresentsSomethingPolice formImmutable() {
         _formImmutable = true;
+        return this;
+    }
+
+    public LastaPresentsSomethingPolice bodyImmutable() {
+        _bodyImmutable = true;
         return this;
     }
 }
