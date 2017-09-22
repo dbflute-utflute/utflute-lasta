@@ -107,6 +107,35 @@ public class TestingValidationData {
         }
     }
 
+    /**
+     * Assert the message is required as validation error.
+     * <pre>
+     * data.requiredMessageOfDirectly("sea", "be between");
+     * </pre>
+     * @param property the name of property, which may have user messages. (NotNull)
+     * @param keyword The keyword that is contained in message of validation error. (NotNull)
+     */
+    public void requiredMessageOfDirectly(String property, String keyword) {
+        if (property == null) {
+            throw new IllegalArgumentException("The argument 'property' should not be null.");
+        }
+        if (keyword == null) {
+            throw new IllegalArgumentException("The argument 'keyword' should not be null.");
+        }
+        final UserMessages messages = _cause.getMessages();
+        final Iterator<UserMessage> ite = messages.silentAccessByIteratorOf(property);
+        boolean found = false;
+        while (ite.hasNext()) {
+            final UserMessage message = ite.next();
+            if (message.getMessageKey().contains(keyword)) {
+                found = true;
+            }
+        }
+        if (!found) {
+            Assert.fail(buildNoValidationErrorMessageDirectly(messages, property, keyword));
+        }
+    }
+
     protected String buildNoValidationErrorMessage(UserMessages messages, String property, Class<? extends Annotation> annotationType) {
         final ExceptionMessageBuilder br = new ExceptionMessageBuilder();
         br.addNotice("No validation error for the validator annotation.");
@@ -126,6 +155,18 @@ public class TestingValidationData {
         br.addElement(property);
         br.addItem("Message Key");
         br.addElement(messageKey);
+        br.addItem("UserMessages");
+        setupUserMessagesDisplay(messages, br);
+        return br.buildExceptionMessage();
+    }
+
+    protected String buildNoValidationErrorMessageDirectly(UserMessages messages, String property, String keyword) {
+        final ExceptionMessageBuilder br = new ExceptionMessageBuilder();
+        br.addNotice("No validation error for the message key.");
+        br.addItem("Property");
+        br.addElement(property);
+        br.addItem("Keyword");
+        br.addElement(keyword);
         br.addItem("UserMessages");
         setupUserMessagesDisplay(messages, br);
         return br.buildExceptionMessage();
