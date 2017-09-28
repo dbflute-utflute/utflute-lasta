@@ -44,6 +44,7 @@ import org.dbflute.utflute.mocklet.MockletServletConfigImpl;
 import org.dbflute.utflute.mocklet.MockletServletContext;
 import org.dbflute.utflute.mocklet.MockletServletContextImpl;
 import org.lastaflute.core.direction.FwAssistantDirector;
+import org.lastaflute.core.magic.ThreadCacheContext;
 import org.lastaflute.core.message.MessageManager;
 import org.lastaflute.di.core.ExternalContext;
 import org.lastaflute.di.core.LaContainer;
@@ -515,6 +516,30 @@ public abstract class WebContainerTestCase extends ContainerTestCase {
     protected void assertTokenVerified() { // for action that calls verityToken()
         final boolean condition = _doubleSubmitManager.isFirstSubmittedRequest();
         assertTrue("Not found the transaction token verification, so call verifyToken().", condition);
+    }
+
+    // ===================================================================================
+    //                                                                Mock HTML Validation
+    //                                                                ====================
+    /**
+     * Mock HTML validate() call for thread cache adjustment. <br>
+     * For example, in LastaRemoteApi, client error translation of HTML validation error needs this.
+     * <pre>
+     * // in yourDefaultRule()
+     * rule.translateClientError(resource -&gt; {
+     *     ...
+     *     return resource.asHtmlValidationError(messages);
+     * });
+     * 
+     * ...
+     * 
+     * // in unit test
+     * mockHtmlValidateCall();
+     * assertValidationError(() -&gt; bhv.requestProductList(param));
+     * </pre>
+     */
+    protected void mockHtmlValidateCall() { // for e.g. remote api unit test
+        ThreadCacheContext.registerValidatorErrorHook(() -> ActionResponse.undefined()); // dummy
     }
 
     // ===================================================================================
