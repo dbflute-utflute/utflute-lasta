@@ -116,6 +116,24 @@ public abstract class WebContainerTestCase extends ContainerTestCase {
         xdoPrepareWebMockContext();
     }
 
+    @Override
+    protected boolean isUseOneTimeContainer() { // may be overridden
+        return maybeContainerResourceOverridden(); // to destroy cache but #hope separate life-cycle
+    }
+
+    protected boolean maybeContainerResourceOverridden() {
+        return isMethodOverridden("prepareMockContextPath") || isMethodOverridden("prepareMockServletPath");
+    }
+
+    private boolean isMethodOverridden(String methodName, Class<?>... argTypes) {
+        try {
+            getClass().getDeclaredMethod(methodName, argTypes);
+            return true;
+        } catch (NoSuchMethodException ignored) {
+            return false;
+        }
+    }
+
     protected void xdoPrepareWebMockContext() {
         if (_xcachedServletConfig != null) {
             // the servletConfig has been already created when container initialization
