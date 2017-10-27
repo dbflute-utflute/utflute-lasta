@@ -707,7 +707,13 @@ public abstract class PlainTestCase extends TestCase {
                         break;
                     }
                     final Object nextObj = msgs[nextIndex];
-                    final String replacement = nextObj != null ? nextObj.toString() : "null";
+                    final String replacement;
+                    if (nextObj != null) {
+                        // escape two special characters of replaceFirst() to avoid illegal group reference
+                        replacement = Srl.replace(Srl.replace(nextObj.toString(), "\\", "\\\\"), "$", "\\$");
+                    } else {
+                        replacement = "null";
+                    }
                     strMsg = strMsg.replaceFirst("\\{\\}", replacement);
                     ++skipCount;
                     ++nextIndex;
