@@ -82,7 +82,7 @@ public abstract class LastaDiTestCase extends InjectionTestCase {
         final String configFile = prepareConfigFile();
         if (xisInitializedContainer()) {
             if (xcanRecycleContainer(configFile)) {
-                log("...Recycling lasta_di: " + configFile);
+                log("...Recycling lasta_di as {}: config={}", xisCurrentBootingContainerWeb() ? "web" : "library", configFile);
                 xrecycleContainerInstance(configFile);
                 return configFile; // no need to initialize
             } else { // changed
@@ -112,7 +112,7 @@ public abstract class LastaDiTestCase extends InjectionTestCase {
         }
         return false;
     }
-    
+
     protected boolean xisTreatedAsWebContainer() { // may be overridden
         return false;
     }
