@@ -134,6 +134,11 @@ public abstract class WebContainerTestCase extends ContainerTestCase {
         }
     }
 
+    @Override
+    protected boolean xisTreatedAsWebContainer() {
+        return true; // fixedly (not related to web mock)
+    }
+
     protected void xdoPrepareWebMockContext() {
         if (_xcachedServletConfig != null) {
             // the servletConfig has been already created when container initialization

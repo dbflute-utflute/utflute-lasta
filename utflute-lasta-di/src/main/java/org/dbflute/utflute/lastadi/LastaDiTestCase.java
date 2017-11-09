@@ -27,7 +27,6 @@ import javax.transaction.TransactionManager;
 
 import org.dbflute.utflute.core.InjectionTestCase;
 import org.dbflute.utflute.core.binding.BindingAnnotationRule;
-import org.dbflute.utflute.core.binding.ComponentBinder;
 import org.dbflute.utflute.core.transaction.TransactionFailureException;
 import org.dbflute.utflute.core.transaction.TransactionResource;
 import org.dbflute.util.Srl;
@@ -50,10 +49,10 @@ public abstract class LastaDiTestCase extends InjectionTestCase {
     //                                         Static Cached
     //                                         -------------
     /** The cached configuration file of DI container. (NullAllowed: null means beginning or ending) */
-    protected static String _xcachedConfigFile;
+    private static String _xcachedConfigFile;
 
     /** The cached determination of suppressing web mock. (NullAllowed: null means beginning or ending) */
-    protected static Boolean _xcachedSuppressWebMock;
+    private static Boolean _xcachedSuppressWebMock;
 
     // ===================================================================================
     //                                                                            Settings
@@ -95,20 +94,45 @@ public abstract class LastaDiTestCase extends InjectionTestCase {
     }
 
     protected boolean xcanRecycleContainer(String configFile) {
+        if (xneedsContainlyReinitializeContainer()) {
+            return false; // needs to switch e.g. web or library
+        }
         return xconfigCanAcceptContainerRecycle(configFile) && xwebMockCanAcceptContainerRecycle();
+    }
+
+    protected boolean xneedsContainlyReinitializeContainer() {
+        if (xisTreatedAsWebContainer()) {
+            if (!xisCurrentBootingContainerWeb()) { // current is library
+                return !isSuppressWebMock(); // needs to re-initialize as web if not suppressed mock
+            }
+        } else { // treated as library container
+            if (xisCurrentBootingContainerWeb()) { // current is web
+                return true; // needs to re-initialize as library
+            }
+        }
+        return false;
+    }
+
+    protected boolean xisTreatedAsWebContainer() { // may be overridden
+        return false;
+    }
+
+    protected boolean xisCurrentBootingContainerWeb() {
+        // external context is actually only for web so simple here
+        return SingletonLaContainerFactory.getExternalContext() != null;
     }
 
     protected boolean xconfigCanAcceptContainerRecycle(String configFile) {
         return configFile.equals(_xcachedConfigFile); // no change
     }
 
-    protected void xrecycleContainerInstance(String configFile) {
-        // managed as singleton so caching is unneeded here
-    }
-
     protected boolean xwebMockCanAcceptContainerRecycle() {
         // no mark or no change
         return _xcachedSuppressWebMock == null || _xcachedSuppressWebMock.equals(isSuppressWebMock());
+    }
+
+    protected void xrecycleContainerInstance(String configFile) {
+        // managed as singleton so caching is unneeded here
     }
 
     protected void xsaveCachedInstance(String configFile) {
@@ -207,11 +231,6 @@ public abstract class LastaDiTestCase extends InjectionTestCase {
     // ===================================================================================
     //                                                                   Component Binding
     //                                                                   =================
-    @Override
-    protected ComponentBinder createOuterComponentBinder(Object bean) {
-        return super.createOuterComponentBinder(bean);
-    }
-
     @Override
     protected Map<Class<? extends Annotation>, BindingAnnotationRule> xprovideBindingAnnotationRuleMap() {
         final Map<Class<? extends Annotation>, BindingAnnotationRule> ruleMap = newHashMap();
@@ -321,5 +340,24 @@ public abstract class LastaDiTestCase extends InjectionTestCase {
         } catch (ComponentNotFoundException ignored) {
             return false;
         }
+    }
+
+    // ===================================================================================
+    //                                                                            Accessor
+    //                                                                            ========
+    protected static String xgetCachedConfigFile() {
+        return _xcachedConfigFile;
+    }
+
+    protected static void xsetCachedConfigFile(String xcachedConfigFile) {
+        _xcachedConfigFile = xcachedConfigFile;
+    }
+
+    protected static Boolean xgetCachedSuppressWebMock() {
+        return _xcachedSuppressWebMock;
+    }
+
+    protected static void xsetCachedSuppressWebMock(Boolean xcachedSuppressWebMock) {
+        _xcachedSuppressWebMock = xcachedSuppressWebMock;
     }
 }

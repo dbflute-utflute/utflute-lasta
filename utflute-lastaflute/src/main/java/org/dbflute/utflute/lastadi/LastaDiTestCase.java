@@ -94,20 +94,45 @@ public abstract class LastaDiTestCase extends InjectionTestCase {
     }
 
     protected boolean xcanRecycleContainer(String configFile) {
+        if (xneedsContainlyReinitializeContainer()) {
+            return false; // needs to switch e.g. web or library
+        }
         return xconfigCanAcceptContainerRecycle(configFile) && xwebMockCanAcceptContainerRecycle();
+    }
+
+    protected boolean xneedsContainlyReinitializeContainer() {
+        if (xisTreatedAsWebContainer()) {
+            if (!xisCurrentBootingContainerWeb()) { // current is library
+                return !isSuppressWebMock(); // needs to re-initialize as web if not suppressed mock
+            }
+        } else { // treated as library container
+            if (xisCurrentBootingContainerWeb()) { // current is web
+                return true; // needs to re-initialize as library
+            }
+        }
+        return false;
+    }
+    
+    protected boolean xisTreatedAsWebContainer() { // may be overridden
+        return false;
+    }
+
+    protected boolean xisCurrentBootingContainerWeb() {
+        // external context is actually only for web so simple here
+        return SingletonLaContainerFactory.getExternalContext() != null;
     }
 
     protected boolean xconfigCanAcceptContainerRecycle(String configFile) {
         return configFile.equals(_xcachedConfigFile); // no change
     }
 
-    protected void xrecycleContainerInstance(String configFile) {
-        // managed as singleton so caching is unneeded here
-    }
-
     protected boolean xwebMockCanAcceptContainerRecycle() {
         // no mark or no change
         return _xcachedSuppressWebMock == null || _xcachedSuppressWebMock.equals(isSuppressWebMock());
+    }
+
+    protected void xrecycleContainerInstance(String configFile) {
+        // managed as singleton so caching is unneeded here
     }
 
     protected void xsaveCachedInstance(String configFile) {
@@ -266,7 +291,7 @@ public abstract class LastaDiTestCase extends InjectionTestCase {
     }
 
     protected void xinitializeContainer(String configFile) {
-        log("...Initializing seasar as library: " + configFile);
+        log("...Initializing lasta_di as library: " + configFile);
         xdoInitializeContainerAsLibrary(configFile);
     }
 
@@ -302,7 +327,7 @@ public abstract class LastaDiTestCase extends InjectionTestCase {
         try {
             SingletonLaContainer.getComponent(type);
             return true;
-        } catch (ComponentNotFoundException e) {
+        } catch (ComponentNotFoundException ignored) {
             return false;
         }
     }
