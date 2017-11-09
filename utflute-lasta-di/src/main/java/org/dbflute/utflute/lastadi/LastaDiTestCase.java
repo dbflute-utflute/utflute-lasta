@@ -272,7 +272,7 @@ public abstract class LastaDiTestCase extends InjectionTestCase {
     }
 
     protected void xinitializeContainer(String configFile) {
-        log("...Initializing seasar as library: " + configFile);
+        log("...Initializing lasta_di as library: " + configFile);
         xdoInitializeContainerAsLibrary(configFile);
     }
 
