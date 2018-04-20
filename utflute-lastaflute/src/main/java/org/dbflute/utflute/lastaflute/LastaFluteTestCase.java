@@ -13,7 +13,7 @@
  * either express or implied. See the License for the specific language
  * governing permissions and limitations under the License.
  */
-package org.dbflute.utflute.lastadi;
+package org.dbflute.utflute.lastaflute;
 
 import java.lang.reflect.Method;
 import java.time.LocalDateTime;
@@ -29,6 +29,7 @@ import javax.servlet.ServletContext;
 import javax.servlet.ServletException;
 import javax.sql.DataSource;
 
+import org.dbflute.utflute.lastadi.LastaDiTestCase;
 import org.dbflute.utflute.lastaflute.mail.MailMessageAssertion;
 import org.dbflute.utflute.lastaflute.mail.TestingMailData;
 import org.dbflute.utflute.mocklet.MockletServletConfig;
@@ -50,11 +51,11 @@ import org.lastaflute.web.LastaFilter;
 import org.lastaflute.web.response.JsonResponse;
 
 /**
+ * The base class of test cases with LastaFlute (also with Lasta Di).
  * @author jflute
- * @since 0.5.1 (2015/03/22 Sunday)
- * @deprecated use LastaFluteTestCase
+ * @since 0.8.6 (2018/04/20 Friday)
  */
-public abstract class ContainerTestCase extends LastaDiTestCase {
+public abstract class LastaFluteTestCase extends LastaDiTestCase {
 
     // ===================================================================================
     //                                                                          Definition

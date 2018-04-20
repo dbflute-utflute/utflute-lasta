@@ -15,14 +15,14 @@
  */
 package org.dbflute.utflute.lastadi.bean;
 
-import org.dbflute.utflute.lastadi.ContainerTestCase;
+import org.dbflute.utflute.lastadi.LastaDiTestCase;
 import org.dbflute.utflute.lastadi.dbflute.exbhv.FooBhv;
 
 /**
  * @author jflute
  * @since 0.1.0 (2011/07/24 Sunday)
  */
-public class FooActionTest extends ContainerTestCase {
+public class FooActionTest extends LastaDiTestCase {
 
     public void test_inject_basic() throws Exception {
         // ## Arrange ##

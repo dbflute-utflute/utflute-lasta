@@ -15,13 +15,13 @@
  */
 package org.dbflute.utflute.lastadi.recycle;
 
-import org.dbflute.utflute.lastadi.ContainerTestCase;
+import org.dbflute.utflute.lastadi.LastaDiTestCase;
 
 /**
  * @author jflute
  * @since 0.5.1 (2015/03/22 Sunday)
  */
-public class Recycle1stTest extends ContainerTestCase {
+public class Recycle1stTest extends LastaDiTestCase {
 
     public void test_first() throws Exception {
         // confirm log

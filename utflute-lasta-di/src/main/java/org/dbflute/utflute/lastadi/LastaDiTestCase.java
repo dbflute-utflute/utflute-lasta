@@ -51,9 +51,6 @@ public abstract class LastaDiTestCase extends InjectionTestCase {
     /** The cached configuration file of DI container. (NullAllowed: null means beginning or ending) */
     private static String _xcachedConfigFile;
 
-    /** The cached determination of suppressing web mock. (NullAllowed: null means beginning or ending) */
-    private static Boolean _xcachedSuppressWebMock;
-
     // ===================================================================================
     //                                                                            Settings
     //                                                                            ========
@@ -82,7 +79,7 @@ public abstract class LastaDiTestCase extends InjectionTestCase {
         final String configFile = prepareConfigFile();
         if (xisInitializedContainer()) {
             if (xcanRecycleContainer(configFile)) {
-                log("...Recycling lasta_di as {}: config={}", xisCurrentBootingContainerWeb() ? "web" : "library", configFile);
+                log("...Recycling lasta_di as {}: config={}", xisCurrentBootingWebContainer() ? "web-container" : "library", configFile);
                 xrecycleContainerInstance(configFile);
                 return configFile; // no need to initialize
             } else { // changed
@@ -95,18 +92,18 @@ public abstract class LastaDiTestCase extends InjectionTestCase {
 
     protected boolean xcanRecycleContainer(String configFile) {
         if (xneedsContainlyReinitializeContainer()) {
-            return false; // needs to switch e.g. web or library
+            return false; // needs to switch e.g. web-container or library
         }
-        return xconfigCanAcceptContainerRecycle(configFile) && xwebMockCanAcceptContainerRecycle();
+        return xconfigCanAcceptContainerRecycle(configFile);
     }
 
     protected boolean xneedsContainlyReinitializeContainer() {
         if (xisTreatedAsWebContainer()) {
-            if (!xisCurrentBootingContainerWeb()) { // current is library
-                return !isSuppressWebMock(); // needs to re-initialize as web if not suppressed mock
+            if (!xisCurrentBootingWebContainer()) { // current is library
+                return true; // needs to re-initialize as web-container
             }
         } else { // treated as library container
-            if (xisCurrentBootingContainerWeb()) { // current is web
+            if (xisCurrentBootingWebContainer()) { // current is web-container
                 return true; // needs to re-initialize as library
             }
         }
@@ -117,7 +114,7 @@ public abstract class LastaDiTestCase extends InjectionTestCase {
         return false;
     }
 
-    protected boolean xisCurrentBootingContainerWeb() {
+    protected boolean xisCurrentBootingWebContainer() {
         // external context is actually only for web so simple here
         return SingletonLaContainerFactory.getExternalContext() != null;
     }
@@ -126,26 +123,12 @@ public abstract class LastaDiTestCase extends InjectionTestCase {
         return configFile.equals(_xcachedConfigFile); // no change
     }
 
-    protected boolean xwebMockCanAcceptContainerRecycle() {
-        // no mark or no change
-        return _xcachedSuppressWebMock == null || _xcachedSuppressWebMock.equals(isSuppressWebMock());
-    }
-
     protected void xrecycleContainerInstance(String configFile) {
         // managed as singleton so caching is unneeded here
     }
 
     protected void xsaveCachedInstance(String configFile) {
         _xcachedConfigFile = configFile;
-        _xcachedSuppressWebMock = isSuppressWebMock();
-    }
-
-    /**
-     * Does it suppress web mock? e.g. HttpServletRequest, HttpSession
-     * @return The determination, true or false.
-     */
-    protected boolean isSuppressWebMock() {
-        return false;
     }
 
     @Override
@@ -351,13 +334,5 @@ public abstract class LastaDiTestCase extends InjectionTestCase {
 
     protected static void xsetCachedConfigFile(String xcachedConfigFile) {
         _xcachedConfigFile = xcachedConfigFile;
-    }
-
-    protected static Boolean xgetCachedSuppressWebMock() {
-        return _xcachedSuppressWebMock;
-    }
-
-    protected static void xsetCachedSuppressWebMock(Boolean xcachedSuppressWebMock) {
-        _xcachedSuppressWebMock = xcachedSuppressWebMock;
     }
 }
