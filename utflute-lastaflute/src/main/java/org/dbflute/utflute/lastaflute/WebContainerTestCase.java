@@ -55,7 +55,7 @@ import org.lastaflute.web.token.DoubleSubmitTokenMap;
 import org.lastaflute.web.validation.exception.ValidationErrorException;
 
 /**
- * The base class of test cases for components on web. <br>
+ * The base class of test cases for web environment with DI container. <br>
  * You can use tests of LastaFlute components e.g. action, assist, logic, job.
  * 
  * <p>Standard application structure:</p>
@@ -138,23 +138,6 @@ public abstract class WebContainerTestCase extends LastaFluteTestCase {
         }
     }
 
-    @Override
-    protected boolean maybeContainerResourceOverridden() {
-        return super.maybeContainerResourceOverridden() || xisMethodOverridden("prepareMockServletPath");
-    }
-
-    // -----------------------------------------------------
-    //                                     Destroy Container
-    //                                     -----------------
-    @Override
-    protected void xdestroyTestCaseContainer() {
-        xclearRequestMockContext();
-        super.xdestroyTestCaseContainer();
-    }
-
-    // -----------------------------------------------------
-    //                                          Request Mock
-    //                                          ------------
     protected void xregisterRequestMockContext(MockletServletConfig servletConfig) { // like S2ContainerFilter
         final LaContainer container = SingletonLaContainerFactory.getContainer();
         final ExternalContext externalContext = container.getExternalContext();
@@ -182,14 +165,38 @@ public abstract class WebContainerTestCase extends LastaFluteTestCase {
         _xmockResponse = response;
     }
 
+    @Override
+    protected boolean maybeContainerResourceOverridden() {
+        return super.maybeContainerResourceOverridden() || xisMethodOverridden("prepareMockServletPath");
+    }
+
+    // -----------------------------------------------------
+    //                                     Destroy Container
+    //                                     -----------------
+    @Override
+    protected void xdestroyTestCaseContainer() {
+        xclearRequestMockContext();
+        super.xdestroyTestCaseContainer();
+    }
+
     protected void xclearRequestMockContext() {
+        final LaContainer container = SingletonLaContainerFactory.getContainer();
+        final ExternalContext externalContext = container.getExternalContext();
+        if (externalContext != null) { // just in case
+            externalContext.setRequest(null);
+            externalContext.setResponse(null);
+        }
+        xreleaseMockRequestInstance();
+    }
+
+    protected void xreleaseMockRequestInstance() {
         _xmockRequest = null;
         _xmockResponse = null;
     }
 
     // ===================================================================================
-    //                                                                   Web Mock Handling
-    //                                                                   =================
+    //                                                                        Request Mock
+    //                                                                        ============
     // -----------------------------------------------------
     //                                            LastaFlute
     //                                            ----------
