@@ -15,13 +15,13 @@
  */
 package org.dbflute.utflute.lastadi.recycle;
 
-import org.dbflute.utflute.lastadi.ContainerTestCase;
+import org.dbflute.utflute.lastadi.LastaDiTestCase;
 
 /**
  * @author jflute
  * @since 0.5.1 (2015/03/22 Sunday)
  */
-public class Recycle3rdConfigChangeTest extends ContainerTestCase {
+public class Recycle3rdConfigChangeTest extends LastaDiTestCase {
 
     @Override
     protected String prepareConfigFile() {

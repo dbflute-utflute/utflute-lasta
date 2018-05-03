@@ -15,20 +15,15 @@
  */
 package org.dbflute.utflute.lastaflute;
 
-import java.util.Enumeration;
 import java.util.HashSet;
 import java.util.Set;
 
 import javax.annotation.Resource;
-import javax.servlet.FilterConfig;
-import javax.servlet.ServletConfig;
 import javax.servlet.ServletContext;
-import javax.servlet.ServletException;
 import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpServletRequest;
 
 import org.dbflute.helper.function.IndependentProcessor;
-import org.dbflute.utflute.lastadi.ContainerTestCase;
 import org.dbflute.utflute.lastaflute.mock.MockResopnseBeanValidator;
 import org.dbflute.utflute.lastaflute.mock.MockRuntimeFactory;
 import org.dbflute.utflute.lastaflute.mock.TestingHtmlData;
@@ -40,9 +35,6 @@ import org.dbflute.utflute.mocklet.MockletHttpServletResponse;
 import org.dbflute.utflute.mocklet.MockletHttpServletResponseImpl;
 import org.dbflute.utflute.mocklet.MockletHttpSession;
 import org.dbflute.utflute.mocklet.MockletServletConfig;
-import org.dbflute.utflute.mocklet.MockletServletConfigImpl;
-import org.dbflute.utflute.mocklet.MockletServletContext;
-import org.dbflute.utflute.mocklet.MockletServletContextImpl;
 import org.lastaflute.core.direction.FwAssistantDirector;
 import org.lastaflute.core.magic.ThreadCacheContext;
 import org.lastaflute.core.message.MessageManager;
@@ -52,7 +44,6 @@ import org.lastaflute.di.core.factory.SingletonLaContainerFactory;
 import org.lastaflute.doc.DocumentGenerator;
 import org.lastaflute.doc.SwaggerGenerator;
 import org.lastaflute.doc.web.LaActionSwaggerable;
-import org.lastaflute.web.LastaFilter;
 import org.lastaflute.web.LastaWebKey;
 import org.lastaflute.web.response.ActionResponse;
 import org.lastaflute.web.response.HtmlResponse;
@@ -64,20 +55,41 @@ import org.lastaflute.web.token.DoubleSubmitTokenMap;
 import org.lastaflute.web.validation.exception.ValidationErrorException;
 
 /**
+ * The base class of test cases for web environment with DI container. <br>
+ * You can use tests of LastaFlute components e.g. action, assist, logic, job.
+ * 
+ * <p>Standard application structure:</p>
+ * <pre>
+ * WebContainerTestCase
+ *  |-Unit[App]TestCase
+ *      |-[Your]ActionTest
+ * </pre>
+ * 
+ * <p>You can test like this:</p>
+ * <pre>
+ * public void test_yourMethod() {
+ *     <span style="color: #3F7E5E">// ## Arrange ##</span>
+ *     YourAction action = new YourAction();
+ *     <span style="color: #FD4747">inject</span>(action);
+ * 
+ *     <span style="color: #3F7E5E">// ## Act ##</span>
+ *     action.submit();
+ * 
+ *     <span style="color: #3F7E5E">// ## Assert ##</span>
+ *     assertTrue(action...);
+ * }
+ * </pre>
  * @author jflute
  * @since 0.5.1 (2015/03/22 Sunday)
  */
-public abstract class WebContainerTestCase extends ContainerTestCase {
+public abstract class WebContainerTestCase extends LastaFluteTestCase {
 
     // ===================================================================================
     //                                                                           Attribute
     //                                                                           =========
-    /** The cached configuration of servlet. (NullAllowed: when no web mock or beginning or ending) */
-    private static MockletServletConfig _xcachedServletConfig;
-
     // -----------------------------------------------------
-    //                                              Web Mock
-    //                                              --------
+    //                                          Request Mock
+    //                                          ------------
     /** The mock request of the test case execution. (NullAllowed: when no web mock or beginning or ending) */
     private MockletHttpServletRequest _xmockRequest;
 
@@ -99,99 +111,34 @@ public abstract class WebContainerTestCase extends ContainerTestCase {
     // ===================================================================================
     //                                                                            Settings
     //                                                                            ========
-    @Override
-    protected void initializeAssistantDirector() {
-        // web mock calls assistant director initialization so unneeded
-        if (isSuppressWebMock()) {
-            super.initializeAssistantDirector();
-        }
-    }
-
     // -----------------------------------------------------
     //                                     Prepare Container
     //                                     -----------------
     @Override
     protected void xprepareTestCaseContainer() {
         super.xprepareTestCaseContainer();
-        xdoPrepareWebMockContext();
-    }
-
-    protected void xdoPrepareWebMockContext() {
-        if (_xcachedServletConfig != null) {
-            // the servletConfig has been already created when container initialization
-            xregisterWebMockContext(_xcachedServletConfig);
+        if (!isSuppressRequestMock()) {
+            xdoPrepareRequestMockContext();
         }
     }
 
-    // -----------------------------------------------------
-    //                                     Destroy Container
-    //                                     -----------------
-    @Override
-    protected void xdestroyTestCaseContainer() {
-        xclearWebMockContext();
-        super.xdestroyTestCaseContainer();
+    /**
+     * Does it suppress web-request mock? e.g. HttpServletRequest, HttpSession
+     * @return The determination, true or false.
+     */
+    protected boolean isSuppressRequestMock() {
+        return false;
     }
 
-    protected void xclearWebMockContext() {
-        _xmockRequest = null;
-        _xmockResponse = null;
-    }
-
-    // -----------------------------------------------------
-    //                                  Initialize Container
-    //                                  --------------------
-    @Override
-    protected void xinitializeContainer(String configFile) {
-        if (isSuppressWebMock()) { // library
-            super.xinitializeContainer(configFile);
-        } else { // web (LastaFlute contains web components as default)
-            log("...Initializing lasta_di as web: " + configFile);
-            xdoInitializeContainerAsWeb(configFile);
+    protected void xdoPrepareRequestMockContext() {
+        // the servletConfig has been already created when container initialization
+        final MockletServletConfig servletConfig = xgetCachedServletConfig();
+        if (servletConfig != null) { // basically true, just in case (e.g. might be overridden)
+            xregisterRequestMockContext(servletConfig);
         }
     }
 
-    protected void xdoInitializeContainerAsWeb(String configFile) {
-        SingletonLaContainerFactory.setConfigPath(configFile);
-        final ServletConfig servletConfig = xprepareMockServletConfig(configFile);
-        final LastaFilter filter = xcreateLastaFilter();
-        try {
-            filter.init(new FilterConfig() {
-                public String getFilterName() {
-                    return "containerFilter";
-                }
-
-                public ServletContext getServletContext() {
-                    return servletConfig.getServletContext();
-                }
-
-                public Enumeration<String> getInitParameterNames() {
-                    return null;
-                }
-
-                public String getInitParameter(String name) {
-                    return null;
-                }
-            });
-        } catch (ServletException e) {
-            String msg = "Failed to initialize servlet config to servlet: " + servletConfig;
-            throw new IllegalStateException(msg, e.getRootCause());
-        }
-    }
-
-    // -----------------------------------------------------
-    //                                              Web Mock
-    //                                              --------
-    protected ServletConfig xprepareMockServletConfig(String configFile) {
-        _xcachedServletConfig = createMockletServletConfig(); // cache for request mocks
-        _xcachedServletConfig.setServletContext(createMockletServletContext());
-        return _xcachedServletConfig;
-    }
-
-    protected LastaFilter xcreateLastaFilter() {
-        return new LastaFilter();
-    }
-
-    protected void xregisterWebMockContext(MockletServletConfig servletConfig) { // like S2ContainerFilter
+    protected void xregisterRequestMockContext(MockletServletConfig servletConfig) { // like S2ContainerFilter
         final LaContainer container = SingletonLaContainerFactory.getContainer();
         final ExternalContext externalContext = container.getExternalContext();
         final MockletHttpServletRequest request = createMockletHttpServletRequest(servletConfig.getServletContext());
@@ -199,18 +146,6 @@ public abstract class WebContainerTestCase extends ContainerTestCase {
         externalContext.setRequest(request);
         externalContext.setResponse(response);
         xkeepMockRequestInstance(request, response); // for web mock handling methods
-    }
-
-    protected MockletServletConfig createMockletServletConfig() {
-        return new MockletServletConfigImpl();
-    }
-
-    protected MockletServletContext createMockletServletContext() {
-        return new MockletServletContextImpl(prepareMockContextPath());
-    }
-
-    protected String prepareMockContextPath() { // you can override
-        return "/utcontext";
     }
 
     protected MockletHttpServletRequest createMockletHttpServletRequest(ServletContext servletContext) {
@@ -230,18 +165,38 @@ public abstract class WebContainerTestCase extends ContainerTestCase {
         _xmockResponse = response;
     }
 
-    // -----------------------------------------------------
-    //                                               Destroy
-    //                                               -------
     @Override
-    protected void xdestroyContainer() {
-        super.xdestroyContainer();
-        _xcachedServletConfig = null;
+    protected boolean maybeContainerResourceOverridden() {
+        return super.maybeContainerResourceOverridden() || xisMethodOverridden("prepareMockServletPath");
+    }
+
+    // -----------------------------------------------------
+    //                                     Destroy Container
+    //                                     -----------------
+    @Override
+    protected void xdestroyTestCaseContainer() {
+        xclearRequestMockContext();
+        super.xdestroyTestCaseContainer();
+    }
+
+    protected void xclearRequestMockContext() {
+        final LaContainer container = SingletonLaContainerFactory.getContainer();
+        final ExternalContext externalContext = container.getExternalContext();
+        if (externalContext != null) { // just in case
+            externalContext.setRequest(null);
+            externalContext.setResponse(null);
+        }
+        xreleaseMockRequestInstance();
+    }
+
+    protected void xreleaseMockRequestInstance() {
+        _xmockRequest = null;
+        _xmockResponse = null;
     }
 
     // ===================================================================================
-    //                                                                   Web Mock Handling
-    //                                                                   =================
+    //                                                                        Request Mock
+    //                                                                        ============
     // -----------------------------------------------------
     //                                            LastaFlute
     //                                            ----------
@@ -594,14 +549,6 @@ public abstract class WebContainerTestCase extends ContainerTestCase {
     // ===================================================================================
     //                                                                            Accessor
     //                                                                            ========
-    protected static MockletServletConfig xgetCachedServletConfig() {
-        return _xcachedServletConfig;
-    }
-
-    protected static void xsetCachedServletConfig(MockletServletConfig xcachedServletConfig) {
-        _xcachedServletConfig = xcachedServletConfig;
-    }
-
     protected MockletHttpServletRequest xgetMockRequest() {
         return _xmockRequest;
     }
