@@ -24,11 +24,11 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 
-import junit.framework.AssertionFailedError;
-
 import org.dbflute.helper.message.ExceptionMessageBuilder;
 import org.dbflute.utflute.core.transaction.TransactionResource;
 import org.dbflute.util.Srl;
+
+import junit.framework.AssertionFailedError;
 
 /**
  * @author jflute
@@ -105,8 +105,7 @@ public class CannonballDirector {
         final List<Future<Object>> futureList = new ArrayList<Future<Object>>();
         for (int i = 0; i < threadCount; i++) { // basically synchronized with parameter size
             final int entryNumber = i + 1;
-            final Callable<Object> callable = createCallable(execution, option, ready, start, goal, ourLatch,
-                    entryNumber, lockObj, logger);
+            final Callable<Object> callable = createCallable(execution, option, ready, start, goal, ourLatch, entryNumber, lockObj, logger);
             final Future<Object> future = service.submit(callable);
             futureList.add(future);
         }
@@ -184,9 +183,9 @@ public class CannonballDirector {
     // ===================================================================================
     //                                                                            Callable
     //                                                                            ========
-    protected Callable<Object> createCallable(final CannonballRun run, final CannonballOption option,
-            final CountDownLatch ready, final CountDownLatch start, final CountDownLatch goal,
-            final CannonballLatch ourLatch, final int entryNumber, final Object lockObj, final CannonballLogger logger) {
+    protected Callable<Object> createCallable(final CannonballRun run, final CannonballOption option, final CountDownLatch ready,
+            final CountDownLatch start, final CountDownLatch goal, final CannonballLatch ourLatch, final int entryNumber,
+            final Object lockObj, final CannonballLogger logger) {
         return new Callable<Object>() {
             public Object call() { // each thread here
                 final long threadId = Thread.currentThread().getId();
@@ -200,6 +199,7 @@ public class CannonballDirector {
                         String msg = "start.await() was interrupted: start=" + start;
                         throw new IllegalStateException(msg, e);
                     }
+                    prepareBeginning();
                     prepareAccessContext();
                     TransactionResource txRes = null;
                     if (!option.isSuppressTransaction()) {
@@ -245,8 +245,8 @@ public class CannonballDirector {
         };
     }
 
-    protected CannonballCar createCar(long threadId, CannonballLatch ourLatch, int entryNumber, Object lockObj,
-            CannonballOption option, CannonballLogger logger) {
+    protected CannonballCar createCar(long threadId, CannonballLatch ourLatch, int entryNumber, Object lockObj, CannonballOption option,
+            CannonballLogger logger) {
         final int countOfEntry = option.getThreadCount();
         return new CannonballCar(threadId, ourLatch, entryNumber, lockObj, countOfEntry, logger);
     }
@@ -378,6 +378,10 @@ public class CannonballDirector {
     //                                                                         ===========
     protected TransactionResource beginTransaction() {
         return _cannonballHelper.help_beginTransaction();
+    }
+
+    protected void prepareBeginning() {
+        _cannonballHelper.help_prepareBeginning();
     }
 
     protected void prepareAccessContext() {

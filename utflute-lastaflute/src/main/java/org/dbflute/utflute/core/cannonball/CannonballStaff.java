@@ -23,9 +23,11 @@ import org.dbflute.utflute.core.transaction.TransactionResource;
  */
 public interface CannonballStaff {
 
-    TransactionResource help_beginTransaction();
+    void help_prepareBeginning();
 
     void help_prepareAccessContext();
+
+    TransactionResource help_beginTransaction();
 
     void help_clearAccessContext();
 

@@ -16,6 +16,7 @@
 package org.dbflute.utflute.core;
 
 import java.io.File;
+import java.lang.reflect.Method;
 import java.math.BigDecimal;
 import java.sql.SQLException;
 import java.sql.Timestamp;
@@ -112,7 +113,9 @@ public abstract class PlainTestCase extends TestCase {
     @Override
     protected void setUp() throws Exception {
         xreserveShowTitle();
-        xprepareAccessContext();
+        if (!xisSuppressTestCaseAccessContext()) {
+            initializeTestCaseAccessContext();
+        }
         super.setUp();
     }
 
@@ -141,11 +144,23 @@ public abstract class PlainTestCase extends TestCase {
 
     @Override
     protected void tearDown() throws Exception {
-        super.tearDown();
-        xclearAccessContext();
+        xclearAccessContextOnThread();
         xclearGatheredExecutedSql();
         xclearSwitchedCurrentDate();
         xclearMark(); // last process to be able to be used in tearDown()
+        super.tearDown();
+    }
+
+    // -----------------------------------------------------
+    //                                            Basic Info
+    //                                            ----------
+    protected Method getTestMethod() {
+        String methodName = getName();
+        try {
+            return getClass().getMethod(methodName, (Class[]) null);
+        } catch (NoSuchMethodException | SecurityException e) {
+            throw new IllegalStateException("Not found the method: " + methodName, e);
+        }
     }
 
     // ===================================================================================
@@ -1080,16 +1095,21 @@ public abstract class PlainTestCase extends TestCase {
      */
     protected CannonballStaff xcreateCannonballStaff() {
         return new CannonballStaff() {
+
+            public void help_prepareBeginning() {
+                xprepareCannonballBeginning();
+            }
+
+            public void help_prepareAccessContext() {
+                xprepareCannonballAccessContext();
+            }
+
             public TransactionResource help_beginTransaction() {
                 return beginNewTransaction();
             }
 
-            public void help_prepareAccessContext() {
-                xprepareAccessContext();
-            }
-
             public void help_clearAccessContext() {
-                xclearAccessContext();
+                xclearAccessContextOnThread();
             }
 
             public void help_assertEquals(Object expected, Object actual) {
@@ -1108,6 +1128,13 @@ public abstract class PlainTestCase extends TestCase {
                 return ln();
             }
         };
+    }
+
+    protected void xprepareCannonballBeginning() {
+    }
+
+    protected void xprepareCannonballAccessContext() {
+        xputTestCaseAccessContextOnThread();
     }
 
     /**
@@ -1295,7 +1322,19 @@ public abstract class PlainTestCase extends TestCase {
     // -----------------------------------------------------
     //                                         AccessContext
     //                                         -------------
-    protected void xprepareAccessContext() {
+    protected boolean xisSuppressTestCaseAccessContext() {
+        return false;
+    }
+
+    protected void initializeTestCaseAccessContext() {
+        xputTestCaseAccessContextOnThread();
+    }
+
+    protected void xputTestCaseAccessContextOnThread() {
+        AccessContext.setAccessContextOnThread(createTestCaseAccessContext());
+    }
+
+    protected AccessContext createTestCaseAccessContext() {
         final AccessContext context = new AccessContext();
         context.setAccessLocalDate(currentLocalDate());
         context.setAccessLocalDateTime(currentLocalDateTime());
@@ -1304,7 +1343,7 @@ public abstract class PlainTestCase extends TestCase {
         context.setAccessUser(Thread.currentThread().getName());
         context.setAccessProcess(getClass().getSimpleName());
         context.setAccessModule(getClass().getSimpleName());
-        AccessContext.setAccessContextOnThread(context);
+        return context;
     }
 
     /**
@@ -1315,7 +1354,7 @@ public abstract class PlainTestCase extends TestCase {
         return AccessContext.getAccessContextOnThread();
     }
 
-    protected void xclearAccessContext() {
+    protected void xclearAccessContextOnThread() {
         AccessContext.clearAccessContextOnThread();
     }
 
