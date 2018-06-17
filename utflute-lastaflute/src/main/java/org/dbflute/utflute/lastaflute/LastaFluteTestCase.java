@@ -17,7 +17,6 @@ package org.dbflute.utflute.lastaflute;
 
 import java.lang.reflect.Method;
 import java.time.LocalDateTime;
-import java.util.Date;
 import java.util.Enumeration;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
@@ -29,6 +28,7 @@ import javax.servlet.ServletContext;
 import javax.servlet.ServletException;
 import javax.sql.DataSource;
 
+import org.dbflute.hook.AccessContext;
 import org.dbflute.utflute.lastadi.LastaDiTestCase;
 import org.dbflute.utflute.lastaflute.mail.MailMessageAssertion;
 import org.dbflute.utflute.lastaflute.mail.TestingMailData;
@@ -38,13 +38,10 @@ import org.dbflute.utflute.mocklet.MockletServletContext;
 import org.dbflute.utflute.mocklet.MockletServletContextImpl;
 import org.dbflute.util.DfTypeUtil;
 import org.lastaflute.core.direction.FwAssistantDirector;
-import org.lastaflute.core.direction.FwCoreDirection;
 import org.lastaflute.core.json.JsonManager;
 import org.lastaflute.core.magic.ThreadCacheContext;
-import org.lastaflute.core.magic.TransactionTimeContext;
 import org.lastaflute.core.magic.destructive.BowgunDestructiveAdjuster;
 import org.lastaflute.core.time.SimpleTimeManager;
-import org.lastaflute.core.time.TimeManager;
 import org.lastaflute.db.dbflute.accesscontext.PreparedAccessContext;
 import org.lastaflute.di.core.factory.SingletonLaContainerFactory;
 import org.lastaflute.web.LastaFilter;
@@ -73,13 +70,6 @@ public abstract class LastaFluteTestCase extends LastaDiTestCase {
     @Resource
     private DataSource _xdataSource;
 
-    @Resource
-    private FwAssistantDirector _assistantDirector;
-    @Resource
-    private TimeManager _timeManager;
-    @Resource
-    private JsonManager _jsonManager;
-
     // -----------------------------------------------------
     //                                       Mail Validation
     //                                       ---------------
@@ -88,26 +78,56 @@ public abstract class LastaFluteTestCase extends LastaDiTestCase {
     // ===================================================================================
     //                                                                            Settings
     //                                                                            ========
+    // -----------------------------------------------------
+    //                                                Set up
+    //                                                ------
     @Override
-    public void setUp() throws Exception {
+    protected boolean xisSuppressTestCaseAccessContext() {
+        return true; // instead, use context geared by transaction
+    }
+
+    @Override
+    protected void xsetupBeforeTestCaseContainer() {
         xsuppressJobSchedulingIfNeeds();
-        super.setUp();
+        super.xsetupBeforeTestCaseContainer();
+    }
+
+    @Override
+    protected void xsetupAfterTestCaseContainer() {
+        super.xsetupAfterTestCaseContainer();
         if (isUseJobScheduling()) {
             xrebootJobSchedulingIfNeeds();
         }
         initializeAssistantDirector(); // nearly actual timing
-        initializeThreadCacheContext(); // me too
     }
 
-    protected void initializeAssistantDirector() {
-        final FwCoreDirection direction = _assistantDirector.assistCoreDirection();
-        direction.assistCurtainBeforeHook().hook(_assistantDirector);
+    protected void initializeAssistantDirector() { // injection not yet here
+        final FwAssistantDirector director = getComponent(FwAssistantDirector.class);
+        director.assistCoreDirection().assistCurtainBeforeHook().hook(director);
+    }
+
+    @Override
+    protected void xsetupBeforeTestCaseInjection() {
+        super.xsetupBeforeTestCaseInjection();
+        initializeThreadCacheContext(); // nearly actual timing
+        initializePreparedAccessContext();
     }
 
     protected void initializeThreadCacheContext() {
         ThreadCacheContext.initialize();
     }
 
+    protected void initializePreparedAccessContext() {
+        PreparedAccessContext.setAccessContextOnThread(createPreparedAccessContext());
+    }
+
+    protected AccessContext createPreparedAccessContext() {
+        return createTestCaseAccessContext(); // you should change to your context
+    }
+
+    // -----------------------------------------------------
+    //                                             Tear Down
+    //                                             ---------
     @Override
     protected void postTest() {
         super.postTest();
@@ -116,13 +136,13 @@ public abstract class LastaFluteTestCase extends LastaDiTestCase {
 
     @Override
     public void tearDown() throws Exception {
-        ThreadCacheContext.clear();
+        xdestroyJobSchedulingIfNeeds(); // always destroy if scheduled to avoid job trouble
+        super.tearDown();
+        ThreadCacheContext.clear(); // should be after closing transaction for e.g. LazyTransaction
         if (BowgunDestructiveAdjuster.hasAnyBowgun()) {
             BowgunDestructiveAdjuster.unlock();
             BowgunDestructiveAdjuster.restoreBowgunAll();
         }
-        xdestroyJobSchedulingIfNeeds(); // always destroy if scheduled to avoid job trouble
-        super.tearDown();
     }
 
     // -----------------------------------------------------
@@ -226,35 +246,18 @@ public abstract class LastaFluteTestCase extends LastaDiTestCase {
         _xcachedServletConfig = null;
     }
 
-    // -----------------------------------------------------
-    //                                     Begin Transaction
-    //                                     -----------------
+    // ===================================================================================
+    //                                                                         Cannon-ball
+    //                                                                         ===========
     @Override
-    protected void xbeginTestCaseTransaction() {
-        initializePreparedAccessContext(); // nearly actual timing
-        initializeTransactionTime(); // me too
-        super.xbeginTestCaseTransaction();
+    protected void xprepareCannonballBeginning() {
+        super.xprepareCannonballBeginning();
+        initializeThreadCacheContext();
     }
 
-    protected void initializeTransactionTime() {
-        // because of non-UserTransaction transaction in UTFlute
-        final Date transactionTime = _timeManager.flashDate();
-        TransactionTimeContext.setTransactionTime(transactionTime);
-    }
-
-    protected void initializePreparedAccessContext() {
-        // though non-UserTransaction, for e.g. transaction in asynchronous
-        PreparedAccessContext.setAccessContextOnThread(getAccessContext()); // inherit one of test case
-    }
-
-    // -----------------------------------------------------
-    //                                       End Transaction
-    //                                       ---------------
     @Override
-    protected void xrollbackTestCaseTransaction() {
-        super.xrollbackTestCaseTransaction();
-        TransactionTimeContext.clear();
-        PreparedAccessContext.clearAccessContextOnThread();
+    protected void xprepareCannonballAccessContext() {
+        initializePreparedAccessContext(); // not call super not to use default
     }
 
     // ===================================================================================
@@ -280,7 +283,7 @@ public abstract class LastaFluteTestCase extends LastaDiTestCase {
         } else {
             realBean = jsonBean;
         }
-        return _jsonManager.toJson(realBean);
+        return getComponent(JsonManager.class).toJson(realBean);
     }
 
     // ===================================================================================

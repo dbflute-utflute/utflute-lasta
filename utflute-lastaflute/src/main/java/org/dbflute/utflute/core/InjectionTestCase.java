@@ -70,18 +70,35 @@ public abstract class InjectionTestCase extends PlainTestCase {
     @Override
     public void setUp() throws Exception {
         super.setUp();
+
         xsetupBeforeContainer();
+        xsetupBeforeTestCaseContainer();
         xprepareTestCaseContainer();
-        xprepareTestCaseComponent();
-        if (!isSuppressTestCaseTransaction()) {
-            xbeginTestCaseTransaction();
-        }
+        xsetupAfterTestCaseContainer();
+
+        xsetupBeforeTestCaseInjection();
+        xprepareTestCaseInjection();
+        xsetupAfterTestCaseInjection();
+
+        xsetupBeforeTestCaseTransaction();
+        xprepareTestCaseTransaction();
+        xsetupAfterTestCaseTransaction();
     }
 
-    protected void xsetupBeforeContainer() {
+    // -----------------------------------------------------
+    //                                     setUp() Container
+    //                                     -----------------
+    @Deprecated
+    protected void xsetupBeforeContainer() { // use xsetupBeforeTestCaseContainer()
+    }
+
+    protected void xsetupBeforeTestCaseContainer() {
     }
 
     protected abstract void xprepareTestCaseContainer();
+
+    protected void xsetupAfterTestCaseContainer() {
+    }
 
     /**
      * Does it use one-time container? (re-initialize container per one test case?)
@@ -91,8 +108,29 @@ public abstract class InjectionTestCase extends PlainTestCase {
         return false;
     }
 
-    protected void xprepareTestCaseComponent() {
+    // -----------------------------------------------------
+    //                                     setUp() Injection
+    //                                     -----------------
+    protected void xsetupBeforeTestCaseInjection() {
+    }
+
+    protected void xprepareTestCaseInjection() {
         _xtestCaseBoundResult = _xtestCaseComponentBinder.bindComponent(this);
+    }
+
+    protected void xsetupAfterTestCaseInjection() {
+    }
+
+    // -----------------------------------------------------
+    //                                   setUp() Transaction
+    //                                   -------------------
+    protected void xsetupBeforeTestCaseTransaction() {
+    }
+
+    protected void xprepareTestCaseTransaction() {
+        if (!isSuppressTestCaseTransaction()) {
+            xbeginTestCaseTransaction();
+        }
     }
 
     /**
@@ -107,21 +145,27 @@ public abstract class InjectionTestCase extends PlainTestCase {
         _xtestCaseTransactionResource = beginNewTransaction();
     }
 
+    protected void xsetupAfterTestCaseTransaction() {
+    }
+
     // -----------------------------------------------------
     //                                             Tear Down
     //                                             ---------
     @Override
     public void tearDown() throws Exception {
         if (!isSuppressTestCaseTransaction()) {
-            xrollbackTestCaseTransaction();
+            xrollbackTestCaseTransaction(); // should be tear-down to close transaction when failure 
         }
-        xdestroyTestCaseComponent();
+        xdestroyTestCaseInjection();
         xdestroyTestCaseContainer();
         _xmockInstanceList = null;
         _xnonBindingTypeList = null;
         super.tearDown();
     }
 
+    // -----------------------------------------------------
+    //                                teatDown() Transaction
+    //                                ----------------------
     protected void xrollbackTestCaseTransaction() {
         if (_xtestCaseTransactionResource == null) { // just in case
             return;
@@ -164,7 +208,10 @@ public abstract class InjectionTestCase extends PlainTestCase {
         }
     }
 
-    protected void xdestroyTestCaseComponent() {
+    // -----------------------------------------------------
+    //                                  teatDown() Injection
+    //                                  --------------------
+    protected void xdestroyTestCaseInjection() {
         _xtestCaseComponentBinder.revertBoundComponent(_xtestCaseBoundResult);
         _xtestCaseBoundResult = null;
         if (_xinjectedBoundResultList != null) {
@@ -173,6 +220,9 @@ public abstract class InjectionTestCase extends PlainTestCase {
         _xinjectedBoundResultList = null;
     }
 
+    // -----------------------------------------------------
+    //                                  teatDown() Container
+    //                                  --------------------
     protected void xdestroyTestCaseContainer() {
         if (isUseOneTimeContainer() || isDestroyContainerAtTearDown()) {
             xdestroyContainer();

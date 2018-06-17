@@ -24,6 +24,7 @@ import javax.transaction.Status;
 import javax.transaction.SystemException;
 import javax.transaction.Transaction;
 import javax.transaction.TransactionManager;
+import javax.transaction.UserTransaction;
 
 import org.dbflute.utflute.core.InjectionTestCase;
 import org.dbflute.utflute.core.binding.BindingAnnotationRule;
@@ -37,8 +38,9 @@ import org.lastaflute.di.core.smart.SmartDeployMode;
 import org.lastaflute.di.naming.NamingConvention;
 
 /**
+ * The base class of test cases with Lasta Di (without LastaFlute).
  * @author jflute
- * @since 0.5.0-sp7 (2015/03/22 Sunday)
+ * @since 0.5.1 (2015/03/22 Sunday)
  */
 public abstract class LastaDiTestCase extends InjectionTestCase {
 
@@ -58,8 +60,8 @@ public abstract class LastaDiTestCase extends InjectionTestCase {
     //                                      Before Container
     //                                      ----------------
     @Override
-    protected void xsetupBeforeContainer() {
-        super.xsetupBeforeContainer();
+    protected void xsetupBeforeTestCaseContainer() {
+        super.xsetupBeforeTestCaseContainer();
         xprepareUnitTestEnv();
     }
 
@@ -115,7 +117,7 @@ public abstract class LastaDiTestCase extends InjectionTestCase {
     }
 
     protected boolean xisCurrentBootingWebContainer() {
-        // external context is actually only for web so simple here
+        // external context is actually only for web framework so simple here
         return SingletonLaContainerFactory.getExternalContext() != null;
     }
 
@@ -154,15 +156,16 @@ public abstract class LastaDiTestCase extends InjectionTestCase {
     //                                                                         ===========
     @Override
     protected TransactionResource beginNewTransaction() { // user method
-        final Class<TransactionManager> managerType = TransactionManager.class;
-        if (!hasComponent(managerType)) {
+        // begin transaction via UserTransaction because it may have framework logic
+        final UserTransaction userTx = xfindTestCaseUserTransaction();
+        if (userTx == null) {
             return null;
         }
-        final TransactionManager manager = getComponent(managerType);
+        final TransactionManager manager = getComponent(TransactionManager.class); // for native handling
         final Transaction suspendedTx;
         try {
-            if (manager.getStatus() != Status.STATUS_NO_TRANSACTION) {
-                suspendedTx = manager.suspend(); // because Seasar's DBCP doesn't support nested transaction
+            if (userTx.getStatus() != Status.STATUS_NO_TRANSACTION) {
+                suspendedTx = manager.suspend(); // because it doesn't support nested transaction
             } else {
                 suspendedTx = null;
             }
@@ -171,11 +174,11 @@ public abstract class LastaDiTestCase extends InjectionTestCase {
         }
         TransactionResource resource = null;
         try {
-            manager.begin();
+            userTx.begin();
             resource = new TransactionResource() {
                 public void commit() {
                     try {
-                        manager.commit();
+                        userTx.commit();
                     } catch (Exception e) {
                         throw new TransactionFailureException("Failed to commit the transaction.", e);
                     } finally {
@@ -185,7 +188,7 @@ public abstract class LastaDiTestCase extends InjectionTestCase {
 
                 public void rollback() {
                     try {
-                        manager.rollback();
+                        userTx.rollback();
                     } catch (Exception e) {
                         throw new TransactionFailureException("Failed to roll-back the transaction.", e);
                     } finally {
@@ -201,13 +204,18 @@ public abstract class LastaDiTestCase extends InjectionTestCase {
         return resource;
     }
 
+    protected UserTransaction xfindTestCaseUserTransaction() { // null allowed
+        final Class<UserTransaction> userTxType = UserTransaction.class;
+        return hasComponent(userTxType) ? getComponent(userTxType) : null;
+    }
+
     protected void xresumeSuspendedTxQuietly(TransactionManager manager, Transaction suspendedTx) {
         try {
             if (suspendedTx != null) {
                 manager.resume(suspendedTx);
             }
-        } catch (Exception e) {
-            log(e.getMessage());
+        } catch (Exception continued) {
+            log(continued.getMessage());
         }
     }
 
