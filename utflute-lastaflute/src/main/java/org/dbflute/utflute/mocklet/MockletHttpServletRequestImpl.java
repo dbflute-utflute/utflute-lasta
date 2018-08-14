@@ -170,7 +170,7 @@ public class MockletHttpServletRequestImpl implements MockletHttpServletRequest 
     }
 
     public String getContextPath() {
-        return servletContext.getServletContextName();
+        return servletContext.getContextPath();
     }
 
     public String getQueryString() {
@@ -477,7 +477,7 @@ public class MockletHttpServletRequestImpl implements MockletHttpServletRequest 
 
     public Locale getLocale() {
         if (locales.isEmpty()) {
-            return Locale.getDefault();
+            return Locale.getDefault(); // according to JavaDoc
         }
         return locales.get(0);
     }
