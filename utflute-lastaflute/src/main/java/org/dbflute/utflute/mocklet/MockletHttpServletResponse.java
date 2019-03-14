@@ -15,7 +15,7 @@
  */
 package org.dbflute.utflute.mocklet;
 
-import java.util.Enumeration;
+import java.util.Collection;
 
 import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpServletResponse;
@@ -32,13 +32,11 @@ public interface MockletHttpServletResponse extends HttpServletResponse, Mocklet
 
     String getMessage();
 
-    @SuppressWarnings("rawtypes")
-    Enumeration getHeaders(String name);
+    Collection<String> getHeaders(String name);
 
     String getHeader(String name);
 
-    @SuppressWarnings("rawtypes")
-    Enumeration getHeaderNames();
+    Collection<String> getHeaderNames();
 
     int getIntHeader(String name);
 
