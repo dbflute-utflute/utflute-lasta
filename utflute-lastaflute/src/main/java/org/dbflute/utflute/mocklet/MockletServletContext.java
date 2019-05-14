@@ -27,13 +27,13 @@ public interface MockletServletContext extends ServletContext, Mocklet {
 
     void addMimeType(String file, String type);
 
-    void setInitParameter(String name, String value);
+    boolean setInitParameter(String name, String value);
 
     MockletHttpServletRequest createRequest(String path);
 
     void setServletContextName(String servletContextName);
 
     void setContextPath(String contextPath);
-
+    
     Map<String, String> getInitParameterMap();
 }

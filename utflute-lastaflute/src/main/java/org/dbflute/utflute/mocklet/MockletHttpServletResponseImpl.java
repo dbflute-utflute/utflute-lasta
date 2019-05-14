@@ -20,7 +20,7 @@ import java.io.IOException;
 import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Enumeration;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
@@ -31,8 +31,6 @@ import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
-import org.dbflute.utflute.mocklet.helper.MockletEmptyEnumeration;
-import org.dbflute.utflute.mocklet.helper.MockletEnumerationAdapter;
 import org.dbflute.utflute.mocklet.helper.MockletSPrintWriter;
 
 /**
@@ -110,12 +108,9 @@ public class MockletHttpServletResponseImpl implements MockletHttpServletRespons
     public void sendRedirect(String path) throws IOException {
     }
 
-    public Enumeration<String> getHeaders(String name) {
+    public Collection<String> getHeaders(String name) {
         List<String> values = getHeaderList(name);
-        if (values != null) {
-            return new MockletEnumerationAdapter<String>(values.iterator());
-        }
-        return new MockletEmptyEnumeration<String>();
+        return values != null ? new ArrayList<>(values) : new ArrayList<>(); // mutable
     }
 
     public String getHeader(String name) {
@@ -126,8 +121,8 @@ public class MockletHttpServletResponseImpl implements MockletHttpServletRespons
         return null;
     }
 
-    public Enumeration<String> getHeaderNames() {
-        return new MockletEnumerationAdapter<String>(headers.keySet().iterator());
+    public Collection<String> getHeaderNames() {
+        return headers.keySet();
     }
 
     public void setDateHeader(String name, long value) {
@@ -367,5 +362,12 @@ public class MockletHttpServletResponseImpl implements MockletHttpServletRespons
 
     public String getResponseString() {
         return writer.toString();
+    }
+
+    // ===================================================================================
+    //                                                                         since 3.1.0
+    //                                                                         ===========
+    @Override
+    public void setContentLengthLong(long len) {
     }
 }

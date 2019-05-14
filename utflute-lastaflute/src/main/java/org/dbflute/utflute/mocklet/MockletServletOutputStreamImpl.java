@@ -18,19 +18,42 @@ package org.dbflute.utflute.mocklet;
 import java.io.IOException;
 import java.io.OutputStream;
 
+import javax.servlet.WriteListener;
+
 /**
  * @author modified by jflute (originated in Seasar)
  * @since 0.4.0 (2014/03/16 Sunday)
  */
 public class MockletServletOutputStreamImpl extends MockletServletOutputStream {
 
+    // ===================================================================================
+    //                                                                           Attribute
+    //                                                                           =========
     protected final OutputStream outputStream;
 
+    // ===================================================================================
+    //                                                                         Constructor
+    //                                                                         ===========
     public MockletServletOutputStreamImpl(OutputStream outputStream) {
         this.outputStream = outputStream;
     }
 
+    // ===================================================================================
+    //                                                                               Write
+    //                                                                               =====
     public void write(int b) throws IOException {
         outputStream.write(b);
+    }
+
+    // ===================================================================================
+    //                                                                         since 3.1.0
+    //                                                                         ===========
+    @Override
+    public boolean isReady() {
+        return false;
+    }
+
+    @Override
+    public void setWriteListener(WriteListener writeListener) {
     }
 }
