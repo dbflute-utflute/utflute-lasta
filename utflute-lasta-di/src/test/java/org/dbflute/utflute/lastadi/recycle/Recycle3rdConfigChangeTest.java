@@ -16,6 +16,7 @@
 package org.dbflute.utflute.lastadi.recycle;
 
 import org.dbflute.utflute.lastadi.LastaDiTestCase;
+import org.junit.jupiter.api.Test;
 
 /**
  * @author jflute
@@ -28,10 +29,12 @@ public class Recycle3rdConfigChangeTest extends LastaDiTestCase {
         return "unitbean.xml";
     }
 
+    @Test
     public void test_first() throws Exception {
         // confirm log
     }
 
+    @Test
     public void test_second() throws Exception {
         // confirm log
     }

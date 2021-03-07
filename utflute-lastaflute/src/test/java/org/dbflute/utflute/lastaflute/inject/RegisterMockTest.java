@@ -20,6 +20,8 @@ import org.dbflute.utflute.lastaflute.bean.FooAction;
 import org.dbflute.utflute.lastaflute.bean.FooAssist;
 import org.dbflute.utflute.lastaflute.bean.FooBhv;
 import org.dbflute.utflute.lastaflute.bean.FooLogic;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
 
 /**
  * @author jflute
@@ -30,6 +32,7 @@ public class RegisterMockTest extends LastaDiTestCase {
     // ===================================================================================
     //                                                                        Nested Level
     //                                                                        ============
+    @Test
     public void test_registerMock_firstLevel() {
         // ## Arrange ##
         registerMock(new FooAssist() {
@@ -47,10 +50,11 @@ public class RegisterMockTest extends LastaDiTestCase {
         String result = action.index();
 
         // ## Assert ##
-        assertEquals("sea", result);
+        Assertions.assertEquals("sea", result);
         assertMarked("mock");
     }
 
+    @Test
     public void test_registerMock_secondLevel() {
         // ## Arrange ##
         registerMock(new FooLogic() {
@@ -68,16 +72,17 @@ public class RegisterMockTest extends LastaDiTestCase {
         String result = action.index();
 
         // ## Assert ##
-        assertEquals("sea", result);
+        Assertions.assertEquals("sea", result);
         assertMarked("mock");
     }
 
+    @Test
     public void test_registerMock_thirdLevel() {
         // ## Arrange ##
         registerMock(new FooBhv() {
             @Override
             public String callBhv() {
-                fail();
+                Assertions.fail();
                 return "sea";
             }
         });
@@ -88,6 +93,6 @@ public class RegisterMockTest extends LastaDiTestCase {
         String result = action.index();
 
         // ## Assert ##
-        assertEquals("maihama", result); // cannot yet
+        Assertions.assertEquals("maihama", result); // cannot yet
     }
 }

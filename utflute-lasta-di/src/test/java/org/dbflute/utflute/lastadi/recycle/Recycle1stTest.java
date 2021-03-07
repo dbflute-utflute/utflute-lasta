@@ -16,6 +16,7 @@
 package org.dbflute.utflute.lastadi.recycle;
 
 import org.dbflute.utflute.lastadi.LastaDiTestCase;
+import org.junit.jupiter.api.Test;
 
 /**
  * @author jflute
@@ -23,10 +24,12 @@ import org.dbflute.utflute.lastadi.LastaDiTestCase;
  */
 public class Recycle1stTest extends LastaDiTestCase {
 
+    @Test
     public void test_first() throws Exception {
         // confirm log
     }
 
+    @Test
     public void test_second() throws Exception {
         // confirm log
     }

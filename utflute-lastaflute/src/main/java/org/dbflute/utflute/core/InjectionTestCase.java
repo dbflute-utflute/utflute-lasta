@@ -27,6 +27,10 @@ import org.dbflute.utflute.core.binding.ComponentBinder;
 import org.dbflute.utflute.core.binding.ComponentProvider;
 import org.dbflute.utflute.core.transaction.TransactionFailureException;
 import org.dbflute.utflute.core.transaction.TransactionResource;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.TestInfo;
 
 /**
  * @author jflute
@@ -68,10 +72,10 @@ public abstract class InjectionTestCase extends PlainTestCase {
     //                                                Set up
     //                                                ------
     @Override
-    public void setUp() throws Exception {
-        super.setUp();
+    @BeforeEach
+    protected void setUp(TestInfo testInfo) throws Exception {
+        super.setUp(testInfo);
 
-        xsetupBeforeContainer();
         xsetupBeforeTestCaseContainer();
         xprepareTestCaseContainer();
         xsetupAfterTestCaseContainer();
@@ -88,10 +92,6 @@ public abstract class InjectionTestCase extends PlainTestCase {
     // -----------------------------------------------------
     //                                     setUp() Container
     //                                     -----------------
-    @Deprecated
-    protected void xsetupBeforeContainer() { // use xsetupBeforeTestCaseContainer()
-    }
-
     protected void xsetupBeforeTestCaseContainer() {
     }
 
@@ -152,7 +152,8 @@ public abstract class InjectionTestCase extends PlainTestCase {
     //                                             Tear Down
     //                                             ---------
     @Override
-    public void tearDown() throws Exception {
+    @AfterEach
+    protected void tearDown() throws Exception {
         if (!isSuppressTestCaseTransaction()) {
             xrollbackTestCaseTransaction(); // should be tear-down to close transaction when failure 
         }
@@ -409,7 +410,7 @@ public abstract class InjectionTestCase extends PlainTestCase {
 
     protected void xadjustOuterComponentBinder(Object bean, ComponentBinder binder) {
         // adjust mock components
-        final List<Object> mockInstanceList = newArrayList();
+        final List<Object> mockInstanceList = new ArrayList<>();
         if (_xmockInstanceList != null) {
             mockInstanceList.addAll(_xmockInstanceList);
         }
@@ -421,7 +422,7 @@ public abstract class InjectionTestCase extends PlainTestCase {
         }
 
         // adjust no binding components
-        final List<Class<?>> nonBindingTypeList = newArrayList();
+        final List<Class<?>> nonBindingTypeList = new ArrayList<>();
         if (_xnonBindingTypeList != null) {
             nonBindingTypeList.addAll(_xnonBindingTypeList);
         }
@@ -468,6 +469,13 @@ public abstract class InjectionTestCase extends PlainTestCase {
      * @return The determination, true or false.
      */
     protected abstract boolean hasComponent(String name); // user method
+
+    // ===================================================================================
+    //                                                                          Compatible
+    //                                                                          ==========
+    private void assertNotNull(Object actual) { // for compatible
+        Assertions.assertNotNull(actual);
+    }
 
     // ===================================================================================
     //                                                                            Accessor

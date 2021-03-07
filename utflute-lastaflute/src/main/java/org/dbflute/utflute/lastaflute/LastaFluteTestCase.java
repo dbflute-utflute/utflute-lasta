@@ -128,14 +128,16 @@ public abstract class LastaFluteTestCase extends LastaDiTestCase {
     // -----------------------------------------------------
     //                                             Tear Down
     //                                             ---------
-    @Override
-    protected void postTest() {
-        super.postTest();
-        xprocessMailAssertion();
-    }
+    // #thinking cannot override runTest() so move it to tearDown() 
+    //@Override
+    //protected void postTest() {
+    //    super.postTest();
+    //    xprocessMailAssertion();
+    //}
 
     @Override
     public void tearDown() throws Exception {
+        xprocessMailAssertion(); // moved from postTest()
         xdestroyJobSchedulingIfNeeds(); // always destroy if scheduled to avoid job trouble
         super.tearDown();
         ThreadCacheContext.clear(); // should be after closing transaction for e.g. LazyTransaction

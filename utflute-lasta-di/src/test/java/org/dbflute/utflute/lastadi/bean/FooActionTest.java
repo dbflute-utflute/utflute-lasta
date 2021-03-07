@@ -17,6 +17,8 @@ package org.dbflute.utflute.lastadi.bean;
 
 import org.dbflute.utflute.lastadi.LastaDiTestCase;
 import org.dbflute.utflute.lastadi.dbflute.exbhv.FooBhv;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
 
 /**
  * @author jflute
@@ -24,6 +26,7 @@ import org.dbflute.utflute.lastadi.dbflute.exbhv.FooBhv;
  */
 public class FooActionTest extends LastaDiTestCase {
 
+    @Test
     public void test_inject_basic() throws Exception {
         // ## Arrange ##
         FooAction action = new FooAction();
@@ -57,6 +60,7 @@ public class FooActionTest extends LastaDiTestCase {
         assertNotNull(action.transactionManager);
     }
 
+    @Test
     public void test_inject_mockInstance_injected() throws Exception {
         // ## Arrange ##
         FooAction action = new FooAction();
@@ -91,6 +95,7 @@ public class FooActionTest extends LastaDiTestCase {
         assertSame(logic, action.fooLogic);
     }
 
+    @Test
     public void test_inject_mockInstance_plain() throws Exception {
         // ## Arrange ##
         FooAction action = new FooAction();
@@ -122,6 +127,7 @@ public class FooActionTest extends LastaDiTestCase {
         assertSame(logic, action.fooLogic);
     }
 
+    @Test
     public void test_inject_superClass_injected() throws Exception {
         // ## Arrange ##
         FooFacade facade = new FooFacade();
@@ -134,5 +140,17 @@ public class FooActionTest extends LastaDiTestCase {
         assertNotNull(facade.superBehaviorInstance()); // different
         assertNull(facade.transactionManager);
         assertNull(facade.fooService);
+    }
+
+    private void assertNotNull(Object obj) {
+        Assertions.assertNotNull(obj);
+    }
+
+    private void assertNull(Object obj) {
+        Assertions.assertNull(obj);
+    }
+
+    private void assertSame(Object expected, Object actual) {
+        Assertions.assertSame(expected, actual);
     }
 }

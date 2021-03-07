@@ -16,6 +16,7 @@
 package org.dbflute.utflute.lastadi;
 
 import java.lang.annotation.Annotation;
+import java.util.HashMap;
 import java.util.Map;
 
 import javax.annotation.Resource;
@@ -224,7 +225,7 @@ public abstract class LastaDiTestCase extends InjectionTestCase {
     //                                                                   =================
     @Override
     protected Map<Class<? extends Annotation>, BindingAnnotationRule> xprovideBindingAnnotationRuleMap() {
-        final Map<Class<? extends Annotation>, BindingAnnotationRule> ruleMap = newHashMap();
+        final Map<Class<? extends Annotation>, BindingAnnotationRule> ruleMap = new HashMap<>();
         ruleMap.put(Resource.class, new BindingAnnotationRule());
         return ruleMap;
     }

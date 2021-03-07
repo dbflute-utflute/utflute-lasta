@@ -35,6 +35,7 @@ import org.dbflute.utflute.mocklet.MockletHttpServletResponse;
 import org.dbflute.utflute.mocklet.MockletHttpServletResponseImpl;
 import org.dbflute.utflute.mocklet.MockletHttpSession;
 import org.dbflute.utflute.mocklet.MockletServletConfig;
+import org.junit.jupiter.api.Assertions;
 import org.lastaflute.core.direction.FwAssistantDirector;
 import org.lastaflute.core.magic.ThreadCacheContext;
 import org.lastaflute.core.message.MessageManager;
@@ -404,7 +405,7 @@ public abstract class WebContainerTestCase extends LastaFluteTestCase {
     protected void assertTokenSaved(Class<?> groupType) { // for action that calls saveToken()
         final DoubleSubmitTokenMap tokenMap = _doubleSubmitManager.getSessionTokenMap().get();
         final boolean condition = tokenMap.get(groupType).isPresent();
-        assertTrue("Not found the transaction token saved in session, so call saveToken(): tokenMap=" + tokenMap, condition);
+        Assertions.assertTrue(condition, "Not found the transaction token saved in session, so call saveToken(): tokenMap=" + tokenMap);
     }
 
     /**
@@ -470,7 +471,7 @@ public abstract class WebContainerTestCase extends LastaFluteTestCase {
      */
     protected void assertTokenVerified() { // for action that calls verityToken()
         final boolean condition = _doubleSubmitManager.isFirstSubmittedRequest();
-        assertTrue("Not found the transaction token verification, so call verifyToken().", condition);
+        Assertions.assertTrue(condition, "Not found the transaction token verification, so call verifyToken().");
     }
 
     // ===================================================================================
@@ -533,7 +534,7 @@ public abstract class WebContainerTestCase extends LastaFluteTestCase {
      * @param swaggerable The new-created swagger-able action to get swagger JSON. (NotNull)
      */
     protected void saveSwaggerMeta(LaActionSwaggerable swaggerable) {
-        assertNotNull(swaggerable);
+        Assertions.assertNotNull(swaggerable);
         inject(swaggerable);
         createSwaggerGenerator().saveSwaggerMeta(swaggerable);
     }

@@ -15,7 +15,8 @@
  */
 package org.dbflute.utflute.lastadi;
 
-import org.dbflute.utflute.lastadi.LastaDiTestCase;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
 
 /**
  * @author jflute
@@ -23,6 +24,7 @@ import org.dbflute.utflute.lastadi.LastaDiTestCase;
  */
 public class LastaDiTestCaseTest extends LastaDiTestCase {
 
+    @Test
     public void test_xcanUseComponentNameByBindingNamingRule_basic() throws Exception {
         assertTrue(xcanUseComponentNameByBindingNamingRule("foo_bar", "bar"));
         assertTrue(xcanUseComponentNameByBindingNamingRule("foo_bar", "foo_bar"));
@@ -39,5 +41,13 @@ public class LastaDiTestCaseTest extends LastaDiTestCase {
         assertFalse(xcanUseComponentNameByBindingNamingRule("foo_bar_quxLogic", "ar_quxLogic"));
         assertFalse(xcanUseComponentNameByBindingNamingRule("foo_bar_quxLogic", "oo_bar_quxLogic"));
         assertFalse(xcanUseComponentNameByBindingNamingRule("foo_bar_quxLogic", "_quxLogic"));
+    }
+
+    private void assertTrue(boolean condition) {
+        Assertions.assertTrue(condition);
+    }
+
+    private void assertFalse(boolean condition) {
+        Assertions.assertFalse(condition);
     }
 }

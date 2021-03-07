@@ -24,8 +24,7 @@ import org.dbflute.mail.PostOffice;
 import org.dbflute.mail.send.hook.SMailCallbackContext;
 import org.dbflute.mail.send.hook.SMailPreparedMessageHook;
 import org.dbflute.mail.send.supplement.SMailPostingDiscloser;
-
-import junit.framework.Assert;
+import org.junit.jupiter.api.Assertions;
 
 /**
  * @author jflute
@@ -158,7 +157,7 @@ public class MailMessageAssertion {
     //                                                                       Assert Helper
     //                                                                       =============
     protected void fail(String msg) {
-        Assert.fail(msg);
+        Assertions.fail(msg);
     }
 
     protected Object toPostcardDisp(SMailPostingDiscloser discloser) {

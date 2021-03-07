@@ -27,7 +27,7 @@ import org.dbflute.mail.CardView;
 import org.dbflute.mail.PostOffice;
 import org.dbflute.mail.send.supplement.SMailPostingDiscloser;
 import org.dbflute.mail.send.supplement.attachment.SMailReadAttachedData;
-import org.junit.Assert;
+import org.junit.jupiter.api.Assertions;
 
 /**
  * @author jflute
@@ -142,11 +142,11 @@ public class TestingPreparedMessage {
     //                                                                       Assert Helper
     //                                                                       =============
     protected void fail(String msg) {
-        Assert.fail(msg);
+        Assertions.fail(msg);
     }
 
     protected void assertTrue(String msg, boolean condition) {
-        Assert.assertTrue(msg, condition);
+        Assertions.assertTrue(condition, msg);
     }
 
     protected Object toPostcardDisp() {
