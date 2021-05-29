@@ -45,7 +45,6 @@ import org.lastaflute.di.core.LaContainer;
 import org.lastaflute.di.core.factory.SingletonLaContainerFactory;
 import org.lastaflute.meta.DocumentGenerator;
 import org.lastaflute.meta.SwaggerGenerator;
-import org.lastaflute.meta.agent.MetaPhysicalAgent;
 import org.lastaflute.meta.agent.OutputMetaAgent;
 import org.lastaflute.meta.diff.SwaggerDiffGenerator;
 import org.lastaflute.meta.diff.SwaggerDiffOption;
