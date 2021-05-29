@@ -27,7 +27,7 @@
 		<dependency>
 			<groupId>org.lastaflute.meta</groupId>
 			<artifactId>lasta-meta</artifactId>
-			<version>0.5.1-G-SNAPSHOT</version> <!-- want latest version -->
+			<version>0.5.1-H-SNAPSHOT</version> <!-- want latest version -->
 		</dependency>
 
 		<!-- ================ -->
