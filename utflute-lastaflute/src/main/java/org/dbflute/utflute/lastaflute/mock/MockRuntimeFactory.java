@@ -53,12 +53,12 @@ public class MockRuntimeFactory {
     //                                                                             Creator
     //                                                                             =======
     public ActionRuntime createHtmlRuntime() {
-        final ActionExecute execute = _mapping.getExecuteMap().get("sea");
+        final ActionExecute execute = _mapping.searchByMethodName("sea").get(0); // always one;
         return new ActionRuntime("/mock/sea/", execute, createRequestPathParam());
     }
 
     public ActionRuntime createJsonRuntime() {
-        final ActionExecute execute = _mapping.getExecuteMap().get("land");
+        final ActionExecute execute = _mapping.searchByMethodName("land").get(0); // always one;
         return new ActionRuntime("/mock/land/", execute, createRequestPathParam());
     }
 

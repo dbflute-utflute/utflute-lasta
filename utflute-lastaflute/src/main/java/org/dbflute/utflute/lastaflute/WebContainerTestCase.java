@@ -17,6 +17,7 @@ package org.dbflute.utflute.lastaflute;
 
 import java.util.HashSet;
 import java.util.Set;
+import java.util.function.Consumer;
 
 import javax.annotation.Resource;
 import javax.servlet.ServletContext;
@@ -44,6 +45,10 @@ import org.lastaflute.di.core.LaContainer;
 import org.lastaflute.di.core.factory.SingletonLaContainerFactory;
 import org.lastaflute.meta.DocumentGenerator;
 import org.lastaflute.meta.SwaggerGenerator;
+import org.lastaflute.meta.agent.MetaPhysicalAgent;
+import org.lastaflute.meta.agent.OutputMetaAgent;
+import org.lastaflute.meta.diff.SwaggerDiffGenerator;
+import org.lastaflute.meta.diff.SwaggerDiffOption;
 import org.lastaflute.meta.web.LaActionSwaggerable;
 import org.lastaflute.web.LastaWebKey;
 import org.lastaflute.web.response.ActionResponse;
@@ -547,6 +552,13 @@ public abstract class WebContainerTestCase extends LastaFluteTestCase {
         return new SwaggerGenerator();
     }
 
+    protected void verifyYourSwaggerSync(String locationPath, Consumer<SwaggerDiffOption> opLambda) {
+        final SwaggerDiffGenerator diff = new SwaggerDiffGenerator(opLambda);
+        final String outputSwaggerJsonPath = new OutputMetaAgent().getSwaggerJsonPath().toString();
+        final String diffResult = diff.diffFromLocations(locationPath, outputSwaggerJsonPath);
+        log("@@@: " + ln() + diffResult);
+    }
+    
     // ===================================================================================
     //                                                                            Accessor
     //                                                                            ========
