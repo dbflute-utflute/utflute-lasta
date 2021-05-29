@@ -17,6 +17,7 @@ package org.dbflute.utflute.lastaflute;
 
 import java.util.HashSet;
 import java.util.Set;
+import java.util.function.Consumer;
 
 import javax.annotation.Resource;
 import javax.servlet.ServletContext;
@@ -43,6 +44,9 @@ import org.lastaflute.di.core.LaContainer;
 import org.lastaflute.di.core.factory.SingletonLaContainerFactory;
 import org.lastaflute.meta.DocumentGenerator;
 import org.lastaflute.meta.SwaggerGenerator;
+import org.lastaflute.meta.agent.yourswagger.YourSwaggerSyncAgent;
+import org.lastaflute.meta.diff.SwaggerDiffOption;
+import org.lastaflute.meta.exception.YourSwaggerDiffException;
 import org.lastaflute.meta.web.LaActionSwaggerable;
 import org.lastaflute.web.LastaWebKey;
 import org.lastaflute.web.response.ActionResponse;
@@ -544,6 +548,25 @@ public abstract class WebContainerTestCase extends LastaFluteTestCase {
      */
     protected SwaggerGenerator createSwaggerGenerator() {
         return new SwaggerGenerator();
+    }
+
+    /**
+     * Verify that your swagger.json is synchronized with source codes. <br>
+     * Basically for manual-made swagger.json driven development.
+     * @param locationPath The location path to your swagger.json, can be resource path and filesystem path. (NotNull)
+     * @param opLambda The callback for SwaggerDiff option. (NotNull)
+     * @throws YourSwaggerDiffException When your swagger.json has differences with source codes.
+     */
+    protected void verifyYourSwaggerSync(String locationPath, Consumer<SwaggerDiffOption> opLambda) {
+        createYourSwaggerSyncAgent().verifyYourSwaggerSync(locationPath, opLambda);
+    }
+
+    /**
+     * Create agent for your swagger.json synchronization.
+     * @return The new-created agent. (NotNull)
+     */
+    protected YourSwaggerSyncAgent createYourSwaggerSyncAgent() {
+        return new YourSwaggerSyncAgent();
     }
 
     // ===================================================================================
