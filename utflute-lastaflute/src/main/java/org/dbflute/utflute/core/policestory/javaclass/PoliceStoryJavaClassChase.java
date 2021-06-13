@@ -62,9 +62,9 @@ public class PoliceStoryJavaClassChase {
         br.addElement(_testCase);
         br.addItem("Source Directory");
         br.addElement(srcDir);
-        br.addItem("Exception");
+        br.addItem("Cause");
         br.addElement(cause.getClass());
-        br.addElement(cause.getMessage());
+        br.addElement("See the cause exception message at 'Caused by'.");
         final String msg = br.buildExceptionMessage();
         throw new IllegalStateException(msg, cause);
     }
