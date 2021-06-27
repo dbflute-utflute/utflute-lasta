@@ -46,8 +46,8 @@ import org.lastaflute.di.core.factory.SingletonLaContainerFactory;
 import org.lastaflute.meta.DocumentGenerator;
 import org.lastaflute.meta.SwaggerGenerator;
 import org.lastaflute.meta.agent.yourswagger.YourSwaggerSyncAgent;
+import org.lastaflute.meta.agent.yourswagger.YourSwaggerSyncOption;
 import org.lastaflute.meta.exception.YourSwaggerDiffException;
-import org.lastaflute.meta.swagger.diff.SwaggerDiffOption;
 import org.lastaflute.meta.swagger.web.LaActionSwaggerable;
 import org.lastaflute.web.LastaWebKey;
 import org.lastaflute.web.response.ActionResponse;
@@ -555,10 +555,10 @@ public abstract class WebContainerTestCase extends LastaFluteTestCase {
      * Verify that your swagger.json is synchronized with source codes. <br>
      * Basically for manual-made swagger.json driven development.
      * @param locationPath The location path to your swagger.json, can be resource path and filesystem path. (NotNull)
-     * @param opLambda The callback for SwaggerDiff option. (NotNull)
+     * @param opLambda The callback for your swagger-sync option. (NotNull)
      * @throws YourSwaggerDiffException When your swagger.json has differences with source codes.
      */
-    protected void verifyYourSwaggerSync(String locationPath, Consumer<SwaggerDiffOption> opLambda) {
+    protected void verifyYourSwaggerSync(String locationPath, Consumer<YourSwaggerSyncOption> opLambda) {
         createYourSwaggerSyncAgent().verifyYourSwaggerSync(locationPath, opLambda);
     }
 
