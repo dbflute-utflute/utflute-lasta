@@ -126,7 +126,7 @@ public abstract class PlainTestCase {
         return getClass().getSimpleName() + "." + getTestMethodName() + "()";
     }
 
-    // TODO jflute how do I do in junit5? (or needed?) (2020/06/15)
+    // #thinking jflute how do I do in junit5? (or needed?) (2020/06/15)
     //    protected void runTest() throws Throwable {
     //        try {
     //            super.runTest();
