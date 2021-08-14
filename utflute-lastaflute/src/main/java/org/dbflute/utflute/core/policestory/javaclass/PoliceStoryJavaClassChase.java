@@ -1,5 +1,5 @@
 /*
- * Copyright 2014-2017 the original author or authors.
+ * Copyright 2014-2021 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -62,9 +62,9 @@ public class PoliceStoryJavaClassChase {
         br.addElement(_testCase);
         br.addItem("Source Directory");
         br.addElement(srcDir);
-        br.addItem("Exception");
+        br.addItem("Cause");
         br.addElement(cause.getClass());
-        br.addElement(cause.getMessage());
+        br.addElement("See the cause exception message at 'Caused by'.");
         final String msg = br.buildExceptionMessage();
         throw new IllegalStateException(msg, cause);
     }

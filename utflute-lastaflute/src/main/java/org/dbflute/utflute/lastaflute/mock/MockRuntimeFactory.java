@@ -1,5 +1,5 @@
 /*
- * Copyright 2014-2017 the original author or authors.
+ * Copyright 2014-2021 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -53,12 +53,12 @@ public class MockRuntimeFactory {
     //                                                                             Creator
     //                                                                             =======
     public ActionRuntime createHtmlRuntime() {
-        final ActionExecute execute = _mapping.getExecuteMap().get("sea");
+        final ActionExecute execute = _mapping.searchByMethodName("sea").get(0); // always one in mock action
         return new ActionRuntime("/mock/sea/", execute, createRequestPathParam());
     }
 
     public ActionRuntime createJsonRuntime() {
-        final ActionExecute execute = _mapping.getExecuteMap().get("land");
+        final ActionExecute execute = _mapping.searchByMethodName("land").get(0); // always one in mock action
         return new ActionRuntime("/mock/land/", execute, createRequestPathParam());
     }
 

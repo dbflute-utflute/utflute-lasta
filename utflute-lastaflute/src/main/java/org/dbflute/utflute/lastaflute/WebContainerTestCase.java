@@ -1,5 +1,5 @@
 /*
- * Copyright 2014-2017 the original author or authors.
+ * Copyright 2014-2021 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,6 +17,7 @@ package org.dbflute.utflute.lastaflute;
 
 import java.util.HashSet;
 import java.util.Set;
+import java.util.function.Consumer;
 
 import javax.annotation.Resource;
 import javax.servlet.ServletContext;
@@ -43,7 +44,10 @@ import org.lastaflute.di.core.LaContainer;
 import org.lastaflute.di.core.factory.SingletonLaContainerFactory;
 import org.lastaflute.meta.DocumentGenerator;
 import org.lastaflute.meta.SwaggerGenerator;
-import org.lastaflute.meta.web.LaActionSwaggerable;
+import org.lastaflute.meta.agent.yourswagger.YourSwaggerSyncAgent;
+import org.lastaflute.meta.agent.yourswagger.YourSwaggerSyncOption;
+import org.lastaflute.meta.exception.YourSwaggerDiffException;
+import org.lastaflute.meta.swagger.web.LaActionSwaggerable;
 import org.lastaflute.web.LastaWebKey;
 import org.lastaflute.web.response.ActionResponse;
 import org.lastaflute.web.response.HtmlResponse;
@@ -544,6 +548,25 @@ public abstract class WebContainerTestCase extends LastaFluteTestCase {
      */
     protected SwaggerGenerator createSwaggerGenerator() {
         return new SwaggerGenerator();
+    }
+
+    /**
+     * Verify that your swagger.json is synchronized with source codes. <br>
+     * Basically for manual-made swagger.json driven development.
+     * @param locationPath The location path to your swagger.json, can be resource path and filesystem path. (NotNull)
+     * @param opLambda The callback for your swagger-sync option. (NotNull)
+     * @throws YourSwaggerDiffException When your swagger.json has differences with source codes.
+     */
+    protected void verifyYourSwaggerSync(String locationPath, Consumer<YourSwaggerSyncOption> opLambda) {
+        createYourSwaggerSyncAgent().verifyYourSwaggerSync(locationPath, opLambda);
+    }
+
+    /**
+     * Create agent for your swagger.json synchronization.
+     * @return The new-created agent. (NotNull)
+     */
+    protected YourSwaggerSyncAgent createYourSwaggerSyncAgent() {
+        return new YourSwaggerSyncAgent();
     }
 
     // ===================================================================================
