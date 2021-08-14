@@ -21,13 +21,13 @@
 		<dependency>
 			<groupId>org.lastaflute</groupId>
 			<artifactId>lastaflute</artifactId>
-			<version>1.2.1-R-SNAPSHOT</version> <!-- about one year old (from now) -->
+			<version>1.2.1</version> <!-- about one year old (from now) -->
 		</dependency>
 		<!-- lasta-meta -->
 		<dependency>
 			<groupId>org.lastaflute.meta</groupId>
 			<artifactId>lasta-meta</artifactId>
-			<version>0.5.1-W3-SNAPSHOT</version> <!-- want latest version -->
+			<version>0.5.1</version> <!-- want latest version -->
 		</dependency>
 
 		<!-- ================ -->
