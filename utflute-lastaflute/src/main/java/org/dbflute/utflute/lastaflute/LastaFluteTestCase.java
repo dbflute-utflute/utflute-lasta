@@ -37,6 +37,7 @@ import org.dbflute.utflute.mocklet.MockletServletConfigImpl;
 import org.dbflute.utflute.mocklet.MockletServletContext;
 import org.dbflute.utflute.mocklet.MockletServletContextImpl;
 import org.dbflute.util.DfTypeUtil;
+import org.junit.jupiter.api.AfterEach;
 import org.lastaflute.core.direction.FwAssistantDirector;
 import org.lastaflute.core.json.JsonManager;
 import org.lastaflute.core.magic.ThreadCacheContext;
@@ -136,6 +137,7 @@ public abstract class LastaFluteTestCase extends LastaDiTestCase {
     //}
 
     @Override
+    @AfterEach
     public void tearDown() throws Exception {
         xprocessMailAssertion(); // moved from postTest()
         xdestroyJobSchedulingIfNeeds(); // always destroy if scheduled to avoid job trouble
