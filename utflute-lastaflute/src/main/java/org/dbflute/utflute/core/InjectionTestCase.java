@@ -302,6 +302,25 @@ public abstract class InjectionTestCase extends PlainTestCase {
      * registerMock(<span style="color: #FD4747">inject</span>(<span style="color: #70226C">new</span> MockFooLogic()));
      * inject(<span style="color: #553000">action</span>); <span style="color: #3F7E5E">// the new-created mock logic is injected</span>
      * </pre>
+     * The nest limit is 2 basically. But you can resolve it by mock relay.<br>
+     * e.g. Action to Assist to Logic to Wizard
+     * <pre>
+     * <span style="color: #3F7E5E">// Good</span>
+     * registerMock(<span style="color: #FD4747">inject</span>(<span style="color: #70226C">new</span> MockFooLogic()));
+     * FooAction <span style="color: #553000">action</span> = <span style="color: #70226C">new</span> FooAction();
+     * inject(<span style="color: #553000">action</span>); <span style="color: #3F7E5E">// refers real assist refers mock logic</span>
+     * 
+     * <span style="color: #3F7E5E">// Bad (but...)</span>
+     * registerMock(<span style="color: #FD4747">inject</span>(<span style="color: #70226C">new</span> MockFooWizard()));
+     * FooAction <span style="color: #553000">action</span> = <span style="color: #70226C">new</span> FooAction();
+     * inject(<span style="color: #553000">action</span>); <span style="color: #3F7E5E">// refers real assist refers logic referes real wizard</span>
+     * 
+     * <span style="color: #3F7E5E">// Good (using mock relay)</span>
+     * registerMock(<span style="color: #FD4747">inject</span>(<span style="color: #70226C">new</span> MockFooWizard()));
+     * registerMock(<span style="color: #FD4747">inject</span>(<span style="color: #70226C">new</span> MockFooLogic()));
+     * FooAction <span style="color: #553000">action</span> = <span style="color: #70226C">new</span> FooAction();
+     * inject(<span style="color: #553000">action</span>); <span style="color: #3F7E5E">// refers real assist mock logic referes mock wizard</span>
+     * </pre>
      * @param mock The mock instance injected to component. (NotNull)
      */
     public void registerMock(Object mock) { // user method
