@@ -302,7 +302,7 @@ public abstract class InjectionTestCase extends PlainTestCase {
      * registerMock(<span style="color: #FD4747">inject</span>(<span style="color: #70226C">new</span> MockFooLogic()));
      * inject(<span style="color: #553000">action</span>); <span style="color: #3F7E5E">// the new-created mock logic is injected</span>
      * </pre>
-     * The nest limit is 2 basically. But you can resolve it by mock relay.<br>
+     * The nest mock is limited. But you can resolve it by mock relay.<br>
      * e.g. Action to Assist to Logic to Wizard
      * <pre>
      * <span style="color: #3F7E5E">// Good</span>
