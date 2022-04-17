@@ -15,8 +15,6 @@
  */
 package org.dbflute.utflute.lastadi;
 
-import org.dbflute.utflute.lastadi.LastaDiTestCase;
-
 /**
  * @author jflute
  * @since 0.5.1 (2015/03/22 Sunday)
