@@ -456,7 +456,7 @@ public abstract class InjectionTestCase extends PlainTestCase {
     // ===================================================================================
     //                                                                  Container Handling
     //                                                                  ==================
-    protected abstract void xdestroyContainer();
+    protected abstract void xdestroyContainer(); // if container is working
 
     /**
      * Get component from DI container for the type.
