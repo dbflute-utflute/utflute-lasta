@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+	<modelVersion>4.0.0</modelVersion>
+	<parent>
+		<groupId>org.dbflute.utflute</groupId>
+		<artifactId>utflute-base</artifactId>
+		<version>0.9.6-A-SNAPSHOT</version>
+	</parent>
+	<artifactId>utflute-lastaflute-jakarta</artifactId>
+	<packaging>jar</packaging>
+
+	<name>UTFlute LastaFlute</name>
+	<description>The unit test library for LastaFlute (with DBFlute)</description>
+
+	<dependencies>
+		<!-- =============== -->
+		<!-- |   compile   | -->
+		<!-- =============== -->
+		<!-- lastaflute -->
+		<dependency>
+			<groupId>org.lastaflute</groupId>
+			<artifactId>lastaflute</artifactId>
+			<version>1.3.0-SNAPSHOT</version> <!-- about one year old (from now) -->
+		</dependency>
+		<!-- lasta-meta -->
+		<dependency>
+			<groupId>org.lastaflute.meta</groupId>
+			<artifactId>lasta-meta</artifactId>
+			<version>0.6.0</version> <!-- want latest version -->
+		</dependency>
+
+		<!-- ================ -->
+		<!-- |   provided   | -->
+		<!-- ================ -->
+		<!-- transaction -->
+		<dependency>
+			<groupId>jakarta.transaction</groupId>
+			<artifactId>jakarta.transaction-api</artifactId>
+			<version>2.0.1</version>
+			<scope>provided</scope>
+		</dependency>
+		<!-- servlet -->
+		<dependency>
+			<groupId>jakarta.servlet</groupId>
+			<artifactId>jakarta.servlet-api</artifactId>
+			<version>6.0.0</version>
+			<scope>provided</scope> 
+		</dependency>
+		<dependency>
+			<groupId>jakarta.servlet.jsp</groupId>
+			<artifactId>jakarta.servlet.jsp-api</artifactId>
+			<version>3.1.1</version>
+			<scope>provided</scope> 
+		</dependency>
+	</dependencies>
+</project>
