@@ -1,0 +1,521 @@
+/*
+ * Copyright 2014-2022 the original author or authors.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND,
+ * either express or implied. See the License for the specific language
+ * governing permissions and limitations under the License.
+ */
+package org.dbflute.utflute.lastaflute;
+
+import java.lang.reflect.Method;
+import java.time.LocalDateTime;
+import java.util.Enumeration;
+import java.util.function.Consumer;
+import java.util.function.Supplier;
+
+import javax.sql.DataSource;
+
+import org.dbflute.hook.AccessContext;
+import org.dbflute.utflute.lastadi.LastaDiTestCase;
+import org.dbflute.utflute.lastaflute.mail.MailMessageAssertion;
+import org.dbflute.utflute.lastaflute.mail.TestingMailData;
+import org.dbflute.utflute.mocklet.MockletServletConfig;
+import org.dbflute.utflute.mocklet.MockletServletConfigImpl;
+import org.dbflute.utflute.mocklet.MockletServletContext;
+import org.dbflute.utflute.mocklet.MockletServletContextImpl;
+import org.dbflute.util.DfTypeUtil;
+import org.lastaflute.core.direction.FwAssistantDirector;
+import org.lastaflute.core.json.JsonManager;
+import org.lastaflute.core.magic.ThreadCacheContext;
+import org.lastaflute.core.magic.destructive.BowgunDestructiveAdjuster;
+import org.lastaflute.core.time.SimpleTimeManager;
+import org.lastaflute.db.dbflute.accesscontext.PreparedAccessContext;
+import org.lastaflute.di.core.factory.SingletonLaContainerFactory;
+import org.lastaflute.web.LastaFilter;
+import org.lastaflute.web.response.JsonResponse;
+
+import jakarta.annotation.Resource;
+import jakarta.servlet.FilterConfig;
+import jakarta.servlet.ServletConfig;
+import jakarta.servlet.ServletContext;
+import jakarta.servlet.ServletException;
+
+/**
+ * The base class of test cases with LastaFlute (also with Lasta Di).
+ * @author jflute
+ * @since 0.8.6 (2018/04/20 Friday)
+ */
+public abstract class LastaFluteTestCase extends LastaDiTestCase {
+
+    // ===================================================================================
+    //                                                                          Definition
+    //                                                                          ==========
+    /** The cached configuration of servlet. (NullAllowed: when no web mock or beginning or ending) */
+    private static MockletServletConfig _xcachedServletConfig;
+
+    protected static Boolean _xexistsLastaJob; // lazy-loaded for performance
+    protected static boolean _xjobSchedulingSuppressed;
+
+    // ===================================================================================
+    //                                                                           Attribute
+    //                                                                           =========
+    /** The (main) data source for database. (NotNull: after injection) */
+    @Resource
+    private DataSource _xdataSource;
+
+    // -----------------------------------------------------
+    //                                       Mail Validation
+    //                                       ---------------
+    private MailMessageAssertion _xmailMessageAssertion;
+
+    // ===================================================================================
+    //                                                                            Settings
+    //                                                                            ========
+    // -----------------------------------------------------
+    //                                                Set up
+    //                                                ------
+    @Override
+    protected boolean xisSuppressTestCaseAccessContext() {
+        return true; // instead, use context geared by transaction
+    }
+
+    @Override
+    protected void xsetupBeforeTestCaseContainer() {
+        xsuppressJobSchedulingIfNeeds();
+        super.xsetupBeforeTestCaseContainer();
+    }
+
+    @Override
+    protected void xsetupAfterTestCaseContainer() {
+        super.xsetupAfterTestCaseContainer();
+        if (isUseJobScheduling()) {
+            xrebootJobSchedulingIfNeeds();
+        }
+        initializeAssistantDirector(); // nearly actual timing
+    }
+
+    protected void initializeAssistantDirector() { // injection not yet here
+        final FwAssistantDirector director = getComponent(FwAssistantDirector.class);
+        director.assistCoreDirection().assistCurtainBeforeHook().hook(director);
+    }
+
+    @Override
+    protected void xsetupBeforeTestCaseInjection() {
+        super.xsetupBeforeTestCaseInjection();
+        initializeThreadCacheContext(); // nearly actual timing
+        initializePreparedAccessContext();
+    }
+
+    protected void initializeThreadCacheContext() {
+        ThreadCacheContext.initialize();
+    }
+
+    protected void initializePreparedAccessContext() {
+        PreparedAccessContext.setAccessContextOnThread(createPreparedAccessContext());
+    }
+
+    protected AccessContext createPreparedAccessContext() {
+        return createTestCaseAccessContext(); // you should change to your context
+    }
+
+    // -----------------------------------------------------
+    //                                             Tear Down
+    //                                             ---------
+    @Override
+    protected void postTest() {
+        super.postTest();
+        xprocessMailAssertion();
+    }
+
+    @Override
+    public void tearDown() throws Exception {
+        xdestroyJobSchedulingIfNeeds(); // always destroy if scheduled to avoid job trouble
+        super.tearDown();
+        ThreadCacheContext.clear(); // should be after closing transaction for e.g. LazyTransaction
+        if (BowgunDestructiveAdjuster.hasAnyBowgun()) {
+            BowgunDestructiveAdjuster.unlock();
+            BowgunDestructiveAdjuster.restoreBowgunAll();
+        }
+    }
+
+    // -----------------------------------------------------
+    //                                     Prepare Container
+    //                                     -----------------
+    @Override
+    protected boolean isUseOneTimeContainer() { // may be overridden
+        return maybeContainerResourceOverridden(); // to destroy cache but #hope separate life-cycle
+    }
+
+    protected boolean maybeContainerResourceOverridden() {
+        return xisMethodOverridden("prepareMockContextPath");
+    }
+
+    protected boolean xisMethodOverridden(String methodName, Class<?>... argTypes) {
+        try {
+            getClass().getDeclaredMethod(methodName, argTypes);
+            return true;
+        } catch (NoSuchMethodException ignored) {
+            return false;
+        }
+    }
+
+    @Override
+    protected boolean xisTreatedAsWebContainer() {
+        return true; // fixedly (not related to request mock)
+    }
+
+    // -----------------------------------------------------
+    //                                  Initialize Container
+    //                                  --------------------
+    @Override
+    protected void xinitializeContainer(String configFile) {
+        log("...Initializing Lasta Di via LastaFlute: " + configFile);
+        xdoInitializeContainerViaLastaFlute(configFile);
+    }
+
+    protected void xdoInitializeContainerViaLastaFlute(String configFile) {
+        SingletonLaContainerFactory.setConfigPath(configFile);
+        final ServletConfig servletConfig = xprepareMockServletConfig(configFile);
+        final LastaFilter filter = xcreateLastaFilter();
+        try {
+            filter.init(new FilterConfig() { // initializing Lasta Di
+                public String getFilterName() {
+                    return "containerFilter";
+                }
+
+                public ServletContext getServletContext() {
+                    return servletConfig.getServletContext();
+                }
+
+                public Enumeration<String> getInitParameterNames() {
+                    return null;
+                }
+
+                public String getInitParameter(String name) {
+                    return null;
+                }
+            });
+        } catch (ServletException e) {
+            String msg = "Failed to initialize servlet config to servlet: " + servletConfig;
+            throw new IllegalStateException(msg, e.getRootCause());
+        }
+    }
+
+    // -----------------------------------------------------
+    //                                     Destroy Container
+    //                                     -----------------
+    @Override
+    protected void xdestroyContainer() {
+        super.xdestroyContainer();
+        xclearServletConfig();
+    }
+
+    // -----------------------------------------------------
+    //                                          Servlet Mock
+    //                                          ------------
+    protected ServletConfig xprepareMockServletConfig(String configFile) {
+        _xcachedServletConfig = createMockletServletConfig(); // cache for request mocks
+        _xcachedServletConfig.setServletContext(createMockletServletContext());
+        return _xcachedServletConfig;
+    }
+
+    protected LastaFilter xcreateLastaFilter() {
+        return new LastaFilter();
+    }
+
+    protected MockletServletConfig createMockletServletConfig() {
+        return new MockletServletConfigImpl();
+    }
+
+    protected MockletServletContext createMockletServletContext() {
+        return new MockletServletContextImpl(prepareMockContextPath());
+    }
+
+    protected String prepareMockContextPath() { // you can override
+        return "/utcontext";
+    }
+
+    protected void xclearServletConfig() {
+        _xcachedServletConfig = null;
+    }
+
+    // ===================================================================================
+    //                                                                         Cannon-ball
+    //                                                                         ===========
+    @Override
+    protected void xprepareCannonballBeginning() {
+        super.xprepareCannonballBeginning();
+        initializeThreadCacheContext();
+    }
+
+    @Override
+    protected void xprepareCannonballAccessContext() {
+        initializePreparedAccessContext(); // not call super not to use default
+    }
+
+    // ===================================================================================
+    //                                                                       JSON Handling
+    //                                                                       =============
+    /**
+     * Show JSON string for the JSON bean.
+     * @param jsonBean The JSON bean to be serialized. (NotNull)
+     */
+    protected void showJson(Object jsonBean) {
+        log(jsonBean.getClass().getSimpleName() + ":" + ln() + toJson(jsonBean));
+    }
+
+    /**
+     * Convert to JSON string from the JSON bean.
+     * @param jsonBean The JSON bean to be serialized. (NotNull)
+     * @return The JSON string. (NotNull)
+     */
+    protected String toJson(Object jsonBean) {
+        final Object realBean;
+        if (jsonBean instanceof JsonResponse<?>) {
+            realBean = ((JsonResponse<?>) jsonBean).getJsonBean();
+        } else {
+            realBean = jsonBean;
+        }
+        return getComponent(JsonManager.class).toJson(realBean);
+    }
+
+    // ===================================================================================
+    //                                                                      Mail Assertion
+    //                                                                      ==============
+    /**
+     * Reserve mail assertion, should be called before action execution.
+     * <pre>
+     * <span style="color: #3F7E5E">// ## Arrange ##</span>
+     * SignupAction <span style="color: #553000">action</span> = <span style="color: #70226C">new</span> SignupAction();
+     * inject(<span style="color: #553000">action</span>);
+     * SignupForm <span style="color: #553000">form</span> = <span style="color: #70226C">new</span> SignupForm();
+     * <span style="color: #CC4747">reserveMailAssertion</span>(<span style="color: #553000">data</span> <span style="color: #90226C; font-weight: bold"><span style="font-size: 120%">-</span>&gt;</span> {
+     *     <span style="color: #553000">data</span>.required(<span style="color: #994747">WelcomeMemberPostcard</span>.<span style="color: #70226C">class</span>).forEach(<span style="color: #553000">message</span> <span style="color: #90226C; font-weight: bold"><span style="font-size: 120%">-</span>&gt;</span> {
+     *        <span style="color: #553000">message</span>.requiredToList().forEach(<span style="color: #553000">addr</span> <span style="color: #90226C; font-weight: bold"><span style="font-size: 120%">-</span>&gt;</span> {
+     *            assertContains(<span style="color: #553000">addr</span>.getAddress(), <span style="color: #553000">form</span>.memberAccount); <span style="color: #3F7E5E">// e.g. land@docksidestage.org</span>
+     *        });
+     *        <span style="color: #553000">message</span>.assertPlainTextContains(<span style="color: #553000">form</span>.memberName);
+     *        <span style="color: #553000">message</span>.assertPlainTextContains(<span style="color: #553000">form</span>.memberAccount);
+     *     });
+     * });
+     *
+     * <span style="color: #3F7E5E">// ## Act ##</span>
+     * HtmlResponse <span style="color: #553000">response</span> = <span style="color: #553000">action</span>.signup(<span style="color: #553000">form</span>);
+     * ...
+     * </pre>
+     * @param dataLambda The callback for mail data. (NotNull)
+     */
+    protected void reserveMailAssertion(Consumer<TestingMailData> dataLambda) {
+        _xmailMessageAssertion = new MailMessageAssertion(dataLambda);
+    }
+
+    protected void xprocessMailAssertion() {
+        if (_xmailMessageAssertion != null) {
+            _xmailMessageAssertion.assertMailData();
+            _xmailMessageAssertion = null;
+        }
+    }
+
+    // ===================================================================================
+    //                                                                         Destructive
+    //                                                                         ===========
+    // -----------------------------------------------------
+    //                                          Asynchronous
+    //                                          ------------
+    /**
+     * Change asynchronous process to normal synchronous, to be easy to assert. <br>
+     * (Invalidate AsyncManager)
+     * <pre>
+     * <span style="color: #3F7E5E">// ## Arrange ##</span>
+     * <span style="color: #CC4747">changeAsyncToNormalSync()</span>;
+     * ...
+     * </pre>
+     */
+    protected void changeAsyncToNormalSync() {
+        BowgunDestructiveAdjuster.unlock();
+        BowgunDestructiveAdjuster.shootBowgunAsyncToNormalSync();
+    }
+
+    /**
+     * Restore asynchronous process to normal synchronous. <br>
+     * (async() is executed as asynchronous)
+     */
+    protected void restoreAsyncToNormalSync() {
+        BowgunDestructiveAdjuster.unlock();
+        BowgunDestructiveAdjuster.restoreBowgunAsyncToNormalSync();
+    }
+
+    // -----------------------------------------------------
+    //                                           Transaction
+    //                                           -----------
+    /**
+     * Change requires-new transaction to required transaction, to be easy to assert. <br>
+     * (All transactions can be in test transaction)
+     * <pre>
+     * <span style="color: #3F7E5E">// ## Arrange ##</span>
+     * <span style="color: #CC4747">changeRequiresNewToRequired()</span>;
+     * ...
+     * </pre>
+     */
+    protected void changeRequiresNewToRequired() {
+        BowgunDestructiveAdjuster.unlock();
+        BowgunDestructiveAdjuster.shootBowgunRequiresNewToRequired();
+    }
+
+    /**
+     * Restore requires-new transaction to required transaction. <br>
+     * (requiresNew() is executed as requires-new)
+     */
+    protected void restoreRequiresNewToRequired() {
+        BowgunDestructiveAdjuster.unlock();
+        BowgunDestructiveAdjuster.restoreBowgunRequiresNewToRequired();
+    }
+
+    // -----------------------------------------------------
+    //                                          Current Date
+    //                                          ------------
+    // to be geared with LastaFlute
+    @Override
+    protected void switchCurrentDate(Supplier<LocalDateTime> dateTimeSupplier) {
+        super.switchCurrentDate(dateTimeSupplier);
+        SimpleTimeManager.unlock();
+        SimpleTimeManager.shootBowgunCurrentTimeProvider(() -> {
+            return DfTypeUtil.toDate(dateTimeSupplier.get()).getTime();
+        });
+    }
+
+    @Override
+    protected void xclearSwitchedCurrentDate() {
+        if (xisUseSwitchedCurrentDate()) {
+            SimpleTimeManager.unlock();
+            SimpleTimeManager.shootBowgunCurrentTimeProvider(null);
+        }
+        super.xclearSwitchedCurrentDate();
+    }
+
+    // ===================================================================================
+    //                                                                            LastaJob
+    //                                                                            ========
+    protected void xsuppressJobSchedulingIfNeeds() {
+        if (!xexistsLastaJob()) {
+            return;
+        }
+        if (_xjobSchedulingSuppressed) { // to avoid duplicate calls when batch execution of unit test
+            return;
+        }
+        _xjobSchedulingSuppressed = true;
+        try {
+            // reflection on parade not to depends on LastaJob library
+            final Class<?> jobManagerType = Class.forName("org.lastaflute.job.SimpleJobManager");
+            final Method unlockMethod = jobManagerType.getMethod("unlock", (Class[]) null);
+            unlockMethod.invoke(null, (Object[]) null);
+            final Method shootMethod = jobManagerType.getMethod("shootBowgunEmptyScheduling", (Class[]) null);
+            shootMethod.invoke(null, (Object[]) null);
+        } catch (Exception continued) {
+            log("*Failed to suppress job scheduling", continued);
+        }
+    }
+
+    protected boolean isUseJobScheduling() { // you can override, for e.g. heavy scheduling (using e.g. DB)
+        return false; // you can set true only when including LastaJob
+    }
+
+    protected void xrebootJobSchedulingIfNeeds() { // called when isUseJobScheduling()
+        if (!xexistsLastaJob()) {
+            return;
+        }
+        try {
+            // reflection on parade not to depends on LastaJob library
+            final Class<?> jobManagerType = xforNameJobManager();
+            final Object jobManager = getComponent(jobManagerType);
+            if (!xisJobSchedulingDone(jobManagerType, jobManager)) {
+                xcallNoArgInstanceJobMethod(jobManagerType, jobManager, "reboot");
+            }
+        } catch (Exception continued) {
+            log("*Failed to reboot job scheduling", continued);
+        }
+    }
+
+    protected void xdestroyJobSchedulingIfNeeds() { // always called from tearDown()
+        if (!xexistsLastaJob()) {
+            return;
+        }
+        try {
+            // reflection on parade not to depends on LastaJob library
+            final Class<?> jobManagerType = xforNameJobManager();
+            if (hasComponent(jobManagerType)) { // e.g. in classpath and include lasta_job.xml
+                final Object jobManager = getComponent(jobManagerType);
+                if (xisJobSchedulingDone(jobManagerType, jobManager)) {
+                    xcallNoArgInstanceJobMethod(jobManagerType, jobManager, "destroy");
+                }
+            }
+        } catch (Exception continued) {
+            log("*Failed to destroy job scheduling", continued);
+        }
+    }
+
+    protected static Class<?> xforNameJobManager() throws ClassNotFoundException {
+        return Class.forName("org.lastaflute.job.JobManager");
+    }
+
+    protected boolean xisJobSchedulingDone(Class<?> jobManagerType, Object jobManager) throws ReflectiveOperationException {
+        return (boolean) xcallNoArgInstanceJobMethod(jobManagerType, jobManager, "isSchedulingDone");
+    }
+
+    private Object xcallNoArgInstanceJobMethod(Class<?> jobManagerType, Object jobManager, String methodName)
+            throws ReflectiveOperationException {
+        final Method rebootMethod = jobManagerType.getMethod(methodName, (Class[]) null);
+        return rebootMethod.invoke(jobManager, (Object[]) null);
+    }
+
+    protected boolean xexistsLastaJob() {
+        if (_xexistsLastaJob != null) {
+            return _xexistsLastaJob;
+        }
+        try {
+            xforNameJobManager();
+            _xexistsLastaJob = true;
+            // this method is called outside container so cannot determine it
+            //_xexistsLastaJob = hasComponent(jobManagerType);
+        } catch (ClassNotFoundException e) {
+            _xexistsLastaJob = false;
+        }
+        return _xexistsLastaJob;
+    }
+
+    // ===================================================================================
+    //                                                                         JDBC Helper
+    //                                                                         ===========
+    /** {@inheritDoc} */
+    @Override
+    protected DataSource getDataSource() { // user method
+        return _xdataSource;
+    }
+
+    // ===================================================================================
+    //                                                                            Accessor
+    //                                                                            ========
+    protected static MockletServletConfig xgetCachedServletConfig() {
+        return _xcachedServletConfig;
+    }
+
+    protected static void xsetCachedServletConfig(MockletServletConfig xcachedServletConfig) {
+        _xcachedServletConfig = xcachedServletConfig;
+    }
+
+    protected MailMessageAssertion xgetMailMessageValidator() {
+        return _xmailMessageAssertion;
+    }
+
+    protected void xsetMailMessageValidator(MailMessageAssertion xmailMessageValidator) {
+        _xmailMessageAssertion = xmailMessageValidator;
+    }
+}
