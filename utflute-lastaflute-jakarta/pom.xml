@@ -21,7 +21,7 @@
 		<dependency>
 			<groupId>org.lastaflute</groupId>
 			<artifactId>lastaflute</artifactId>
-			<version>1.3.0-SNAPSHOT</version> <!-- about one year old (from now) -->
+			<version>2.0.0-SNAPSHOT</version> <!-- about one year old (from now) -->
 		</dependency>
 		<!-- lasta-meta -->
 		<dependency>
