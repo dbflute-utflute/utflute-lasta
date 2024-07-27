@@ -17,13 +17,16 @@
 		<!-- =============== -->
 		<!-- |   compile   | -->
 		<!-- =============== -->
+		<!-- UTFlute for LastaFlute does not depend on UTFlute Core
+		 as independent style to be simple structure specially
+		 -->
 		<!-- lastaflute -->
 		<dependency>
 			<groupId>org.lastaflute</groupId>
 			<artifactId>lastaflute</artifactId>
 			<version>1.2.7</version> <!-- about one year old (from now) -->
 		</dependency>
-		<!-- lasta-meta -->
+		<!-- lasta meta -->
 		<dependency>
 			<groupId>org.lastaflute.meta</groupId>
 			<artifactId>lasta-meta</artifactId>
