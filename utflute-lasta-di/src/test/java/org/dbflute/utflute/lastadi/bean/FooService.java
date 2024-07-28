@@ -1,7 +1,7 @@
 package org.dbflute.utflute.lastadi.bean;
 
-import javax.annotation.Resource;
-import javax.transaction.TransactionManager;
+import jakarta.annotation.Resource;
+import jakarta.transaction.TransactionManager;
 
 /**
  * @author jflute

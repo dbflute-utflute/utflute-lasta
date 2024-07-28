@@ -15,7 +15,7 @@
  */
 package org.dbflute.utflute.mocklet;
 
-import javax.servlet.RequestDispatcher;
+import jakarta.servlet.RequestDispatcher;
 
 /**
  * @author modified by jflute (originated in Seasar)

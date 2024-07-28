@@ -20,9 +20,9 @@ import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.Map;
 
-import javax.servlet.ServletContext;
-
 import org.dbflute.utflute.mocklet.helper.MockletEnumerationAdapter;
+
+import jakarta.servlet.ServletContext;
 
 /**
  * @author modified by jflute (originated in Seasar)

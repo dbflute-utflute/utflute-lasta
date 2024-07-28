@@ -15,8 +15,8 @@
  */
 package org.dbflute.utflute.mocklet;
 
-import javax.servlet.ServletConfig;
-import javax.servlet.ServletContext;
+import jakarta.servlet.ServletConfig;
+import jakarta.servlet.ServletContext;
 
 /**
  * @author modified by jflute (originated in Seasar)

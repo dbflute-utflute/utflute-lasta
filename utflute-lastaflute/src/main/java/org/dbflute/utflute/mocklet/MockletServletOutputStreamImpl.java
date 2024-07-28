@@ -18,7 +18,7 @@ package org.dbflute.utflute.mocklet;
 import java.io.IOException;
 import java.io.OutputStream;
 
-import javax.servlet.WriteListener;
+import jakarta.servlet.WriteListener;
 
 /**
  * @author modified by jflute (originated in Seasar)

@@ -20,9 +20,9 @@ import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.Map;
 
-import javax.servlet.ServletContext;
-
 import org.dbflute.utflute.mocklet.helper.MockletEnumerationAdapter;
+
+import jakarta.servlet.ServletContext;
 
 /**
  * @author modified by jflute (originated in Seasar)
@@ -89,11 +89,6 @@ public class MockletHttpSessionImpl implements MockletHttpSession, Serializable 
 
     public void removeAttribute(String name) {
         attributes.remove(name);
-    }
-
-    @Deprecated
-    public javax.servlet.http.HttpSessionContext getSessionContext() {
-        return null;
     }
 
     @Deprecated

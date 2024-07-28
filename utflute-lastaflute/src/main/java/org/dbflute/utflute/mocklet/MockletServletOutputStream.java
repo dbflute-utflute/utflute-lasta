@@ -15,7 +15,7 @@
  */
 package org.dbflute.utflute.mocklet;
 
-import javax.servlet.ServletOutputStream;
+import jakarta.servlet.ServletOutputStream;
 
 /**
  * @author modified by jflute (originated in Seasar)

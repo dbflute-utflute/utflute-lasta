@@ -15,7 +15,7 @@
  */
 package org.dbflute.utflute.mocklet;
 
-import javax.servlet.http.HttpSession;
+import jakarta.servlet.http.HttpSession;
 
 /**
  * @author modified by jflute (originated in Seasar)

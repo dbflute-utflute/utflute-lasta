@@ -15,10 +15,10 @@
  */
 package org.dbflute.utflute.lastaflute.inject;
 
-import javax.annotation.Resource;
-
 import org.dbflute.utflute.lastadi.LastaDiTestCase;
 import org.dbflute.utflute.lastaflute.bean.FooAction;
+
+import jakarta.annotation.Resource;
 
 /**
  * @author jflute

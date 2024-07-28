@@ -18,14 +18,6 @@ package org.dbflute.utflute.lastadi;
 import java.lang.annotation.Annotation;
 import java.util.Map;
 
-import javax.annotation.Resource;
-import javax.transaction.NotSupportedException;
-import javax.transaction.Status;
-import javax.transaction.SystemException;
-import javax.transaction.Transaction;
-import javax.transaction.TransactionManager;
-import javax.transaction.UserTransaction;
-
 import org.dbflute.utflute.core.InjectionTestCase;
 import org.dbflute.utflute.core.binding.BindingAnnotationRule;
 import org.dbflute.utflute.core.transaction.TransactionFailureException;
@@ -36,6 +28,14 @@ import org.lastaflute.di.core.exception.ComponentNotFoundException;
 import org.lastaflute.di.core.factory.SingletonLaContainerFactory;
 import org.lastaflute.di.core.smart.SmartDeployMode;
 import org.lastaflute.di.naming.NamingConvention;
+
+import jakarta.annotation.Resource;
+import jakarta.transaction.NotSupportedException;
+import jakarta.transaction.Status;
+import jakarta.transaction.SystemException;
+import jakarta.transaction.Transaction;
+import jakarta.transaction.TransactionManager;
+import jakarta.transaction.UserTransaction;
 
 /**
  * The base class of test cases with Lasta Di (without LastaFlute).

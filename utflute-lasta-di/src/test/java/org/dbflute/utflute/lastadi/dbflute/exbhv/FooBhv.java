@@ -1,6 +1,6 @@
 package org.dbflute.utflute.lastadi.dbflute.exbhv;
 
-import javax.transaction.TransactionManager;
+import jakarta.transaction.TransactionManager;
 
 /**
  * @author jflute

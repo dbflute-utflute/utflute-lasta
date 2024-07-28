@@ -19,15 +19,15 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
-import javax.mail.Address;
-import javax.mail.internet.InternetAddress;
-
 import org.dbflute.helper.message.ExceptionMessageBuilder;
 import org.dbflute.mail.CardView;
 import org.dbflute.mail.PostOffice;
 import org.dbflute.mail.send.supplement.SMailPostingDiscloser;
 import org.dbflute.mail.send.supplement.attachment.SMailReadAttachedData;
 import org.junit.Assert;
+
+import jakarta.mail.Address;
+import jakarta.mail.internet.InternetAddress;
 
 /**
  * @author jflute

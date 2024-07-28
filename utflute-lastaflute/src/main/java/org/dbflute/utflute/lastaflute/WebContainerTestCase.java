@@ -19,11 +19,6 @@ import java.util.HashSet;
 import java.util.Set;
 import java.util.function.Consumer;
 
-import javax.annotation.Resource;
-import javax.servlet.ServletContext;
-import javax.servlet.http.Cookie;
-import javax.servlet.http.HttpServletRequest;
-
 import org.dbflute.helper.function.IndependentProcessor;
 import org.dbflute.utflute.lastaflute.mock.MockResopnseBeanValidator;
 import org.dbflute.utflute.lastaflute.mock.MockRuntimeFactory;
@@ -57,6 +52,11 @@ import org.lastaflute.web.servlet.request.RequestManager;
 import org.lastaflute.web.token.DoubleSubmitManager;
 import org.lastaflute.web.token.DoubleSubmitTokenMap;
 import org.lastaflute.web.validation.exception.ValidationErrorException;
+
+import jakarta.annotation.Resource;
+import jakarta.servlet.ServletContext;
+import jakarta.servlet.http.Cookie;
+import jakarta.servlet.http.HttpServletRequest;
 
 /**
  * The base class of test cases for web environment with DI container. <br>

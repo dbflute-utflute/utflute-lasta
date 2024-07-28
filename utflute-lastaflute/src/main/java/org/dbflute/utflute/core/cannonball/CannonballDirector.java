@@ -188,7 +188,7 @@ public class CannonballDirector {
             final Object lockObj, final CannonballLogger logger) {
         return new Callable<Object>() {
             public Object call() { // each thread here
-                final long threadId = Thread.currentThread().getId();
+                final long threadId = Thread.currentThread().threadId();
                 final CannonballCar car = createCar(threadId, ourLatch, entryNumber, lockObj, option, logger);
                 boolean failure = false;
                 try {

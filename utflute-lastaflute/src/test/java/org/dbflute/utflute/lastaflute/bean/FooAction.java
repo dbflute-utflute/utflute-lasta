@@ -15,7 +15,7 @@
  */
 package org.dbflute.utflute.lastaflute.bean;
 
-import javax.annotation.Resource;
+import jakarta.annotation.Resource;
 
 /**
  * @author jflute

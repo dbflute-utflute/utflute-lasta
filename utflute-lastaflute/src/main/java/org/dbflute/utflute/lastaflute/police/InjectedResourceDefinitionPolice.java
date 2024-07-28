@@ -21,11 +21,11 @@ import java.lang.reflect.Modifier;
 import java.util.List;
 import java.util.function.Predicate;
 
-import javax.annotation.Resource;
-
 import org.dbflute.helper.message.ExceptionMessageBuilder;
 import org.dbflute.utflute.core.policestory.javaclass.PoliceStoryJavaClassHandler;
 import org.dbflute.util.DfReflectionUtil;
+
+import jakarta.annotation.Resource;
 
 /**
  * @author jflute

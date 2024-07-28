@@ -17,8 +17,8 @@ package org.dbflute.utflute.mocklet;
 
 import java.util.Collection;
 
-import javax.servlet.http.Cookie;
-import javax.servlet.http.HttpServletResponse;
+import jakarta.servlet.http.Cookie;
+import jakarta.servlet.http.HttpServletResponse;
 
 /**
  * @author modified by jflute (originated in Seasar)

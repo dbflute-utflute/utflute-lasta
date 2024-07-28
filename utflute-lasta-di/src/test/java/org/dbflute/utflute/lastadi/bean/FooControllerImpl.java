@@ -1,6 +1,6 @@
 package org.dbflute.utflute.lastadi.bean;
 
-import javax.annotation.Resource;
+import jakarta.annotation.Resource;
 
 /**
  * @author jflute

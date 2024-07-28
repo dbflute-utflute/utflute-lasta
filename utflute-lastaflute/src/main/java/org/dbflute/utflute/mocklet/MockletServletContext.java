@@ -17,7 +17,7 @@ package org.dbflute.utflute.mocklet;
 
 import java.util.Map;
 
-import javax.servlet.ServletContext;
+import jakarta.servlet.ServletContext;
 
 /**
  * @author modified by jflute (originated in Seasar)
