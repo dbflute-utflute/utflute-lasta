@@ -5,7 +5,7 @@
 	<parent>
 		<groupId>org.dbflute.utflute</groupId>
 		<artifactId>utflute-base</artifactId>
-		<version>0.9.6</version>
+		<version>0.9.8</version>
 	</parent>
 	<artifactId>utflute-lastaflute</artifactId>
 	<packaging>jar</packaging>
@@ -17,17 +17,20 @@
 		<!-- =============== -->
 		<!-- |   compile   | -->
 		<!-- =============== -->
+		<!-- UTFlute for LastaFlute does not depend on UTFlute Core
+		 as independent style to be simple structure specially
+		 -->
 		<!-- lastaflute -->
 		<dependency>
 			<groupId>org.lastaflute</groupId>
 			<artifactId>lastaflute</artifactId>
-			<version>1.2.5</version> <!-- about one year old (from now) -->
+			<version>1.2.7</version> <!-- about one year old (from now) -->
 		</dependency>
-		<!-- lasta-meta -->
+		<!-- lasta meta -->
 		<dependency>
 			<groupId>org.lastaflute.meta</groupId>
 			<artifactId>lasta-meta</artifactId>
-			<version>0.6.1</version> <!-- want latest version -->
+			<version>0.6.2</version> <!-- want latest version -->
 		</dependency>
 
 		<!-- ================ -->
@@ -37,7 +40,6 @@
 		<dependency>
 			<groupId>javax.transaction</groupId>
 			<artifactId>javax.transaction-api</artifactId>
-			<version>1.2</version>
 			<scope>provided</scope>
 		</dependency>
 		<!-- servlet -->
