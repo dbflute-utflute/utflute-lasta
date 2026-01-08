@@ -530,7 +530,7 @@ public abstract class WebContainerTestCase extends LastaFluteTestCase {
     /**
      * Save meta data to use rich swagger in war deployment. <br>
      * <pre>
-     * public void test_swagger() {
+     * public void test_swaggerMeta() {
      *     saveSwaggerMeta(new SwaggerAction());
      * }
      * </pre>
@@ -545,7 +545,7 @@ public abstract class WebContainerTestCase extends LastaFluteTestCase {
     /**
      * Save meta data to use rich openapi in war deployment. <br>
      * <pre>
-     * public void test_openapi() {
+     * public void test_openapiMeta() {
      *     saveOpenapiMeta(new SwaggerAction());
      * }
      * </pre>
