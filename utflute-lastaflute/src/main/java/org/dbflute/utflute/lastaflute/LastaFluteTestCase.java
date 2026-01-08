@@ -40,6 +40,7 @@ import org.lastaflute.core.time.SimpleTimeManager;
 import org.lastaflute.db.dbflute.accesscontext.PreparedAccessContext;
 import org.lastaflute.di.core.factory.SingletonLaContainerFactory;
 import org.lastaflute.web.LastaFilter;
+import org.junit.jupiter.api.AfterEach;
 import org.lastaflute.web.response.JsonResponse;
 
 import jakarta.annotation.Resource;
@@ -130,13 +131,9 @@ public abstract class LastaFluteTestCase extends LastaDiTestCase {
     //                                             Tear Down
     //                                             ---------
     @Override
-    protected void postTest() {
-        super.postTest();
-        xprocessMailAssertion();
-    }
-
-    @Override
-    public void tearDown() throws Exception {
+    @AfterEach
+    protected void tearDown() throws Exception {
+        xprocessMailAssertion(); // moved from postTest()
         xdestroyJobSchedulingIfNeeds(); // always destroy if scheduled to avoid job trouble
         super.tearDown();
         ThreadCacheContext.clear(); // should be after closing transaction for e.g. LazyTransaction

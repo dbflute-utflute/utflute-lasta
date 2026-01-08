@@ -44,6 +44,10 @@ import org.lastaflute.di.core.factory.SingletonLaContainerFactory;
 import org.lastaflute.web.LastaFilter;
 import org.lastaflute.web.response.JsonResponse;
 
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.TestInfo;
+
 import jakarta.annotation.Resource;
 import jakarta.servlet.FilterConfig;
 import jakarta.servlet.ServletConfig;
@@ -89,9 +93,10 @@ public abstract class ContainerTestCase extends LastaDiTestCase {
     //                                                                            Settings
     //                                                                            ========
     @Override
-    public void setUp() throws Exception {
+    @BeforeEach
+    protected void setUp(TestInfo testInfo) throws Exception {
         xsuppressJobSchedulingIfNeeds();
-        super.setUp();
+        super.setUp(testInfo);
         if (isUseJobScheduling()) {
             xrebootJobSchedulingIfNeeds();
         }
@@ -109,13 +114,9 @@ public abstract class ContainerTestCase extends LastaDiTestCase {
     }
 
     @Override
-    protected void postTest() {
-        super.postTest();
-        xprocessMailAssertion();
-    }
-
-    @Override
-    public void tearDown() throws Exception {
+    @AfterEach
+    protected void tearDown() throws Exception {
+        xprocessMailAssertion(); // moved from postTest()
         ThreadCacheContext.clear();
         if (BowgunDestructiveAdjuster.hasAnyBowgun()) {
             BowgunDestructiveAdjuster.unlock();

@@ -1,12 +1,14 @@
 package org.dbflute.utflute.lastaflute.police;
 
 import org.dbflute.utflute.core.PlainTestCase;
+import org.junit.jupiter.api.Test;
 
 /**
  * @author jflute
  */
 public class WebPackageNinjaReferencePoliceTest extends PlainTestCase {
 
+    @Test
     public void test_existsNinjaReference_basic() {
         // ## Arrange ##
         WebPackageNinjaReferencePolice police = new WebPackageNinjaReferencePolice();

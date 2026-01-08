@@ -71,16 +71,18 @@ import org.dbflute.util.DfCollectionUtil;
 import org.dbflute.util.DfResourceUtil;
 import org.dbflute.util.DfTypeUtil;
 import org.dbflute.util.Srl;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.TestInfo;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import junit.framework.TestCase;
 
 /**
  * @author jflute
  * @since 0.1.0 (2011/07/24 Sunday)
  */
-public abstract class PlainTestCase extends TestCase {
+public abstract class PlainTestCase {
 
     // ===================================================================================
     //                                                                          Definition
@@ -95,6 +97,9 @@ public abstract class PlainTestCase extends TestCase {
     // ===================================================================================
     //                                                                           Attribute
     //                                                                           =========
+    /** The method name of test. (NullAllowed: before preparation) */
+    private String _xtestMethodName;
+
     /** The manager of mark here. (NullAllowed: lazy-loaded) */
     private MarkHereManager _xmarkHereManager;
 
@@ -110,13 +115,17 @@ public abstract class PlainTestCase extends TestCase {
     // ===================================================================================
     //                                                                            Settings
     //                                                                            ========
-    @Override
-    protected void setUp() throws Exception {
+    @BeforeEach
+    protected void setUp(TestInfo testInfo) throws Exception {
+        xkeepTestMethodName(testInfo);
         xreserveShowTitle();
         if (!xisSuppressTestCaseAccessContext()) {
             initializeTestCaseAccessContext();
         }
-        super.setUp();
+    }
+
+    protected void xkeepTestMethodName(TestInfo testInfo) {
+        _xtestMethodName = testInfo.getTestMethod().map(md -> md.getName()).orElse("unknown");
     }
 
     protected void xreserveShowTitle() {
@@ -125,42 +134,31 @@ public abstract class PlainTestCase extends TestCase {
     }
 
     protected String xgetCaseDisp() {
-        return getClass().getSimpleName() + "." + getName() + "()";
+        return getClass().getSimpleName() + "." + getTestMethodName() + "()";
     }
 
-    @Override
-    protected void runTest() throws Throwable {
-        try {
-            super.runTest();
-            postTest();
-        } catch (Throwable e) { // to record in application log
-            log("Failed to finish the test: " + xgetCaseDisp(), e);
-            throw e;
-        }
-    }
-
-    protected void postTest() {
-    }
-
-    @Override
+    @AfterEach
     protected void tearDown() throws Exception {
         xclearAccessContextOnThread();
         xclearGatheredExecutedSql();
         xclearSwitchedCurrentDate();
         xclearMark(); // last process to be able to be used in tearDown()
-        super.tearDown();
     }
 
     // -----------------------------------------------------
     //                                            Basic Info
     //                                            ----------
     protected Method getTestMethod() {
-        String methodName = getName();
+        String methodName = getTestMethodName();
         try {
             return getClass().getMethod(methodName, (Class[]) null);
         } catch (NoSuchMethodException | SecurityException e) {
             throw new IllegalStateException("Not found the method: " + methodName, e);
         }
+    }
+
+    protected String getTestMethodName() {
+        return _xtestMethodName;
     }
 
     // ===================================================================================
@@ -1422,5 +1420,49 @@ public abstract class PlainTestCase extends TestCase {
 
     public boolean xisUseSwitchedCurrentDate() {
         return _xuseSwitchedCurrentDate;
+    }
+
+    // ===================================================================================
+    //                                                                    Assertion Helper
+    //                                                                    ================
+    // wrapper methods for JUnit 5 Assertions (to maintain compatibility with existing code)
+    protected void assertEquals(Object expected, Object actual) {
+        Assertions.assertEquals(expected, actual);
+    }
+
+    protected void assertEquals(String message, Object expected, Object actual) {
+        Assertions.assertEquals(expected, actual, message);
+    }
+
+    protected void assertTrue(boolean condition) {
+        Assertions.assertTrue(condition);
+    }
+
+    protected void assertTrue(String message, boolean condition) {
+        Assertions.assertTrue(condition, message);
+    }
+
+    protected void assertFalse(boolean condition) {
+        Assertions.assertFalse(condition);
+    }
+
+    protected void assertFalse(String message, boolean condition) {
+        Assertions.assertFalse(condition, message);
+    }
+
+    protected void assertNotNull(Object actual) {
+        Assertions.assertNotNull(actual);
+    }
+
+    protected void assertNull(Object actual) {
+        Assertions.assertNull(actual);
+    }
+
+    protected void fail(String message) {
+        Assertions.fail(message);
+    }
+
+    protected void fail() {
+        Assertions.fail();
     }
 }
