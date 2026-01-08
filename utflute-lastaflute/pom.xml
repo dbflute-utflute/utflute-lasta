@@ -5,10 +5,9 @@
 	<parent>
 		<groupId>org.dbflute.utflute</groupId>
 		<artifactId>utflute-base</artifactId>
-		<version>0.9.8</version>
+		<version>0.9.9-A-SNAPSHOT</version>
 	</parent>
 	<artifactId>utflute-lastaflute</artifactId>
-	<version>0.9.9-SNAPSHOT</version>
 	<packaging>jar</packaging>
 
 	<name>UTFlute LastaFlute</name>
@@ -31,7 +30,7 @@
 		<dependency>
 			<groupId>org.lastaflute.meta</groupId>
 			<artifactId>lasta-meta</artifactId>
-			<version>0.6.4-SNAPSHOT</version> <!-- want latest version -->
+			<version>0.6.4-A-SNAPSHOT</version> <!-- want latest version -->
 		</dependency>
 
 		<!-- ================ -->
