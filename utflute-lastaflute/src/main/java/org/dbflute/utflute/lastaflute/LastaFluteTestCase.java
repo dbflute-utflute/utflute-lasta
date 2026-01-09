@@ -38,7 +38,6 @@ import org.dbflute.utflute.mocklet.MockletServletContext;
 import org.dbflute.utflute.mocklet.MockletServletContextImpl;
 import org.dbflute.util.DfTypeUtil;
 import org.junit.jupiter.api.AfterEach;
-import org.lastaflute.core.direction.FwAssistantDirector;
 import org.lastaflute.core.json.JsonManager;
 import org.lastaflute.core.magic.ThreadCacheContext;
 import org.lastaflute.core.magic.destructive.BowgunDestructiveAdjuster;
@@ -99,12 +98,8 @@ public abstract class LastaFluteTestCase extends LastaDiTestCase {
         if (isUseJobScheduling()) {
             xrebootJobSchedulingIfNeeds();
         }
-        initializeAssistantDirector(); // nearly actual timing
-    }
-
-    protected void initializeAssistantDirector() { // injection not yet here
-        final FwAssistantDirector director = getComponent(FwAssistantDirector.class);
-        director.assistCoreDirection().assistCurtainBeforeHook().hook(director);
+        // CurtainBeforeHook is executed by LastaFilter so unneeded
+        //initializeAssistantDirector(); // nearly actual timing
     }
 
     @Override
@@ -190,18 +185,22 @@ public abstract class LastaFluteTestCase extends LastaDiTestCase {
         final LastaFilter filter = xcreateLastaFilter();
         try {
             filter.init(new FilterConfig() { // initializing Lasta Di
+                @Override
                 public String getFilterName() {
                     return "containerFilter";
                 }
 
+                @Override
                 public ServletContext getServletContext() {
                     return servletConfig.getServletContext();
                 }
 
+                @Override
                 public Enumeration<String> getInitParameterNames() {
                     return null;
                 }
 
+                @Override
                 public String getInitParameter(String name) {
                     return null;
                 }

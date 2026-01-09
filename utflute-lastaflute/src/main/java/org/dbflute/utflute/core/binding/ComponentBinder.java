@@ -510,7 +510,8 @@ public class ComponentBinder {
             try {
                 boundField.getField().set(bean, boundField.getExisting());
             } catch (Exception continued) { // because of not important but may need to debug so logging
-                _logger.debug("*Cannot release bound field: target=" + bean + ", field=" + boundField, continued);
+                final String fileExp = buildRevertContinuedExp(continued);
+                _logger.debug("*Cannot release bound field: target=" + bean + ", field=" + boundField + fileExp);
             }
         }
         boundFieldList.clear();
@@ -519,7 +520,8 @@ public class ComponentBinder {
             try {
                 boundProperty.getPropertyDesc().setValue(bean, boundProperty.getExisting());
             } catch (Exception continued) { // because of not important but may need to debug so logging
-                _logger.debug("*Cannot release bound property: target=" + bean + ", property=" + boundProperty, continued);
+                final String fileExp = buildRevertContinuedExp(continued);
+                _logger.debug("*Cannot release bound property: target=" + bean + ", property=" + boundProperty + fileExp);
             }
         }
         boundPropertyList.clear();
@@ -535,6 +537,19 @@ public class ComponentBinder {
         return reversedList;
     }
 
+    protected String buildRevertContinuedExp(Exception continued) {
+        final StringBuilder sb = new StringBuilder();
+        final StackTraceElement[] stackTrace = continued.getStackTrace();
+        if (stackTrace.length >= 1) {
+            final StackTraceElement el = stackTrace[0];
+            sb.append(", exception=");
+            sb.append(continued.getClass().getSimpleName()).append("::").append(continued.getMessage());
+            sb.append(" at ").append(el.getClassName()).append("@").append(el.getMethodName());
+            sb.append("(").append(el.getFileName()).append(":").append(el.getLineNumber()).append(")");
+        }
+        return sb.toString();
+    }
+
     // ===================================================================================
     //                                                                        Assist Logic
     //                                                                        ============
@@ -542,14 +557,22 @@ public class ComponentBinder {
         return _terminalSuperClass == null || !clazz.isAssignableFrom(_terminalSuperClass);
     }
 
-    protected boolean isNonBindingType(Class<?> type) {
+    protected boolean isNonBindingType(Class<?> bindingType) {
+        if (determineFixedNonBindingType(bindingType)) {
+            return true;
+        }
         final List<Class<?>> nonBindingTypeList = _nonBindingTypeList;
         for (Class<?> nonBindingType : nonBindingTypeList) {
-            if (nonBindingType.isAssignableFrom(type)) {
+            if (nonBindingType.isAssignableFrom(bindingType)) {
                 return true;
             }
         }
         return false;
+    }
+
+    protected boolean determineFixedNonBindingType(Class<?> bindingType) {
+        // to avoid e.g. SessionManager@setAttribute(Object)
+        return Object.class.equals(bindingType); // too abstract
     }
 
     protected String extractSpecifiedName(Annotation bindingAnnotation) {
