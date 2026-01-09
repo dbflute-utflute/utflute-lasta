@@ -16,6 +16,7 @@
 package org.dbflute.utflute.lastaflute;
 
 import org.dbflute.utflute.lastadi.LastaDiTestCase;
+import org.junit.jupiter.api.Test;
 
 /**
  * @author jflute
@@ -23,6 +24,7 @@ import org.dbflute.utflute.lastadi.LastaDiTestCase;
  */
 public class WebContainerTestCaseTest extends LastaDiTestCase {
 
+    @Test
     public void test_xcanUseComponentNameByBindingNamingRule_basic() throws Exception {
         assertTrue(xcanUseComponentNameByBindingNamingRule("foo_bar", "bar"));
         assertTrue(xcanUseComponentNameByBindingNamingRule("foo_bar", "foo_bar"));

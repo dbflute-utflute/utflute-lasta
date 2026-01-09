@@ -20,6 +20,7 @@ import org.dbflute.utflute.lastaflute.bean.FooAction;
 import org.dbflute.utflute.lastaflute.bean.FooAssist;
 import org.dbflute.utflute.lastaflute.bean.FooBhv;
 import org.dbflute.utflute.lastaflute.bean.FooLogic;
+import org.junit.jupiter.api.Test;
 
 /**
  * @author jflute
@@ -30,6 +31,7 @@ public class RegisterMockTest extends LastaDiTestCase {
     // ===================================================================================
     //                                                                        Nested Level
     //                                                                        ============
+    @Test
     public void test_registerMock_firstLevel() {
         // ## Arrange ##
         registerMock(new FooAssist() {
@@ -51,6 +53,7 @@ public class RegisterMockTest extends LastaDiTestCase {
         assertMarked("mock");
     }
 
+    @Test
     public void test_registerMock_secondLevel() {
         // ## Arrange ##
         registerMock(new FooLogic() {
@@ -72,6 +75,7 @@ public class RegisterMockTest extends LastaDiTestCase {
         assertMarked("mock");
     }
 
+    @Test
     public void test_registerMock_thirdLevel() {
         // ## Arrange ##
         registerMock(new FooBhv() {

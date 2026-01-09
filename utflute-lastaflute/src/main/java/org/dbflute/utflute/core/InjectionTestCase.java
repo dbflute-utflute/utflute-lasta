@@ -27,6 +27,9 @@ import org.dbflute.utflute.core.binding.ComponentBinder;
 import org.dbflute.utflute.core.binding.ComponentProvider;
 import org.dbflute.utflute.core.transaction.TransactionFailureException;
 import org.dbflute.utflute.core.transaction.TransactionResource;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.TestInfo;
 
 /**
  * @author jflute
@@ -68,8 +71,9 @@ public abstract class InjectionTestCase extends PlainTestCase {
     //                                                Set up
     //                                                ------
     @Override
-    public void setUp() throws Exception {
-        super.setUp();
+    @BeforeEach
+    protected void setUp(TestInfo testInfo) throws Exception {
+        super.setUp(testInfo);
 
         xsetupBeforeContainer();
         xsetupBeforeTestCaseContainer();
@@ -152,9 +156,10 @@ public abstract class InjectionTestCase extends PlainTestCase {
     //                                             Tear Down
     //                                             ---------
     @Override
-    public void tearDown() throws Exception {
+    @AfterEach
+    protected void tearDown() throws Exception {
         if (!isSuppressTestCaseTransaction()) {
-            xrollbackTestCaseTransaction(); // should be tear-down to close transaction when failure 
+            xrollbackTestCaseTransaction(); // should be tear-down to close transaction when failure
         }
         xdestroyTestCaseInjection();
         xdestroyTestCaseContainer();

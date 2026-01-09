@@ -17,6 +17,7 @@ package org.dbflute.utflute.lastaflute.inject;
 
 import org.dbflute.utflute.lastadi.LastaDiTestCase;
 import org.dbflute.utflute.lastaflute.bean.FooAction;
+import org.junit.jupiter.api.Test;
 
 import jakarta.annotation.Resource;
 
@@ -29,6 +30,7 @@ public class InjectTest extends LastaDiTestCase {
     // ===================================================================================
     //                                                                               Basic
     //                                                                               =====
+    @Test
     public void test_inject_basic() {
         // ## Arrange ##
         FooAction action = new FooAction();
@@ -44,6 +46,7 @@ public class InjectTest extends LastaDiTestCase {
     // ===================================================================================
     //                                                                           Not Found
     //                                                                           =========
+    @Test
     public void test_inject_notFound() {
         // ## Arrange ##
         MockBrokenLogic logic = new MockBrokenLogic();

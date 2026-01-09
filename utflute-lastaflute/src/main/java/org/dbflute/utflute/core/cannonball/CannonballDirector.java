@@ -28,7 +28,7 @@ import org.dbflute.helper.message.ExceptionMessageBuilder;
 import org.dbflute.utflute.core.transaction.TransactionResource;
 import org.dbflute.util.Srl;
 
-import junit.framework.AssertionFailedError;
+import org.opentest4j.AssertionFailedError;
 
 /**
  * @author jflute
