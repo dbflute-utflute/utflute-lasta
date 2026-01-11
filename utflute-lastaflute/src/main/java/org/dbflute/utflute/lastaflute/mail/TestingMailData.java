@@ -21,7 +21,7 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
 import org.dbflute.helper.message.ExceptionMessageBuilder;
-import org.junit.Assert;
+import org.junit.jupiter.api.Assertions;
 import org.lastaflute.core.mail.LaMailPostcard;
 
 /**
@@ -46,11 +46,11 @@ public class TestingMailData {
             br.addItem("Existing Postcards");
             br.addElement(_messageMap.keySet());
             final String msg = br.buildExceptionMessage();
-            Assert.fail(msg);
+            Assertions.fail(msg);
         }
         if (messageList.isEmpty()) { // no way
             String msg = "Found the empty message list in the prepared messages: " + postcardType;
-            Assert.fail(msg);
+            Assertions.fail(msg);
         }
         return messageList;
     }

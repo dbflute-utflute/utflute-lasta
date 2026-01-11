@@ -22,7 +22,7 @@ import java.util.Set;
 
 import org.dbflute.helper.message.ExceptionMessageBuilder;
 import org.dbflute.optional.OptionalThing;
-import org.junit.Assert;
+import org.junit.jupiter.api.Assertions;
 import org.lastaflute.core.message.MessageManager;
 import org.lastaflute.core.message.UserMessage;
 import org.lastaflute.core.message.UserMessages;
@@ -83,7 +83,7 @@ public class TestingValidationData {
                 }
             }
         }
-        Assert.fail(buildNoValidationErrorMessage(messages, property, annotationType));
+        Assertions.fail(buildNoValidationErrorMessage(messages, property, annotationType));
     }
 
     /**
@@ -103,7 +103,7 @@ public class TestingValidationData {
         }
         final UserMessages messages = _cause.getMessages();
         if (!messages.hasMessageOf(property, messageKey)) { // can determine annotation message since lastaflute-0.9.4
-            Assert.fail(buildNoValidationErrorMessage(messages, property, messageKey));
+            Assertions.fail(buildNoValidationErrorMessage(messages, property, messageKey));
         }
     }
 
@@ -132,7 +132,7 @@ public class TestingValidationData {
             }
         }
         if (!found) {
-            Assert.fail(buildNoValidationErrorMessageDirectly(messages, property, keyword));
+            Assertions.fail(buildNoValidationErrorMessageDirectly(messages, property, keyword));
         }
     }
 
@@ -195,7 +195,7 @@ public class TestingValidationData {
     @SuppressWarnings("unchecked")
     public <MESSAGES extends UserMessages> MESSAGES requiredMessages() {
         final UserMessages messages = _cause.getMessages();
-        Assert.assertFalse("No messages for validation error: " + _cause, messages.isEmpty());
+        Assertions.assertFalse(messages.isEmpty(), "No messages for validation error: " + _cause);
         return (MESSAGES) messages;
     }
 
@@ -213,7 +213,7 @@ public class TestingValidationData {
         final Map<String, Object> successAttributeMap = _cause.getMessages().getSuccessAttributeMap();
         final Object original = successAttributeMap.get(key);
         if (original == null) {
-            Assert.fail(buildSuccessAttributeFailureMessage(successAttributeMap, key));
+            Assertions.fail(buildSuccessAttributeFailureMessage(successAttributeMap, key));
         }
         try {
             return attributeType.cast(original);

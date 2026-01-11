@@ -19,14 +19,13 @@ import java.util.List;
 import java.util.Map;
 
 import org.dbflute.optional.OptionalThing;
+import org.junit.jupiter.api.Assertions;
 import org.lastaflute.core.util.ContainerUtil;
 import org.lastaflute.web.path.ActionPathResolver;
 import org.lastaflute.web.response.next.ForwardNext;
 import org.lastaflute.web.response.next.HtmlNext;
 import org.lastaflute.web.response.next.RedirectNext;
 import org.lastaflute.web.response.next.RoutingNext;
-
-import junit.framework.Assert;
 
 /**
  * @author jflute
@@ -145,11 +144,11 @@ public class TestingHtmlData {
     //                                         Assert Helper
     //                                         -------------
     protected void assertEquals(Object expected, Object actual) {
-        Assert.assertEquals(expected, actual);
+        Assertions.assertEquals(expected, actual);
     }
 
     protected void assertTrue(String msg, boolean condition) {
-        Assert.assertTrue(msg, condition);
+        Assertions.assertTrue(condition, msg);
     }
 
     // ===================================================================================

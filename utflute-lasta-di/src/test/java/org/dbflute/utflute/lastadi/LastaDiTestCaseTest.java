@@ -15,12 +15,15 @@
  */
 package org.dbflute.utflute.lastadi;
 
+import org.junit.jupiter.api.Test;
+
 /**
  * @author jflute
  * @since 0.5.1 (2015/03/22 Sunday)
  */
 public class LastaDiTestCaseTest extends LastaDiTestCase {
 
+    @Test
     public void test_xcanUseComponentNameByBindingNamingRule_basic() throws Exception {
         assertTrue(xcanUseComponentNameByBindingNamingRule("foo_bar", "bar"));
         assertTrue(xcanUseComponentNameByBindingNamingRule("foo_bar", "foo_bar"));

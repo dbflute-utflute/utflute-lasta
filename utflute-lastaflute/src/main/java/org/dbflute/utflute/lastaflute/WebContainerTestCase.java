@@ -31,6 +31,7 @@ import org.dbflute.utflute.mocklet.MockletHttpServletResponse;
 import org.dbflute.utflute.mocklet.MockletHttpServletResponseImpl;
 import org.dbflute.utflute.mocklet.MockletHttpSession;
 import org.dbflute.utflute.mocklet.MockletServletConfig;
+import org.junit.jupiter.api.Assertions;
 import org.lastaflute.core.direction.FwAssistantDirector;
 import org.lastaflute.core.magic.ThreadCacheContext;
 import org.lastaflute.core.message.MessageManager;
@@ -586,5 +587,16 @@ public abstract class WebContainerTestCase extends LastaFluteTestCase {
 
     protected void xsetMockResponse(MockletHttpServletResponse xmockResponse) {
         _xmockResponse = xmockResponse;
+    }
+
+    // ===================================================================================
+    //                                                                 Internal Compatible
+    //                                                                 ===================
+    // to keep clear differences with JUnit4 UTFlute so bottom definition
+    // -----------------------------------------------------
+    //                                     Assert Compatible
+    //                                     -----------------
+    private void assertTrue(String message, boolean condition) {
+        Assertions.assertTrue(condition, message);
     }
 }

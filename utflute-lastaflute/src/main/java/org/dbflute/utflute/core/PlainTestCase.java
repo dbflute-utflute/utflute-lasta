@@ -1413,77 +1413,83 @@ public abstract class PlainTestCase {
     //                                                                    Assertion Helper
     //                                                                    ================
     // wrapper methods for JUnit 5 Assertions (to maintain compatibility with existing code)
+    // _/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/
+    // #for_now jflute no-message method only to be simple and avoid overload complex (2026/01/11)
+    //  JUnit4: front message style
+    //  JUnit5: rear message style
+    // so UTFlute for JUnit5 provides simple assert methods only here
+    // application can add favorite message style methods in its Unit[App]TestCase.java 
+    // _/_/_/_/_/_/_/_/
+    // -----------------------------------------------------
+    //                                                Equals
+    //                                                ------
     protected void assertEquals(Object expected, Object actual) {
-        // Handle numeric type comparisons (Integer vs Long, etc.) for JUnit 5 migration
-        if (expected instanceof Number && actual instanceof Number) {
-            if (expected instanceof Double || expected instanceof Float || actual instanceof Double || actual instanceof Float) {
-                Assertions.assertEquals(((Number) expected).doubleValue(), ((Number) actual).doubleValue());
-            } else {
-                Assertions.assertEquals(((Number) expected).longValue(), ((Number) actual).longValue());
-            }
-            return;
+        if (isAssertionEqualsNumberInsensitive() && expected instanceof Number && actual instanceof Number) {
+            // Handle numeric type comparisons (Integer vs Long, etc.) for JUnit 5 migration
+            xnumberInsensitiveAssertEquals((Number) expected, (Number) actual);
+        } else {
+            Assertions.assertEquals(expected, actual);
         }
-        Assertions.assertEquals(expected, actual);
     }
 
-    protected void assertEquals(String message, Object expected, Object actual) {
-        // Handle numeric type comparisons (Integer vs Long, etc.) for JUnit 5 migration
-        if (expected instanceof Number && actual instanceof Number) {
-            if (expected instanceof Double || expected instanceof Float || actual instanceof Double || actual instanceof Float) {
-                Assertions.assertEquals(((Number) expected).doubleValue(), ((Number) actual).doubleValue(), message);
-            } else {
-                Assertions.assertEquals(((Number) expected).longValue(), ((Number) actual).longValue(), message);
-            }
-            return;
-        }
-        Assertions.assertEquals(expected, actual, message);
+    protected boolean isAssertionEqualsNumberInsensitive() { // you can override
+        return false; // as default
     }
 
+    protected void xnumberInsensitiveAssertEquals(Number expected, Number actual) {
+        if (expected instanceof Double || expected instanceof Float //
+                || actual instanceof Double || actual instanceof Float) { // as decimal
+            Assertions.assertEquals(expected.doubleValue(), actual.doubleValue());
+        } else { // as intger (seisuu in Japanese)
+            Assertions.assertEquals(expected.longValue(), actual.longValue());
+        }
+    }
+
+    // -----------------------------------------------------
+    //                                            true/false
+    //                                            ----------
     protected void assertTrue(boolean condition) {
         Assertions.assertTrue(condition);
-    }
-
-    protected void assertTrue(String message, boolean condition) {
-        Assertions.assertTrue(condition, message);
-    }
-
-    protected void assertTrue(boolean condition, String message) {
-        Assertions.assertTrue(condition, message);
     }
 
     protected void assertFalse(boolean condition) {
         Assertions.assertFalse(condition);
     }
 
-    protected void assertFalse(String message, boolean condition) {
-        Assertions.assertFalse(condition, message);
-    }
-
-    protected void assertFalse(boolean condition, String message) {
-        Assertions.assertFalse(condition, message);
-    }
-
+    // -----------------------------------------------------
+    //                                               NotNull
+    //                                               -------
     protected void assertNotNull(Object actual) {
         Assertions.assertNotNull(actual);
-    }
-
-    protected void assertNotNull(Object actual, String message) {
-        Assertions.assertNotNull(actual, message);
     }
 
     protected void assertNull(Object actual) {
         Assertions.assertNull(actual);
     }
 
-    protected void assertNull(Object actual, String message) {
-        Assertions.assertNull(actual, message);
-    }
-
-    protected void fail(String message) {
-        Assertions.fail(message);
-    }
-
+    // -----------------------------------------------------
+    //                                        Simple Failure
+    //                                        --------------
     protected void fail() {
         Assertions.fail();
+    }
+
+    // ===================================================================================
+    //                                                                 Internal Compatible
+    //                                                                 ===================
+    // to keep clear differences with JUnit4 UTFlute so bottom definition
+    // -----------------------------------------------------
+    //                                     Assert Compatible
+    //                                     -----------------
+    private void assertTrue(String message, boolean condition) {
+        Assertions.assertTrue(condition, message);
+    }
+
+    private void assertFalse(String message, boolean condition) {
+        Assertions.assertFalse(condition, message);
+    }
+
+    private void fail(String message) {
+        Assertions.fail(message);
     }
 }
