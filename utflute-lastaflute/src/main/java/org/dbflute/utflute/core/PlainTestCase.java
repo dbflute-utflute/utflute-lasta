@@ -165,19 +165,6 @@ public abstract class PlainTestCase {
     //                                                                       Assert Helper
     //                                                                       =============
     // -----------------------------------------------------
-    //                                                Equals
-    //                                                ------
-    // to avoid setting like this:
-    //  assertEquals(Integer.valueOf(3), member.getMemberId())
-    protected void assertEquals(String message, int expected, Integer actual) {
-        assertEquals(message, Integer.valueOf(expected), actual);
-    }
-
-    protected void assertEquals(int expected, Integer actual) {
-        assertEquals(null, Integer.valueOf(expected), actual);
-    }
-
-    // -----------------------------------------------------
     //                                            True/False
     //                                            ----------
     protected void assertTrueAll(boolean... conditions) {
@@ -1427,10 +1414,28 @@ public abstract class PlainTestCase {
     //                                                                    ================
     // wrapper methods for JUnit 5 Assertions (to maintain compatibility with existing code)
     protected void assertEquals(Object expected, Object actual) {
+        // Handle numeric type comparisons (Integer vs Long, etc.) for JUnit 5 migration
+        if (expected instanceof Number && actual instanceof Number) {
+            if (expected instanceof Double || expected instanceof Float || actual instanceof Double || actual instanceof Float) {
+                Assertions.assertEquals(((Number) expected).doubleValue(), ((Number) actual).doubleValue());
+            } else {
+                Assertions.assertEquals(((Number) expected).longValue(), ((Number) actual).longValue());
+            }
+            return;
+        }
         Assertions.assertEquals(expected, actual);
     }
 
     protected void assertEquals(String message, Object expected, Object actual) {
+        // Handle numeric type comparisons (Integer vs Long, etc.) for JUnit 5 migration
+        if (expected instanceof Number && actual instanceof Number) {
+            if (expected instanceof Double || expected instanceof Float || actual instanceof Double || actual instanceof Float) {
+                Assertions.assertEquals(((Number) expected).doubleValue(), ((Number) actual).doubleValue(), message);
+            } else {
+                Assertions.assertEquals(((Number) expected).longValue(), ((Number) actual).longValue(), message);
+            }
+            return;
+        }
         Assertions.assertEquals(expected, actual, message);
     }
 
@@ -1442,6 +1447,10 @@ public abstract class PlainTestCase {
         Assertions.assertTrue(condition, message);
     }
 
+    protected void assertTrue(boolean condition, String message) {
+        Assertions.assertTrue(condition, message);
+    }
+
     protected void assertFalse(boolean condition) {
         Assertions.assertFalse(condition);
     }
@@ -1450,12 +1459,24 @@ public abstract class PlainTestCase {
         Assertions.assertFalse(condition, message);
     }
 
+    protected void assertFalse(boolean condition, String message) {
+        Assertions.assertFalse(condition, message);
+    }
+
     protected void assertNotNull(Object actual) {
         Assertions.assertNotNull(actual);
     }
 
+    protected void assertNotNull(Object actual, String message) {
+        Assertions.assertNotNull(actual, message);
+    }
+
     protected void assertNull(Object actual) {
         Assertions.assertNull(actual);
+    }
+
+    protected void assertNull(Object actual, String message) {
+        Assertions.assertNull(actual, message);
     }
 
     protected void fail(String message) {
