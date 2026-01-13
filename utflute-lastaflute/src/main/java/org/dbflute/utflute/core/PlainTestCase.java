@@ -138,7 +138,7 @@ public abstract class PlainTestCase {
     }
 
     @AfterEach
-    protected void tearDown() throws Exception {
+    protected void tearDown(TestInfo testInfo) throws Exception {
         xclearAccessContextOnThread();
         xclearGatheredExecutedSql();
         xclearSwitchedCurrentDate();

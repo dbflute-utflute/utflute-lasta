@@ -113,9 +113,9 @@ public abstract class ContainerTestCase extends LastaDiTestCase {
         ThreadCacheContext.initialize();
     }
 
-    @Override
     @AfterEach
-    protected void tearDown() throws Exception {
+    @Override
+    protected void tearDown(TestInfo testInfo) throws Exception {
         xprocessMailAssertion(); // moved from postTest()
         ThreadCacheContext.clear();
         if (BowgunDestructiveAdjuster.hasAnyBowgun()) {
@@ -123,7 +123,7 @@ public abstract class ContainerTestCase extends LastaDiTestCase {
             BowgunDestructiveAdjuster.restoreBowgunAll();
         }
         xdestroyJobSchedulingIfNeeds(); // always destroy if scheduled to avoid job trouble
-        super.tearDown();
+        super.tearDown(testInfo);
     }
 
     // -----------------------------------------------------

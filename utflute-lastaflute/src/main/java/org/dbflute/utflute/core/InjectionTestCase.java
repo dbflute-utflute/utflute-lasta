@@ -70,8 +70,8 @@ public abstract class InjectionTestCase extends PlainTestCase {
     // -----------------------------------------------------
     //                                                Set up
     //                                                ------
-    @Override
     @BeforeEach
+    @Override
     protected void setUp(TestInfo testInfo) throws Exception {
         super.setUp(testInfo);
 
@@ -155,9 +155,9 @@ public abstract class InjectionTestCase extends PlainTestCase {
     // -----------------------------------------------------
     //                                             Tear Down
     //                                             ---------
-    @Override
     @AfterEach
-    protected void tearDown() throws Exception {
+    @Override
+    protected void tearDown(TestInfo testInfo) throws Exception {
         if (!isSuppressTestCaseTransaction()) {
             xrollbackTestCaseTransaction(); // should be tear-down to close transaction when failure
         }
@@ -165,7 +165,7 @@ public abstract class InjectionTestCase extends PlainTestCase {
         xdestroyTestCaseContainer();
         _xmockInstanceList = null;
         _xnonBindingTypeList = null;
-        super.tearDown();
+        super.tearDown(testInfo);
     }
 
     // -----------------------------------------------------
