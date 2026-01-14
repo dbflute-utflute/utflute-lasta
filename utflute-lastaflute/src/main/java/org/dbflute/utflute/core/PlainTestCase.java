@@ -116,7 +116,11 @@ public abstract class PlainTestCase {
     //                                                                            Settings
     //                                                                            ========
     @BeforeEach
-    protected void setUp(TestInfo testInfo) throws Exception {
+    protected final void frameworkEntrySetUp(TestInfo testInfo) throws Exception {
+        setUp(testInfo); // to avoid annotation headache
+    }
+
+    protected void setUp(TestInfo testInfo) throws Exception { // you can override
         xkeepTestMethodName(testInfo);
         xreserveShowTitle();
         if (!xisSuppressTestCaseAccessContext()) {
@@ -138,7 +142,11 @@ public abstract class PlainTestCase {
     }
 
     @AfterEach
-    protected void tearDown(TestInfo testInfo) throws Exception {
+    protected final void frameworkEntryTearDown(TestInfo testInfo) throws Exception {
+        tearDown(testInfo); // to avoid annotation headache
+    }
+
+    protected void tearDown(TestInfo testInfo) throws Exception { // you can override
         xclearAccessContextOnThread();
         xclearGatheredExecutedSql();
         xclearSwitchedCurrentDate();

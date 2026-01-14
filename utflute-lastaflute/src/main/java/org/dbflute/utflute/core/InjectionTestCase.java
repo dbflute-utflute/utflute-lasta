@@ -27,8 +27,6 @@ import org.dbflute.utflute.core.binding.ComponentBinder;
 import org.dbflute.utflute.core.binding.ComponentProvider;
 import org.dbflute.utflute.core.transaction.TransactionFailureException;
 import org.dbflute.utflute.core.transaction.TransactionResource;
-import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.TestInfo;
 
 /**
@@ -70,7 +68,6 @@ public abstract class InjectionTestCase extends PlainTestCase {
     // -----------------------------------------------------
     //                                                Set up
     //                                                ------
-    @BeforeEach
     @Override
     protected void setUp(TestInfo testInfo) throws Exception {
         super.setUp(testInfo);
@@ -155,7 +152,6 @@ public abstract class InjectionTestCase extends PlainTestCase {
     // -----------------------------------------------------
     //                                             Tear Down
     //                                             ---------
-    @AfterEach
     @Override
     protected void tearDown(TestInfo testInfo) throws Exception {
         if (!isSuppressTestCaseTransaction()) {

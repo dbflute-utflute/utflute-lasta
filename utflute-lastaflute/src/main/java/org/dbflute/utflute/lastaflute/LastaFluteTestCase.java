@@ -32,6 +32,7 @@ import org.dbflute.utflute.mocklet.MockletServletConfigImpl;
 import org.dbflute.utflute.mocklet.MockletServletContext;
 import org.dbflute.utflute.mocklet.MockletServletContextImpl;
 import org.dbflute.util.DfTypeUtil;
+import org.junit.jupiter.api.TestInfo;
 import org.lastaflute.core.json.JsonManager;
 import org.lastaflute.core.magic.ThreadCacheContext;
 import org.lastaflute.core.magic.destructive.BowgunDestructiveAdjuster;
@@ -39,8 +40,6 @@ import org.lastaflute.core.time.SimpleTimeManager;
 import org.lastaflute.db.dbflute.accesscontext.PreparedAccessContext;
 import org.lastaflute.di.core.factory.SingletonLaContainerFactory;
 import org.lastaflute.web.LastaFilter;
-import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.TestInfo;
 import org.lastaflute.web.response.JsonResponse;
 
 import jakarta.annotation.Resource;
@@ -126,7 +125,6 @@ public abstract class LastaFluteTestCase extends LastaDiTestCase {
     // -----------------------------------------------------
     //                                             Tear Down
     //                                             ---------
-    @AfterEach
     @Override
     protected void tearDown(TestInfo testInfo) throws Exception {
         xprocessMailAssertion(); // moved from postTest()
