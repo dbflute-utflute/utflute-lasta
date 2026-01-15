@@ -372,26 +372,6 @@ public abstract class WebContainerTestCase extends LastaFluteTestCase {
         return new TestingValidationErrorAfter(causeSet.iterator().next(), _messageManager, _requestManager);
     }
 
-    /**
-     * Evaluate validation error hook for action response.
-     * <pre>
-     * <span style="color: #3F7E5E">// if HTML response</span>
-     * assertException(ValidationErrorException.<span style="color: #70226C">class</span>, () <span style="color: #90226C; font-weight: bold"><span style="font-size: 120%">-</span>&gt;</span> <span style="color: #553000">action</span>.update(<span style="color: #553000">form</span>)).handle(<span style="color: #553000">cause</span> <span style="color: #90226C; font-weight: bold"><span style="font-size: 120%">-</span>&gt;</span> {
-     *     HtmlResponse <span style="color: #553000">response</span> = <span style="color: #CC4747">hookValidationError</span>(<span style="color: #553000">cause</span>);
-     *     TestingHtmlData <span style="color: #553000">htmlData</span> = validateHtmlData(<span style="color: #553000">response</span>);
-     *     ...
-     * });
-     * </pre>
-     * @param <RESPONSE> The type of action response, e.g. HtmlResponse, JsonResponse.
-     * @param cause The exception of validation error. (NotNull)
-     * @return The action response from validation error hook.
-     * @deprecated use assertValidationError()
-     */
-    @SuppressWarnings("unchecked")
-    protected <RESPONSE extends ActionResponse> RESPONSE hookValidationError(ValidationErrorException cause) {
-        return (RESPONSE) cause.getErrorHook().hook();
-    }
-
     // ===================================================================================
     //                                                                     Token Assertion
     //                                                                     ===============
@@ -531,7 +511,7 @@ public abstract class WebContainerTestCase extends LastaFluteTestCase {
     /**
      * Save meta data to use rich swagger in war deployment. <br>
      * <pre>
-     * public void test_swaggerJson() {
+     * public void test_swaggerMeta() {
      *     saveSwaggerMeta(new SwaggerAction());
      * }
      * </pre>

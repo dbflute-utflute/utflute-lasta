@@ -72,7 +72,6 @@ public abstract class InjectionTestCase extends PlainTestCase {
     protected void setUp(TestInfo testInfo) throws Exception {
         super.setUp(testInfo);
 
-        xsetupBeforeContainer();
         xsetupBeforeTestCaseContainer();
         xprepareTestCaseContainer();
         xsetupAfterTestCaseContainer();
@@ -89,10 +88,6 @@ public abstract class InjectionTestCase extends PlainTestCase {
     // -----------------------------------------------------
     //                                     setUp() Container
     //                                     -----------------
-    @Deprecated
-    protected void xsetupBeforeContainer() { // use xsetupBeforeTestCaseContainer()
-    }
-
     protected void xsetupBeforeTestCaseContainer() {
     }
 
