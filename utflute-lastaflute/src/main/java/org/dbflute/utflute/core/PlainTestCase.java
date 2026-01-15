@@ -824,14 +824,6 @@ public abstract class PlainTestCase {
         return toLocalTime(currentUtilDate());
     }
 
-    /**
-     * @return The current utility date. (NotNull)
-     * @deprecated use currentUtilDate()
-     */
-    protected Date currentDate() {
-        return currentUtilDate();
-    }
-
     protected Date currentUtilDate() {
         return DBFluteSystem.currentDate();
     }
@@ -850,15 +842,6 @@ public abstract class PlainTestCase {
 
     protected LocalTime toLocalTime(Object obj) {
         return DfTypeUtil.toLocalTime(obj, getUnitTimeZone());
-    }
-
-    /**
-     * @param obj The source of date. (NullAllowed)
-     * @return The utility date. (NotNull)
-     * @deprecated use currentUtilDate()
-     */
-    protected Date toDate(Object obj) {
-        return toUtilDate(obj);
     }
 
     protected Date toUtilDate(Object obj) {
