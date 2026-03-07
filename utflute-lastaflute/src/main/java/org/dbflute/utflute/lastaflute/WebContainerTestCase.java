@@ -530,7 +530,7 @@ public abstract class WebContainerTestCase extends LastaFluteTestCase {
     /**
      * Save meta data to use rich swagger in war deployment. <br>
      * <pre>
-     * public void test_swaggerJson() {
+     * public void test_swaggerMeta() {
      *     saveSwaggerMeta(new SwaggerAction());
      * }
      * </pre>
@@ -540,6 +540,24 @@ public abstract class WebContainerTestCase extends LastaFluteTestCase {
         assertNotNull(swaggerable);
         inject(swaggerable);
         createSwaggerGenerator().saveSwaggerMeta(swaggerable);
+    }
+
+    /**
+     * Save meta data to use rich openapi in war deployment. <br>
+     * <pre>
+     * public void test_openapiMeta() {
+     *     saveOpenapiMeta(new SwaggerAction());
+     * }
+     * </pre>
+     * 
+     * <p>The library "swagger-parser-v2-converter" is needed here.</p>
+     * 
+     * @param swaggerable The new-created swagger-able action to get swagger JSON. (NotNull)
+     */
+    protected void saveOpenapiMeta(LaActionSwaggerable swaggerable) {
+        assertNotNull(swaggerable);
+        inject(swaggerable);
+        createSwaggerGenerator().saveOpenapiMeta(swaggerable);
     }
 
     /**
