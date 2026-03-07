@@ -549,6 +549,9 @@ public abstract class WebContainerTestCase extends LastaFluteTestCase {
      *     saveOpenapiMeta(new SwaggerAction());
      * }
      * </pre>
+     * 
+     * <p>The library "swagger-parser-v2-converter" is needed here.</p>
+     * 
      * @param swaggerable The new-created swagger-able action to get swagger JSON. (NotNull)
      */
     protected void saveOpenapiMeta(LaActionSwaggerable swaggerable) {
@@ -556,7 +559,7 @@ public abstract class WebContainerTestCase extends LastaFluteTestCase {
         inject(swaggerable);
         createSwaggerGenerator().saveOpenapiMeta(swaggerable);
     }
-    
+
     /**
      * Create swagger generator for rich swagger.
      * @return The new-created swagger generator. (NotNull)
